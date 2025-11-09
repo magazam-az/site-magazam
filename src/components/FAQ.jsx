@@ -306,7 +306,7 @@ const FAQPage = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button className="bg-white text-[#5C4977] px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors">
-                  Onlayn Söhbət
+                  Onlayn Söhbə
                 </button>
                 <button className="border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-[#5C4977] transition-colors">
                   Zəng Edin
