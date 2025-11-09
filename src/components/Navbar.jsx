@@ -1,5 +1,3 @@
-"use client"
-
 import { Heart, User, Repeat2, ShoppingCart, Search, Menu, Globe, Phone, X } from "lucide-react"
 import { useState } from "react"
 
@@ -86,8 +84,7 @@ export default function Header() {
 
           {/* Mobile Right Icons - Only Search & Cart for mobile */}
           <div className="flex lg:hidden items-center gap-4">
-          
-          
+            {/* Empty for mobile - icons moved to bottom navigation */}
           </div>
         </div>
 
@@ -226,40 +223,40 @@ export default function Header() {
         </div>
       )}
 
-      {/* 5 İkonlu Mobil Aşağı Naviqasiya Paneli (Səhifəyə Bərkidilmiş) */}
+      {/* 5 Icon Mobile Bottom Navigation Panel (Fixed to page) */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-2xl shadow-gray-400/50">
         <div className="flex justify-around items-center h-16 w-full px-2">
-          {/* 1. Axtarış (Search) */}
+          {/* 1. Search */}
           <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200">
             <Search className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Axtar</span>
+            <span className="text-xs font-medium mt-1">Search</span>
           </button>
 
-          {/* 2. Müqayisə (Repeat2) */}
+          {/* 2. Compare (Repeat2) */}
           <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200 relative">
             <Repeat2 className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Müqayisə</span>
+            <span className="text-xs font-medium mt-1">Compare</span>
             <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-[#5C4977] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
           </button>
 
-          {/* 3. İstək Siyahısı (Heart) */}
+          {/* 3. Wishlist (Heart) */}
           <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200 relative">
             <Heart className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Seçilmişlər</span>
+            <span className="text-xs font-medium mt-1">Wishlist</span>
             <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-[#5C4977] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
           </button>
 
-          {/* 4. Səbət (ShoppingCart) - Əsas rəngdə vurğulanmışdır */}
+          {/* 4. Cart (ShoppingCart) - Highlighted in primary color */}
           <button className="flex flex-col items-center text-[#5C4977] transition-colors duration-200 relative">
             <ShoppingCart className="w-6 h-6" />
-            <span className="text-xs font-medium mt-1">Səbət</span>
+            <span className="text-xs font-medium mt-1">Cart</span>
             <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-[#5C4977] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
           </button>
           
-          {/* 5. Profil (User) */}
+          {/* 5. Profile (User) */}
           <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200">
             <User className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Profil</span>
+            <span className="text-xs font-medium mt-1">Profile</span>
           </button>
         </div>
       </div>
