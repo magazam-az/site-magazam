@@ -75,3 +75,24 @@
   align-items: center;
   justify-content: center;
 }
+.bg-qulaq:hover {
+  transform: scale(1.05);
+}
+
+.bg-qulaq{
+  transition: .6s ease;
+}
+.bg-ps4{
+  transition: .6s ease;
+}
+.bg-ps4:hover{
+  transform: scale(1.05);
+
+}
+.bg-cam:hover{
+    transform: scale(1.05);
+
+}
+.bg-cam{
+  transition: .6s ease;
+}
