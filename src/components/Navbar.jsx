@@ -90,9 +90,17 @@ export default function Header() {
 
         {/* Navigation Menu - Hidden on mobile, visible on desktop */}
         <div className="hidden lg:flex items-center gap-8 mt-4 max-w-7xl mx-auto">
-          <button className="flex items-center gap-2 bg-[#5C4977] text-white px-4 py-2 rounded-lg hover:bg-[#5C4977]/90 transition-all duration-300 shadow-lg shadow-[#5C4977]/30 hover:shadow-xl hover:shadow-[#5C4977]/40 border border-[#5C4977]">
-            <Menu className="w-5 h-5" />
-            <span>All Categories</span>
+       <button className="flex items-center justify-center mx-auto md:mx-0 px-6 sm:px-8 py-2 sm:py-3 bg-[#5C4977] text-white font-semibold rounded-lg shadow-lg hover:bg-[#5C4977]/90 transition duration-300 transform hover:scale-[1.02]">
+            Go Shopping
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 ml-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
           </button>
           
           <nav className="flex gap-6 text-gray-700 font-medium">

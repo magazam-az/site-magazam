@@ -1,0 +1,77 @@
+@import "tailwindcss"; 
+* {
+  font-family: 'Lexend Deca', sans-serif;
+}
+.bg-img{
+    background-image: url("/src/assets/images/hero1/ipad.png");
+      background-repeat: no-repeat;     /* təkrarlanmasın */
+  background-position: center !important;      /* mərkəzə hizala */
+  background-size: cover;  
+}
+.bg-qulaq {
+  background-image: url('/src/assets/images/hero1/logitech-aurora-headset-opt.png');
+  background-repeat: no-repeat;     /* təkrarlanmasın */
+  background-position: center;      /* mərkəzə hizala */
+  background-size: cover;           /* şəkli konteyneri dolduracaq şəkildə ölçüləndir */
+}
+.apas{
+    font-weight: 500 !important;
+}
+.bg-ps4{
+      background-image: url('/src/assets/images/hero1/new-dualsense.png');
+
+      background-repeat: no-repeat;     /* təkrarlanmasın */
+  background-position: center;      /* mərkəzə hizala */
+  background-size: cover;  
+}
+.bg-cam{
+          background-image: url('/src/assets/images/hero1/instant-cameras.png');
+
+       background-repeat: no-repeat;     /* təkrarlanmasın */
+  background-position: center;      /* mərkəzə hizala */
+  background-size: cover; 
+}
+/* Əgər global CSS faylı istifadə edirsinizsə */
+.custom-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-bullet {
+  width: 12px;
+  background-color: #6b7280;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+}
+
+.custom-bullet-active {
+  background-color: black !important;
+  width: 24px;
+  border-radius: 6px;
+}
+.bg-img-2{
+  background-image: url('/src/assets/images/hero1/pre-order-g-pixel-7.jpg');
+    background-repeat: no-repeat;     /* təkrarlanmasın */
+  background-position: center;      /* mərkəzə hizala */
+  background-size: cover;           /* şəkli konteyneri dolduracaq şəkildə ölçüləndir */
+}
+.bg-img-3{
+  background-image: url('/src/assets/images/hero1/discount-on-all-smart-appliances.png');
+    background-repeat: no-repeat;     /* təkrarlanmasın */
+  background-position: center;      /* mərkəzə hizala */
+  background-size: cover;           /* şəkli konteyneri dolduracaq şəkildə ölçüləndir */
+}
+/* Swiper container üçün */
+.swiper {
+  width: 100%;
+}
+
+/* Slaydlar üçün */
+.swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

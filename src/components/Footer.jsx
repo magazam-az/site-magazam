@@ -3,7 +3,7 @@ import { FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp, FaTelegramPlane, FaTik
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-50 py-10 text-gray-700">
+    <footer className="bg-gray-50 py-10 mx-auto text-gray-700">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="flex flex-wrap justify-between gap-y-10">
