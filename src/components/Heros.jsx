@@ -1,7 +1,10 @@
 import React from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination } from 'swiper/modules';
 
-// A small component for the countdown timer boxes
-// You can make this a separate file or keep it here
+import 'swiper/css';
+import 'swiper/css/pagination';
+
 const CountdownBox = ({ value, label }) => (
   <div className="bg-white bg-opacity-80 backdrop-blur-sm rounded-md p-2 w-14 text-center shadow-sm">
     <span className="text-2xl font-bold text-gray-900 block">{value}</span>
@@ -10,58 +13,100 @@ const CountdownBox = ({ value, label }) => (
 );
 
 export default function ProductBanners() {
+  const slides = [
+    {
+      id: 1,
+      title: "Apple Shopping Event",
+      description: "Shop great deals on MacBook, iPad, iPhone and more.",
+      buttonText: "Shop Now",
+      bgClass: "bg-img"
+    },
+    {
+      id: 2,
+      title: "New iPhone 15 Pro",
+      description: "Discover the revolutionary titanium design.",
+      buttonText: "Learn More",
+      bgClass: "bg-img-2"
+    },
+    {
+      id: 3,
+      title: "MacBook Air M3",
+      description: "Supercharged by the next-generation M3 chip.",
+      buttonText: "Buy Now",
+      bgClass: "bg-img-3"
+    }
+  ];
+
   return (
-    <div className="p-4 sm:p-6 bg-gray-100">
+    <div className="container mx-auto w-full p-4 sm:p-6">
       <div className="flex flex-col lg:flex-row gap-6">
         
-        {/* --- 1. Left Column (Smart Appliances) --- */}
-        <div className="lg:w-2/3">
-          <div className="relative bg-gray-900 text-white p-8 md:p-12 rounded-lg overflow-hidden h-full flex flex-col justify-between min-h-[500px]">
-            {/* These are placeholders for the images. 
-              In a real app, you'd use <img /> tags with absolute positioning.
-                                        */}
-            
-            {/* Content */}
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-bold mb-2">
-                Discount on all Smart appliances up to 25%
-              </h2>
-              <p className="text-lg text-gray-300 mb-6 max-w-md">
-                Shop great deals on MacBook, iPad, iPhone and more.
-              </p>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-md transition-colors">
-                Shop Now
-              </button>
-            </div>
+        {/* --- 1. Left Column (Apple Banner with Swiper) --- */}
+        <div className="lg:w-[750px]">
+          <div className="relative rounded-lg overflow-hidden h-full min-h-[500px]">
+            <Swiper
+              modules={[Autoplay, Pagination]}
+              spaceBetween={0}
+              slidesPerView={1}
+              autoplay={{
+                delay: 5000,
+                disableOnInteraction: false,
+              }}
+              pagination={{
+                clickable: true,
+                el: '.custom-pagination',
+                bulletClass: 'custom-bullet',
+                bulletActiveClass: 'custom-bullet-active'
+              }}
+              loop={true}
+              className="h-full"
+            >
+              {slides.map((slide) => (
+                <SwiperSlide key={slide.id}>
+                  <div className={`${slide.bgClass} text-white p-8 md:p-12 rounded-lg h-full flex flex-col justify-between min-h-[500px]`}>
+                    <div className="relative z-10">
+                      <h2 className="text-3xl md:text-5xl apas mb-5 text-center">
+                        {slide.title}
+                      </h2>
+                      <p className="text-lg text-gray-300 mb-6 text-center">
+                        {slide.description}
+                      </p>
+                      <div className="buton-div flex justify-center items-center">
+                        <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-md transition-colors flex justify-center items-center">
+                          {slide.buttonText}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
 
-            {/* Pagination Dots */}
-            <div className="relative z-10 flex gap-2 mt-8">
-              <span className="w-3 h-3 bg-gray-500 rounded-full cursor-pointer"></span>
-              <span className="w-3 h-3 bg-white rounded-full cursor-pointer"></span>
-              <span className="w-3 h-3 bg-gray-500 rounded-full cursor-pointer"></span>
+            {/* Custom Pagination Dots - DÜZƏLİŞ EDİLDİ */}
+            <div className="paginations flex justify-center items-center absolute bottom-4 left-0 right-0 z-20">
+              <div className="custom-pagination flex gap-2 bg-white rounded-full p-1 shadow-md w-auto px-3"></div>
             </div>
           </div>
         </div>
         
         {/* --- 2. Right Column (contains 3 cards) --- */}
-        <div className="lg:w-1/3 flex flex-col gap-6">
+        <div className="lg:flex-1 flex flex-col gap-6">
           
           {/* Card 2.1: Aurora Headset */}
-          <div className="relative bg-pink-100 p-6 rounded-lg overflow-hidden">
-            {/*  - Placeholder for the headset image */}
+          <div className="relative bg-qulaq p-6 rounded-lg overflow-hidden h-[300px]">
             <div className="absolute top-0 right-0 w-2/3 -mt-8 -mr-8 opacity-80">
               {/* You would place your <img /> tag here */}
             </div>
 
             <div className="relative z-10">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Aurora Headset</h3>
+              <h3 className="text-2xl font-bold text-white mt-7">Aurora Headset</h3>
               <div className="flex gap-2 mb-4">
                 <CountdownBox value="52" label="Days" />
                 <CountdownBox value="06" label="Hr" />
                 <CountdownBox value="33" label="Min" />
                 <CountdownBox value="08" label="Sc" />
               </div>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-md transition-colors text-sm">
+              <button className="bg-[#53426B] hover:bg-[#53426B] text-white font-semibold py-2 px-4 rounded-md transition-colors text-sm">
                 Buy Now
               </button>
             </div>
@@ -71,7 +116,7 @@ export default function ProductBanners() {
           <div className="flex flex-col sm:flex-row gap-6">
             
             {/* Card 2.2: New Dual Sense */}
-            <div className="bg-blue-500 text-white p-6 rounded-lg flex-1">
+            <div className="bg-ps4 text-white p-6 rounded-lg flex-1 h-[200px]">
               <div className="flex items-center justify-between space-x-4">
                 <div>
                   <h3 className="text-xl font-bold">New Dual Sense</h3>
@@ -80,7 +125,6 @@ export default function ProductBanners() {
                     View Details
                   </button>
                 </div>
-                {/*  - Placeholder */}
                 <div className="flex-shrink-0">
                   {/* You would place your <img /> tag here */}
                 </div>
@@ -88,7 +132,7 @@ export default function ProductBanners() {
             </div>
             
             {/* Card 2.3: Instant Cameras */}
-            <div className="bg-yellow-400 text-gray-900 p-6 rounded-lg flex-1">
+            <div className="bg-cam text-gray-900 p-6 rounded-lg flex-1">
               <div className="flex items-center justify-between space-x-4">
                 <div>
                   <h3 className="text-xl font-bold">Instant Cameras</h3>
@@ -97,7 +141,6 @@ export default function ProductBanners() {
                     View Details
                   </button>
                 </div>
-                {/*  - Placeholder */}
                 <div className="flex-shrink-0">
                   {/* You would place your <img /> tag here */}
                 </div>
@@ -107,6 +150,37 @@ export default function ProductBanners() {
           </div>
         </div>
       </div>
+
+      {/* Custom CSS for pagination bullets - DÜZƏLİŞ EDİLDİ */}
+      <style jsx>{`
+        .custom-pagination {
+          display: flex !important;
+          justify-content: center;
+          align-items: center;
+          width: auto !important;
+          min-width: 80px;
+          position: static !important;
+          transform: none !important;
+          background: white;
+          border-radius: 9999px;
+          padding: 6px 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .custom-bullet {
+          width: 8px;
+          height: 8px;
+          background-color: #6b7280;
+          border-radius: 50%;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin: 0 3px;
+        }
+        .custom-bullet-active {
+          background-color: #9333ea;
+          width: 10px;
+          border-radius: 6px;
+        }
+      `}</style>
     </div>
   );
 }
