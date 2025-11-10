@@ -46,7 +46,7 @@ const IpadSection = () => {
               // Arxa plan Ağ və Sərhəd (border) Əlavə Edilib (şəkildəki kimi daha dəqiq olması üçün)
               <div key={unit} className="bg-white p-2 sm:p-3 rounded-lg text-center shadow-md min-w-[50px] sm:min-w-[60px] border border-gray-200">
                 {/* Rəqəmlər üçün ACCENT_COLOR_CLASS tətbiq edilir */}
-                <div className="text-xl sm:text-2xl font-bold ${ACCENT_COLOR_CLASS}">
+                <div className={`text-xl sm:text-2xl font-bold ${ACCENT_COLOR_CLASS}`}>
                   {/* Rəqəmlər şəkildəki rəqəmlərə dəyişdirildi: 52 Days, 02 Hr, 51 Min, 07 Sc */}
                   {index === 0 ? '52' : index === 1 ? '02' : index === 2 ? '51' : '07'}
                 </div>
@@ -77,14 +77,13 @@ const IpadSection = () => {
       {/* 📦 Məhsul Vitrini Bölməsi: Grid sütunları 2 (kiçik), 3 (orta), 5 (böyük) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 max-w-7xl mx-auto">
         
-        {/* Məhsul Kartları */}
+        {/* Məhsul Kartları - 3-5 arası ulduz reytinqi əlavə edildi */}
         {[
-          // Şəkildəki qiymətlər yenidən daxil edildi
-          { name: "Acer ProDesigner", price: "750,00 ₼", img: "src/assets/images/ipad-section/iosmodels.webp", rating: 0 },
+          { name: "Acer ProDesigner", price: "750,00 ₼", img: "src/assets/images/ipad-section/iosmodels.webp", rating: 4 },
           { name: "Acer SA100", price: "30,00 ₼", img: "src/assets/images/ipad-section/acerkart.webp", rating: 5 },
-          { name: "Ailink Aluminium", price: "40,00 ₼", img: "src/assets/images/ipad-section/alim.webp", rating: 0 },
+          { name: "Ailink Aluminium", price: "40,00 ₼", img: "src/assets/images/ipad-section/alim.webp", rating: 3 },
           { name: "Alogic Ultra Mini", price: "50,00 ₼", img: "src/assets/images/ipad-section/alagocig.webp", rating: 5 },
-          { name: "AMD Radeon Pro", price: "480,00 ₼", img: "src/assets/images/ipad-section/amdpro.webp", rating: 5 },
+          { name: "AMD Radeon Pro", price: "480,00 ₼", img: "src/assets/images/ipad-section/amdpro.webp", rating: 4 },
         ].map((product, index) => (
           // Məhsul kartları: Ağ arxa plan və kölgə
           <div key={index} className="bg-white rounded-xl p-3 sm:p-4 shadow-lg hover:shadow-xl transition duration-300 text-center border border-gray-200">
@@ -100,13 +99,16 @@ const IpadSection = () => {
             {/* Ad və Qiymət */}
             <p className="font-semibold text-sm sm:text-base text-gray-800 truncate">{product.name}</p>
             
-            {/* Ulduz Reytinqi */}
-            {/* Şəkildə Acer ProDesigner və Ailink Aluminium ulduzları boşdur */}
+            {/* Ulduz Reytinqi - 3-5 arası reytinq tətbiq edildi */}
             <div className="flex justify-center text-yellow-500 my-1 text-sm">
-                {'★★★★★'.split('').map((star, i) => (
-                    // Reytinq 5 ulduzdursa, hamısı rəngli olsun. Əks halda (0 reytinqdirsə) hamısı solğun olsun.
-                    <span key={i} className={product.rating > 0 ? 'opacity-100' : 'opacity-30'}>★</span>
-                ))}
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span 
+                  key={star} 
+                  className={star <= product.rating ? 'opacity-100' : 'opacity-30'}
+                >
+                  ★
+                </span>
+              ))}
             </div>
             
             {/* Qiymət üçün ACCENT_COLOR_CLASS tətbiq edilir */}
