@@ -10,7 +10,7 @@ const IpadSection = () => {
 
   return (
     // Outer container: Ümumi arxa planı açıq saxlamaq üçün yüngül gradient
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-8 font-lexend-deca">
+    <div className="min-h-screen bg-gradient-to-br bg-gradient-to-r from-pink-100/50 via-purple-100/70 to-blue-100/50 p-4 sm:p-8 font-lexend-deca">
       
       {/* 💻 Main Apple Shopping Event Section */}
       <div 

@@ -1,273 +1,110 @@
-import { Heart, User, Repeat2, ShoppingCart, Search, Menu, Globe, Phone, X } from "lucide-react"
-import { useState } from "react"
+import { Search, Phone, Globe, User, RotateCw, Heart, ShoppingCart } from "lucide-react"
 
-export default function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
+export default function MetaShopHeader() {
   return (
-    <header className="w-full bg-white border-b border-gray-200">
-      {/* Top Info Bar - Hidden on mobile */}
-      <div className="hidden lg:flex bg-gray-50 px-4 lg:px-6 py-2 justify-between items-center text-sm">
-        <div className="flex gap-4 lg:gap-8">
-          <div className="flex items-center gap-2 text-gray-600">
-            <Phone className="w-4 h-4" />
-            <span className="hidden sm:inline">24 Support</span>
-            <span className="text-[#5C4977] font-semibold ml-0 sm:ml-2">+1 212-334-0212</span>
+    <div className="w-full bg-white border-b border-gray-200">
+      {/* Top Info Bar */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center text-sm">
+          <div></div>
+          <div className="flex gap-8">
+            <div className="flex items-center gap-2">
+              <Phone className="w-5 h-5 text-blue-600" />
+              <div>
+                <div className="text-gray-700 font-medium">24 Support</div>
+                <div className="text-blue-600">+1 212-334-0212</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-blue-600" />
+              <div>
+                <div className="text-gray-700 font-medium">Worldwide</div>
+                <div className="text-blue-600">Free Shipping</div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-4 lg:gap-6">
-          <div className="flex items-center gap-2 text-gray-600">
-            <Globe className="w-4 h-4" />
-            <span className="hidden sm:inline">Worldwide</span>
-          </div>
-          <span className="text-[#5C4977] font-semibold">Free Shipping</span>
         </div>
       </div>
 
       {/* Main Header */}
-      <div className="px-4 lg:px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Logo and Mobile Menu Button */}
-          <div className="flex items-center gap-4">
-            {/* Mobile Menu Button */}
-            <button 
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              onClick={() => setIsMobileMenuOpen(true)}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            
-            {/* Logo */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <span className="text-xl sm:text-2xl font-bold text-[#5C4977]">META</span>
-              <span className="text-xl sm:text-2xl font-bold text-[#5C4977]">SHOP</span>
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between gap-6">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <div className="text-2xl font-bold">
+              <span className="text-purple-900">META</span>
+              <span className="text-red-600">SHOP</span>
             </div>
           </div>
 
-          {/* Search Bar - Hidden on mobile, visible on tablet and up */}
-          <div className="hidden md:flex flex-1 max-w-2xl mx-4 lg:mx-8">
-            <div className="flex-1 flex items-center bg-gray-100 rounded-lg px-4 py-2 border border-transparent hover:border-[#5C4977]/30 transition-all duration-300">
-              <Search className="w-5 h-5 text-gray-400" />
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md">
+            <div className="relative">
               <input
                 type="text"
                 placeholder="Search for products..."
-                className="flex-1 ml-3 bg-transparent outline-none text-gray-700 placeholder-gray-500"
+                className="w-full px-4 py-3 pl-10 bg-gray-100 rounded-full text-gray-700 placeholder-gray-500 focus:outline-none"
               />
+              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
             </div>
           </div>
 
-          {/* Right Icons - Desktop Version */}
-          <div className="hidden lg:flex items-center gap-6">
-            <button className="flex flex-col items-center text-gray-600 hover:text-[#5C4977] transition-all duration-300 p-2 rounded-lg hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20">
-              <User className="w-6 h-6" />
-            </button>
-            <button className="flex flex-col items-center text-gray-600 hover:text-[#5C4977] transition-all duration-300 p-2 rounded-lg hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20 relative">
-              <Repeat2 className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-[#5C4977] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-lg shadow-[#5C4977]/30">
+          {/* Right Section - Account & Cart */}
+          <div className="flex items-center gap-6">
+            <User className="w-6 h-6 text-gray-700 cursor-pointer" />
+            <div className="relative">
+              <RotateCw className="w-6 h-6 text-gray-700 cursor-pointer" />
+              <span className="absolute -top-2 -right-2 bg-gray-300 text-gray-700 text-xs w-5 h-5 rounded-full flex items-center justify-center">
                 0
               </span>
-            </button>
-            <button className="flex flex-col items-center text-gray-600 hover:text-[#5C4977] transition-all duration-300 p-2 rounded-lg hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20 relative">
-              <Heart className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-[#5C4977] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-lg shadow-[#5C4977]/30">
+            </div>
+            <div className="relative">
+              <Heart className="w-6 h-6 text-gray-700 cursor-pointer" />
+              <span className="absolute -top-2 -right-2 bg-gray-300 text-gray-700 text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                1
+              </span>
+            </div>
+            <div className="relative">
+              <div className="flex items-center gap-2 cursor-pointer">
+                <ShoppingCart className="w-6 h-6 text-gray-700" />
+                <span className="text-sm text-gray-700 font-semibold">0,00 ₽</span>
+              </div>
+              <span className="absolute -top-2 -right-2 bg-purple-900 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                 0
               </span>
-            </button>
-            <button className="flex flex-col items-center bg-[#5C4977] text-white p-2 rounded-lg relative hover:bg-[#5C4977]/90 transition-all duration-300 shadow-lg shadow-[#5C4977]/30 hover:shadow-xl hover:shadow-[#5C4977]/40">
-              <ShoppingCart className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-white text-[#5C4977] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg">
-                0
-              </span>
-            </button>
-            <span className="text-gray-700 font-semibold">0.00 ₼</span>
-          </div>
-
-          {/* Mobile Right Icons - Only Search & Cart for mobile */}
-          <div className="flex lg:hidden items-center gap-4">
-            {/* Empty for mobile - icons moved to bottom navigation */}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Navigation Menu - Hidden on mobile, visible on desktop */}
-        <div className="hidden lg:flex items-center gap-8 mt-4 max-w-7xl mx-auto">
-       <button className="flex items-center justify-center mx-auto md:mx-0 px-6 sm:px-8 py-2 sm:py-3 bg-[#5C4977] text-white font-semibold rounded-lg shadow-lg hover:bg-[#5C4977]/90 transition duration-300 transform hover:scale-[1.02]">
-            Go Shopping
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 ml-2"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
-              <path fillRule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-          </button>
-          
-          <nav className="flex gap-6 text-gray-700 font-medium">
-            <a 
-              href="#" 
-              className="px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20 border border-transparent hover:border-[#5C4977]/30"
-            >
+      {/* Navigation Menu */}
+      <div className="bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-8">
+            <button className="flex items-center gap-2 py-4 px-4 bg-purple-900 text-white rounded-l-lg hover:bg-purple-800 font-medium">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 5a1 1 0 011-1h12a1 1 0 011 1v2H3V5zm0 5h14v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5z" />
+              </svg>
+              All Categories
+            </button>
+            <a href="#" className="py-4 text-gray-700 hover:text-purple-900 font-medium">
               Promotions
             </a>
-            <a 
-              href="#" 
-              className="px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20 border border-transparent hover:border-[#5C4977]/30"
-            >
+            <a href="#" className="py-4 text-gray-700 hover:text-purple-900 font-medium">
               Stores
             </a>
-            <a 
-              href="#" 
-              className="px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20 border border-transparent hover:border-[#5C4977]/30"
-            >
+            <a href="#" className="py-4 text-gray-700 hover:text-purple-900 font-medium">
               Our Contacts
             </a>
-            <a 
-              href="#" 
-              className="px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20 border border-transparent hover:border-[#5C4977]/30"
-            >
+            <a href="#" className="py-4 text-gray-700 hover:text-purple-900 font-medium">
               Delivery & Return
             </a>
-            <a 
-              href="#" 
-              className="px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-lg hover:shadow-[#5C4977]/20 border border-transparent hover:border-[#5C4977]/30"
-            >
+            <a href="#" className="py-4 text-gray-700 hover:text-purple-900 font-medium">
               Outlet
             </a>
-          </nav>
-        </div>
-      </div>
-
-      {/* Mobile Search Bar - Appears when needed */}
-      <div className="md:hidden px-4 pb-4">
-        <div className="flex items-center bg-gray-100 rounded-lg px-4 py-2 border border-transparent hover:border-[#5C4977]/30 transition-all duration-300">
-          <Search className="w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search for products..."
-            className="flex-1 ml-3 bg-transparent outline-none text-gray-700 placeholder-gray-500 text-sm"
-          />
-        </div>
-      </div>
-      
-      {/* Mobile Navigation Menu (Side Panel) */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <div className="flex items-center gap-1">
-              <span className="text-xl font-bold text-[#5C4977]">META</span>
-              <span className="text-xl font-bold text-[#5C4977]">SHOP</span>
-            </div>
-            <button 
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="p-4 space-y-2">
-            <button className="w-full flex items-center justify-center gap-2 bg-[#5C4977] text-white px-4 py-3 rounded-lg hover:bg-[#5C4977]/90 transition-all duration-300">
-              <Menu className="w-5 h-5" />
-              <span>All Categories</span>
-            </button>
-            
-            <a 
-              href="#" 
-              className="block px-4 py-3 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 border border-transparent hover:border-[#5C4977]/30"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Promotions
-            </a>
-            <a 
-              href="#" 
-              className="block px-4 py-3 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 border border-transparent hover:border-[#5C4977]/30"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Stores
-            </a>
-            <a 
-              href="#" 
-              className="block px-4 py-3 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 border border-transparent hover:border-[#5C4977]/30"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Our Contacts
-            </a>
-            <a 
-              href="#" 
-              className="block px-4 py-3 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 border border-transparent hover:border-[#5C4977]/30"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Delivery & Return
-            </a>
-            <a 
-              href="#" 
-              className="block px-4 py-3 rounded-lg transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 border border-transparent hover:border-[#5C4977]/30"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Outlet
-            </a>
-          </nav>
-
-          {/* Mobile Footer Info */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Phone className="w-4 h-4" />
-                <span>24 Support:</span>
-                <span className="text-[#5C4977] font-semibold">+1 212-334-0212</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Globe className="w-4 h-4" />
-                <span>Worldwide Shipping</span>
-              </div>
-              <div className="text-[#5C4977] font-semibold">
-                Free Shipping Available
-              </div>
-            </div>
           </div>
         </div>
-      )}
-
-      {/* 5 Icon Mobile Bottom Navigation Panel (Fixed to page) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-2xl shadow-gray-400/50">
-        <div className="flex justify-around items-center h-16 w-full px-2">
-          {/* 1. Search */}
-          <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200">
-            <Search className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Search</span>
-          </button>
-
-          {/* 2. Compare (Repeat2) */}
-          <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200 relative">
-            <Repeat2 className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Compare</span>
-            <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-[#5C4977] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
-          </button>
-
-          {/* 3. Wishlist (Heart) */}
-          <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200 relative">
-            <Heart className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Wishlist</span>
-            <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-[#5C4977] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
-          </button>
-
-          {/* 4. Cart (ShoppingCart) - Highlighted in primary color */}
-          <button className="flex flex-col items-center text-[#5C4977] transition-colors duration-200 relative">
-            <ShoppingCart className="w-6 h-6" />
-            <span className="text-xs font-medium mt-1">Cart</span>
-            <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-[#5C4977] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
-          </button>
-          
-          {/* 5. Profile (User) */}
-          <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-colors duration-200">
-            <User className="w-5 h-5" />
-            <span className="text-xs font-medium mt-1">Profile</span>
-          </button>
-        </div>
       </div>
-    </header>
+    </div>
   )
 }
