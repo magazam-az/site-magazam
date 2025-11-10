@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-menubar": "^1.1.16",
+    "@radix-ui/react-navigation-menu": "^1.2.14",
     "@tailwindcss/vite": "^4.1.17",
+    "class-variance-authority": "^0.7.1",
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.10",
     "lucide-react": "^0.553.0",
