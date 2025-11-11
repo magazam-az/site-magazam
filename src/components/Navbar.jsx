@@ -6,7 +6,7 @@ export default function MetaShopHeader() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full">
       {/* Desktop Header */}
       <div className="hidden lg:block">
         {/* Main Header */}

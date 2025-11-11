@@ -5,7 +5,7 @@ import Container from '../ui/Container';
 const Footer = () => {
   return (
     // <Container>
-    <footer className="bg-gray-50 py-10 mx-auto text-gray-700">
+    <footer className=" py-10 mx-auto text-gray-700">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="flex flex-wrap justify-between gap-y-10">

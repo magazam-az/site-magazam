@@ -15,7 +15,7 @@ const IpadSection = () => {
       {/* 💻 Main Apple Shopping Event Section */}
       <div 
         // Şəkildəki kimi gradient fonu tətbiq edilir, kənarları yumşaq (rounded-xl)
-        className={`flex flex-col md:flex-row items-center justify-center ${EVENT_BG_GRADIENT} rounded-xl p-6 sm:p-10 mb-12 max-w-7xl mx-auto`}
+        className={`flex flex-col md:flex-row items-center justify-center rounded-xl p-6 sm:p-10 mb-12 max-w-7xl mx-auto`}
       >
         
         {/* 🖼️ Şəkil bloku: Apple cihazlarının şəklinin arxa planı da əsas gradientin bir hissəsidir */}

@@ -8,7 +8,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 
 const CountdownBox = ({ value, label }) => (
-  <div className="bg-white bg-opacity-80 backdrop-blur-sm rounded-md p-2 w-14 text-center shadow-sm">
+  <div className=" backdrop-blur-sm rounded-md p-2 w-14 text-center shadow-sm">
     <span className="text-2xl font-bold text-gray-900 block">{value}</span>
     <span className="text-xs uppercase text-gray-600">{label}</span>
   </div>
