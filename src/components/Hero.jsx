@@ -40,7 +40,7 @@ export default function ProductBanners() {
   ];
 
   return (
-    <div className="container mx-auto w-full p-4 sm:p-6">
+    <div className=" mx-auto w-full p-4 sm:p-6">
       <div className="flex flex-col lg:flex-row gap-6">
         
         {/* --- 1. Left Column (Apple Banner with Swiper) --- */}
@@ -74,7 +74,7 @@ export default function ProductBanners() {
                         {slide.description}
                       </p>
                       <div className="buton-div flex justify-center items-center">
-                        <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-md transition-colors flex justify-center items-center">
+                        <button className="bg-[#5C4977] hover:bg-[#5C4977]/90 text-white font-semibold py-2 px-6 rounded-md transition-colors flex justify-center items-center">
                           {slide.buttonText}
                         </button>
                       </div>
@@ -84,7 +84,7 @@ export default function ProductBanners() {
               ))}
             </Swiper>
 
-            {/* Custom Pagination Dots - DÜZƏLİŞ EDİLDİ */}
+            {/* Custom Pagination Dots */}
             <div className="paginations flex justify-center items-center absolute bottom-4 left-0 right-0 z-20">
               <div className="custom-pagination flex gap-2 bg-white rounded-full p-1 shadow-md w-auto px-3"></div>
             </div>
@@ -153,7 +153,7 @@ export default function ProductBanners() {
         </div>
       </div>
 
-      {/* Custom CSS for pagination bullets - DÜZƏLİŞ EDİLDİ */}
+      {/* Custom CSS for pagination bullets */}
       <style jsx>{`
         .custom-pagination {
           display: flex !important;
@@ -178,7 +178,7 @@ export default function ProductBanners() {
           margin: 0 3px;
         }
         .custom-bullet-active {
-          background-color: #9333ea;
+          background-color: #5C4977;
           width: 10px;
           border-radius: 6px;
         }

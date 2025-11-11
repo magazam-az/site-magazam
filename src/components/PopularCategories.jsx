@@ -79,6 +79,7 @@ const CategoryCard = ({ name, productCount, imageUrl, imageAlt }) => (
 // Əsas Kateqoriya Bölməsi Komponenti
 export default function PopularCategories() {
   return (
+    // <Container>
     <div className="container mx-auto w-full p-4 sm:p-6 bg-white">
       {/* Başlıq */}
       <h2 className="text-2xl  px-5 sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 tracking-tight">
@@ -108,5 +109,6 @@ export default function PopularCategories() {
         `}</style>
       </div>
     </div>
+    // </Container>
   );
 }
