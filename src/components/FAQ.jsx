@@ -138,21 +138,25 @@ const FAQPage = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-12">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Suallarında axtar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white rounded-2xl border border-gray-200 focus:border-[#5C4977] focus:ring-2 focus:ring-[#5C4977]/20 transition-all duration-300 shadow-sm"
-            />
-          </div>
-          {searchTerm && filteredFaqs.length === 0 && (
-            <p className="text-center text-red-500 mt-3">Axtarış nəticəsi tapılmadı. Zəhmət olmasa başqa sözlə axtarın.</p>
-          )}
-        </div>
+       <div className="max-w-2xl mx-auto mb-12">
+  <div className="relative">
+    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#5c4977] w-5 h-5" />
+    <input
+      type="text"
+      placeholder="Suallarında axtar..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="w-full px-4 py-3 pl-12 bg-white rounded-full text-base text-[#5c4977] placeholder-[#5c4977]/50 focus:outline-none focus:ring-2 focus:ring-[#5c4977] focus:bg-white transition-colors border border-[#5c4977]/30 shadow-sm"
+    />
+  </div>
+
+  {searchTerm && filteredFaqs.length === 0 && (
+    <p className="text-center text-red-500 mt-3">
+      Axtarış nəticəsi tapılmadı. Zəhmət olmasa başqa sözlə axtarın.
+    </p>
+  )}
+</div>
+
 
         {/* Popular Questions (ƏSAS FİKS HİSSƏSİ) */}
         {activeCategory === "all" && searchTerm === "" && (

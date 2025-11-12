@@ -142,7 +142,7 @@ const ProductCard = ({ product }) => (
 // Əsas Kateqoriya Bölməsi Komponenti
 export default function HomeAppliance() {
   return (
-    // <Container>
+    <Container>
       <div className="w-full py-8 sm:py-12 px-4 sm:px-6">
         {/* Başlıq */}
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 tracking-tight px-2">
@@ -172,17 +172,17 @@ export default function HomeAppliance() {
             breakpoints={{
               // Mobile: 2 slides
               320: {
-                slidesPerView: 2,
+                slidesPerView: 1,
                 spaceBetween: 12,
               },
               // Small tablets: 3 slides
               640: {
-                slidesPerView: 3,
+                slidesPerView: 1,
                 spaceBetween: 16,
               },
               // Tablets: 4 slides
               768: {
-                slidesPerView: 4,
+                slidesPerView: 1,
                 spaceBetween: 20,
               },
               // Large tablets: 5 slides
@@ -197,7 +197,7 @@ export default function HomeAppliance() {
               },
               // Large desktop: 5 slides (maintain for product cards)
               1536: {
-                slidesPerView: 5,
+                slidesPerView: 4,
                 spaceBetween: 24,
               },
             }}
@@ -269,6 +269,6 @@ export default function HomeAppliance() {
           }
         `}</style>
       </div>
-    // </Container>
+     </Container>
   );
 }

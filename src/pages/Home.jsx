@@ -8,6 +8,7 @@ import PopularCategories from "../components/PopularCategories";
 import TheBestOffers from "../components/TheBestOffers";
 import Container from "../ui/Container";
 import HomeAppliance from "../components/HomeAppliance";
+import NewGoods from "../components/NewGoods";
 
 const Home = () => {
   return (
@@ -19,6 +20,7 @@ const Home = () => {
         <IpadSection />
         <PopularCategories />
         <HomeAppliance />
+        <NewGoods/>
         <FAQPage />
         <Footer />
       {/* </Container> */}
