@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="bg-white text-gray-800 font-sans">
       
       {/* 📍 Mağaza Ünvanları Bölməsi */}
-      <div className="border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+      <div className="border-b mt-16 border-gray-200 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-7xl mx-auto">
           {/* Broadway Mağazası */}
           <div>

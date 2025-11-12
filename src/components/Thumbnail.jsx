@@ -78,9 +78,9 @@ const ProductCard = ({ product }) => (
   <div 
     className="bg-white rounded-xl hover:shadow-xl transition-all duration-300 flex flex-col p-4 cursor-pointer w-full border-gray-100 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none relative product-card"
     style={{ 
-      minHeight: '420px',
+      minHeight: '530px',
       maxHeight: '420px',
-      minWidth: '240px',
+      minWidth: '300px',
       maxWidth: '240px'
     }}
   >
@@ -245,7 +245,7 @@ export default function ProductShowcase() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
                 {/* Kart 1 */}
-                <div className="bg-gradient-to-br raun rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
+                <div className="bg-gradient-to-br h-[170px] raun rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
                   <div className="relative z-10">
                     <h3 className="text-xl font-bold mb-2">Xiaomi MI 11</h3>
                     <p className="text-blue-100 text-sm">Discount up to 30%</p>
@@ -256,7 +256,7 @@ export default function ProductShowcase() {
                 </div>
 
                 {/* Kart 2 */}
-                <div className="bg-gradient-to-br aypod rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
+                <div className="bg-gradient-to-br h-[170px] aypod rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
                   <div className="relative z-10">
                     <h3 className="text-xl font-bold mb-2">HP Laser Jet</h3>
                     <p className="text-orange-100 text-sm">Personal printer</p>
@@ -267,7 +267,7 @@ export default function ProductShowcase() {
                 </div>
 
                 {/* Kart 3 */}
-                <div className="bg-gradient-to-br jops rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
+                <div className="bg-gradient-to-br h-[170px] jops rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
                   <div className="relative z-10">
                     <h3 className="text-xl font-bold mb-2">White Joy Cons</h3>
                     <p className="text-red-100 text-sm">Long-awaited novelty</p>

@@ -8,7 +8,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 
 const CountdownBox = ({ value, label }) => (
-  <div className=" backdrop-blur-sm rounded-md p-2 w-14 text-center shadow-sm">
+  <div className=" backdrop-blur-sm bg-white rounded-md p-2 w-14 text-center shadow-sm">
     <span className="text-2xl font-bold text-gray-900 block">{value}</span>
     <span className="text-xs uppercase text-gray-600">{label}</span>
   </div>
@@ -101,17 +101,17 @@ export default function ProductBanners() {
             </div>
 
             <div className="relative z-10">
-              <h3 className="text-2xl font-bold text-white mt-7">Aurora Headset</h3>
-              <div className="flex gap-2 mb-4">
-                <CountdownBox value="52" label="Days" />
-                <CountdownBox value="06" label="Hr" />
-                <CountdownBox value="33" label="Min" />
-                <CountdownBox value="08" label="Sc" />
-              </div>
-              <button className="bg-[#53426B] hover:bg-[#53426B] text-white font-semibold py-2 px-4 rounded-md transition-colors text-sm">
-                Buy Now
-              </button>
-            </div>
+  <h3 className="text-2xl font-bold text-white mt-7">Aurora Headset</h3>
+  <div className="flex gap-2 mb-4">
+    <CountdownBox value="52" label="Days" className="bg-white count" />
+    <CountdownBox value="06" label="Hr" className="bg-white" />
+    <CountdownBox value="33" label="Min" className="bg-white" />
+    <CountdownBox value="08" label="Sc" className="bg-white" />
+  </div>
+  <button className="bg-[#53426B] hover:bg-[#53426B] text-white font-semibold py-2 px-4 rounded-md transition-colors text-sm">
+    Buy Now
+  </button>
+</div>
           </div>
           
           {/* Row for the two bottom cards */}
