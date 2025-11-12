@@ -9,20 +9,23 @@ import TheBestOffers from "../components/TheBestOffers";
 import Container from "../ui/Container";
 import HomeAppliance from "../components/HomeAppliance";
 import NewGoods from "../components/NewGoods";
+import ProductShowcase from "../components/Thumbnail.Jsx";
 
 const Home = () => {
   return (
     <div>
       {/* <Container> */}
-        <Navbar />
-        <HomePage />
-        <TheBestOffers />
-        <IpadSection />
-        <PopularCategories />
-        <HomeAppliance />
-        <NewGoods/>
-        <FAQPage />
-        <Footer />
+      <Navbar />
+      <HomePage />
+      <PopularCategories />
+      <TheBestOffers />
+      <NewGoods />
+      <IpadSection />
+      <HomeAppliance />
+      <ProductShowcase />
+      <FAQPage />
+      <Footer />
+
       {/* </Container> */}
     </div>
   );
