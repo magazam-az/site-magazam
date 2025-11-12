@@ -177,12 +177,12 @@ export default function HomeAppliance() {
               },
               // Small tablets: 3 slides
               640: {
-                slidesPerView: 1,
+                slidesPerView: 2,
                 spaceBetween: 16,
               },
               // Tablets: 4 slides
               768: {
-                slidesPerView: 1,
+                slidesPerView: 2,
                 spaceBetween: 20,
               },
               // Large tablets: 5 slides

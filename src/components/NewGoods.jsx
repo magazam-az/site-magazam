@@ -234,11 +234,11 @@ export default function NewGoods() {
               }}
               breakpoints={{
                 320: {
-                  slidesPerView: 1.5,
+                  slidesPerView: 1,
                   spaceBetween: 12,
                 },
                 640: {
-                  slidesPerView: 2,
+                  slidesPerView: 1,
                   spaceBetween: 16,
                 },
                 768: {

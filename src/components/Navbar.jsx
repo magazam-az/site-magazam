@@ -144,7 +144,7 @@ export default function MetaShopHeader() {
             <div className="relative">
   {/* Baş düymə */}
   <div
-    className="flex items-center gap-3 bg-white px-4 py-3 rounded-full border border-[#5C4977]/30 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
+    className="flex items-center gap-3 px-4 py-3 transition-all duration-300 cursor-pointer"
     onMouseEnter={() => setIsCategoriesOpen(true)}
     onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
   >

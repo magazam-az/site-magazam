@@ -117,12 +117,12 @@ export default function PopularCategories() {
               },
               // Small tablets: 3 slides
               640: {
-                slidesPerView: 3,
+                slidesPerView: 2,
                 spaceBetween: 16,
               },
               // Tablets: 4 slides
               768: {
-                slidesPerView: 4,
+                slidesPerView: 3,
                 spaceBetween: 20,
               },
               // Large tablets: 5 slides
