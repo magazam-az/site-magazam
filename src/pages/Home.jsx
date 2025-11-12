@@ -10,6 +10,8 @@ import Container from "../ui/Container";
 import HomeAppliance from "../components/HomeAppliance";
 import NewGoods from "../components/NewGoods";
 import ProductShowcase from "../components/Thumbnail.Jsx";
+import ArticleSection from "../components/BlogCards";
+import ContentCard from "../components/Text";
 
 const Home = () => {
   return (
@@ -24,6 +26,9 @@ const Home = () => {
       <HomeAppliance />
       <ProductShowcase />
       <FAQPage />
+      <ArticleSection/>
+      <ContentCard/>
+     
       <Footer />
 
       {/* </Container> */}

@@ -5,9 +5,8 @@ export default function Footer() {
     <footer className="bg-white text-gray-800 font-sans">
       
       {/* 📍 Mağaza Ünvanları Bölməsi */}
-      <div className="border-b border-gray-200 py-8 sm:py-10 lg:py-12">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+      <div className="border-b mt-16 border-gray-200 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-7xl mx-auto">
           {/* Broadway Mağazası */}
           <div>
             <h3 className="font-bold text-base sm:text-lg mb-2 flex items-center gap-2">
@@ -61,7 +60,6 @@ export default function Footer() {
             <p className="text-gray-600 text-xs sm:text-sm">1433 High St, Alameda, CA 94501</p>
           </div>
         </div>
-        </div>
       </div>
 
       {/* 🖥️ Əsas Footer Məzmunu */}
@@ -73,7 +71,7 @@ export default function Footer() {
           {/* 🌳 WoodMart Bölməsi */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl sm:text-2xl font-bold text-blue-600">{`{◀`}</span>
+              <span className="text-xl sm:text-2xl font-bold text-blue-600">{"{◀"}</span>
               <span className="text-lg sm:text-xl font-bold text-gray-900">WoodMart.</span>
             </div>
             <p className="text-gray-600 text-xs sm:text-sm mb-6">
