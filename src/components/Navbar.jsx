@@ -90,7 +90,7 @@ export default function MetaShopHeader() {
       {/* Desktop Header */}
       <div className="hidden lg:block bg-white">
         {/* Main Header */}
-        <div className="max-w-[1350px] mx-auto py-4">
+        <div className="max-w-[1400px] mx-auto py-4">
           <div className="flex items-center justify-between gap-8">
             {/* Logo */}
             <div className="flex-shrink-0">
@@ -137,7 +137,7 @@ export default function MetaShopHeader() {
 
         {/* Navigation Menu */}
         <div className="border-t border-gray-200 bg-white">
-          <div className="max-w-[1350px] mx-auto">
+          <div className="max-w-[1400px] mx-auto">
             <div className="flex items-center justify-between py-2">
               {/* Left Navigation */}
               <div className="flex items-center gap-6">

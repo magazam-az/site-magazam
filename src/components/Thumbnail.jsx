@@ -192,7 +192,7 @@ export default function ProductShowcase() {
   return (
     <div className="min-h-screen">
       {/* Ana Container */}
-      <div className="max-w-[1350px] mx-auto">
+      <div className="max-w-[1400px] mx-auto">
         
         {/* Üst Bölüm: Hero ve Swiper Yan Yana */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">

@@ -75,24 +75,29 @@
   align-items: center;
   justify-content: center;
 }
+.bg-qulaq{
+  transition: background-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  background-size: cover;
+  background-position: center;
+}
 .bg-qulaq:hover {
-  transform: scale(1.05);
+  background-size: 115%;
 }
 
-.bg-qulaq{
-  transition: .6s ease;
-}
 .bg-ps4{
-  transition: .6s ease;
+  transition: background-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  background-size: cover;
+  background-position: center;
 }
 .bg-ps4:hover{
-  transform: scale(1.05);
+  background-size: 115%;
+}
 
+.bg-cam{
+  transition: background-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  background-size: cover;
+  background-position: center;
 }
 .bg-cam:hover{
-    transform: scale(1.05);
-
-}
-.bg-cam{
-  transition: .6s ease;
+  background-size: 115%;
 }

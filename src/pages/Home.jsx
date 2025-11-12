@@ -1,7 +1,7 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import HomePage from "../components/Hero";
+import MainSlider from "../components/MainSlider";
 import FAQPage from "../components/FAQ";
 import IpadSection from "../components/IpadSection";
 import PopularCategories from "../components/PopularCategories";
@@ -16,7 +16,7 @@ const Home = () => {
     <div>
       {/* <Container> */}
       <Navbar />
-      <HomePage />
+      <MainSlider />
       <PopularCategories />
       <TheBestOffers />
       <NewGoods />
