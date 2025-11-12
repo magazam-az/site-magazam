@@ -8,6 +8,7 @@ import PopularCategories from "../components/PopularCategories";
 import TheBestOffers from "../components/TheBestOffers";
 import Container from "../ui/Container";
 import HomeAppliance from "../components/HomeAppliance";
+import ProductShowcase from "../components/Thumbnail.Jsx";
 
 const Home = () => {
   return (
@@ -21,6 +22,7 @@ const Home = () => {
         <HomeAppliance />
         <FAQPage />
         <Footer />
+        <ProductShowcase/>
       {/* </Container> */}
     </div>
   );
