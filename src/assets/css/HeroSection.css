@@ -101,3 +101,16 @@
 .bg-cam:hover{
   background-size: 115%;
 }
+@media(min-width:300px) and (max-width:700px){
+  .swiper {
+  width: 90%;
+  border-radius: 20px;
+}
+.bg-qulaq,.bg-ps4,.bg-cam {
+  width: 90%;
+  
+ 
+  margin: auto !important;   
+}
+
+}

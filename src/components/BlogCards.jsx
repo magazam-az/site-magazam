@@ -4,7 +4,7 @@ const ArticlesSection = () => {
   const articles = [
     {
       id: 1,
-      image: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400&h=250&fit=crop",
+      image: "/images/best-gaming-laptop-model-entry-header-opt.jpg",
       category: "Gaming, Laptops",
       date: "13 Dec 2022",
       title: "Best Gaming Laptop Models",
@@ -78,7 +78,7 @@ const ArticlesSection = () => {
                     
                     {/* Share and Comment Icons */}
                     <div className="flex items-center gap-3">
-                      <button className="text-white hover:text-gray-200 transition-colors">
+                      <button className="text-white  hover:text-gray-200 transition-colors">
                         <svg
                           className="w-5 h-5"
                           fill="none"
@@ -134,7 +134,7 @@ const ArticlesSection = () => {
                 {/* Continue Reading Link */}
                 <a
                   href="#"
-                  className="text-purple-700 hover:text-purple-800 font-medium text-sm transition-colors inline-flex items-center gap-1"
+                  className="text-[#5C4977] hover:text-purple-800 font-medium text-sm transition-colors inline-flex items-center gap-1"
                 >
                   Continue Reading
                   <svg
