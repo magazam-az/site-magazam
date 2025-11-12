@@ -63,14 +63,15 @@ export default function Footer() {
       </div>
 
       {/* 🖥️ Əsas Footer Məzmunu */}
-      <div className="border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+      <div className="border-b border-gray-200 py-8 sm:py-10 lg:py-12">
         {/* Responsive Grid: Kiçik ekranlarda 1 sütun, orta ekranlarda 2, böyük ekranlarda 5 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10 max-w-7xl mx-auto">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
           
           {/* 🌳 WoodMart Bölməsi */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl sm:text-2xl font-bold text-blue-600">{`{◀`}</span>
+              <span className="text-xl sm:text-2xl font-bold text-blue-600">{"{◀"}</span>
               <span className="text-lg sm:text-xl font-bold text-gray-900">WoodMart.</span>
             </div>
             <p className="text-gray-600 text-xs sm:text-sm mb-6">
@@ -226,11 +227,12 @@ export default function Footer() {
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       {/* ©️ Ən Aşağı Bölmə */}
-      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 bg-gray-50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="py-4 sm:py-5 bg-gray-50">
+        <div className="max-w-[1300px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           
           {/* Müəllif Hüququ */}
           <p className="text-xs text-gray-600 order-2 md:order-1 text-center md:text-left">

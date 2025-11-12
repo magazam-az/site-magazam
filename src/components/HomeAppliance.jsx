@@ -143,7 +143,7 @@ const ProductCard = ({ product }) => (
 export default function HomeAppliance() {
   return (
     <Container>
-      <div className="w-full py-8 sm:py-12 px-4 sm:px-6">
+      <div className="w-full py-8 sm:py-12">
         {/* Başlıq */}
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 tracking-tight px-2">
           Home Appliance
