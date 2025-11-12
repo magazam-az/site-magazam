@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Container from '../ui/Container';
 
 import '../assets/css/HeroSection.css';
 
@@ -82,8 +83,9 @@ export default function ProductBanners() {
   ];
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full my-5">
-      <div className="flex flex-col lg:flex-row gap-6">
+    <Container>
+      <div className="w-full my-5">
+        <div className="flex flex-col lg:flex-row gap-6">
         
         {/* --- 1. Left Column (Apple Banner with Swiper) --- */}
         <div className="lg:w-[680px]">
@@ -270,7 +272,8 @@ export default function ProductBanners() {
           border-radius: 6px;
         }
       `}</style>
-    </div>
+      </div>
+    </Container>
   );
 }
 
