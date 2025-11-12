@@ -122,7 +122,7 @@ const FAQPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br py-8">
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
         
         {/* Header Section */}
         <div className="text-center mb-12">

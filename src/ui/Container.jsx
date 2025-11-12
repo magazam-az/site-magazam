@@ -7,7 +7,7 @@ function cn(...classes) {
 
 const Container = ({ children, className }) => {
   return (
-    <div className={cn("max-w-[1400px] mx-auto", className)}>
+    <div className={cn("max-w-[1400px] mx-auto px-4 sm:px-6", className)}>
       {children}
     </div>
   );

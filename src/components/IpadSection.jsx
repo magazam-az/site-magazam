@@ -15,7 +15,7 @@ const IpadSection = () => {
       {/* 💻 Main Apple Shopping Event Section */}
       <div 
         // Şəkildəki kimi gradient fonu tətbiq edilir, kənarları yumşaq (rounded-xl)
-        className={`flex flex-col md:flex-row items-center justify-center rounded-xl p-6 sm:p-10 mb-12 max-w-[1400px] mx-auto`}
+        className={`flex flex-col md:flex-row items-center justify-center rounded-xl py-6 sm:py-10 mb-12 max-w-[1400px] mx-auto px-4 sm:px-6`}
       >
         
         {/* 🖼️ Şəkil bloku: Apple cihazlarının şəklinin arxa planı da əsas gradientin bir hissəsidir */}
@@ -75,7 +75,7 @@ const IpadSection = () => {
       </div>
 
       {/* 📦 Məhsul Vitrini Bölməsi: Grid sütunları 2 (kiçik), 3 (orta), 5 (böyük) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 max-w-[1400px] mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 max-w-[1400px] mx-auto px-4 sm:px-6">
         
         {/* Məhsul Kartları - 3-5 arası ulduz reytinqi əlavə edildi */}
         {[

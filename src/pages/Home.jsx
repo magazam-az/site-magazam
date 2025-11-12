@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 import MainSlider from "../components/MainSlider";
 import FAQPage from "../components/FAQ";
 import IpadSection from "../components/IpadSection";
-import PopularCategories from "../components/PopularCategories";
+import Categories from "../components/Categories";
 import Products from "../components/Products";
 import Container from "../ui/Container";
 import ProductShowcase from "../components/Thumbnail.Jsx";
@@ -17,7 +17,7 @@ const Home = () => {
       {/* <Container> */}
       <Navbar />
       <MainSlider />
-      <PopularCategories />
+      <Categories />
       <Products 
         title="The Best Offers"
         products={[

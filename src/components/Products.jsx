@@ -11,10 +11,10 @@ import 'swiper/css/navigation';
 // Məhsul kartı komponenti
 const ProductCard = ({ product }) => (
   <div 
-    className="bg-white rounded-xl transition-all duration-300 flex flex-col p-4 cursor-pointer w-full border border-gray-100 focus:outline-none relative product-card group"
+    className="bg-white rounded-xl transition-all duration-300 flex flex-col p-3 sm:p-4 cursor-pointer w-full border border-gray-100 focus:outline-none relative product-card group"
     style={{ 
-      minWidth: '280px',
-      maxWidth: '280px'
+      minWidth: '100%',
+      maxWidth: '100%'
     }}
   >
     {/* HOT badge */}
@@ -25,45 +25,45 @@ const ProductCard = ({ product }) => (
     )}
     
     {/* Məhsul Şəkili sahəsi - sabit ölçü */}
-    <div className="w-full flex justify-center items-center mb-4 overflow-hidden" style={{ height: '260px' }}>
+    <div className="w-full flex justify-center items-center mb-3 sm:mb-4 overflow-hidden" style={{ height: '200px' }}>
       <img 
         src={product.imageUrl} 
         alt={product.imageAlt} 
-        className="object-contain w-full h-full max-w-[234px] max-h-[234px] transition-transform duration-300 ease-out group-hover:scale-110"
+        className="object-contain w-full h-full max-w-[180px] max-h-[180px] sm:max-w-[234px] sm:max-h-[234px] transition-transform duration-300 ease-out group-hover:scale-110"
         onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/234x234/6B7280/ffffff?text=Product+Image"; }}
       />
     </div>
 
     {/* Məhsul Məlumatı - sabit ölçü */}
     <div className="flex flex-col flex-grow text-left">
-      <div className="mb-3 flex-grow">
-        <h3 className="text-base font-semibold text-gray-800 line-clamp-2 mb-2">{product.name}</h3>
-        <p className="text-base text-gray-400 line-clamp-1 mt-2">{product.brand}</p>
-        <p className="text-base text-gray-400 line-clamp-1 mt-1">{product.model}</p>
-        <div className="mt-2">
+      <div className="mb-2 sm:mb-3 flex-grow">
+        <h3 className="text-sm sm:text-base font-semibold text-gray-800 line-clamp-2 mb-1 sm:mb-2">{product.name}</h3>
+        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-1 sm:mt-2">{product.brand}</p>
+        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-0.5 sm:mt-1">{product.model}</p>
+        <div className="mt-1 sm:mt-2">
           <Rating rating={product.rating || 5} />
         </div>
       </div>
       
       <div className="mt-auto">
         {/* Stok statusu */}
-        <div className="flex items-center mb-2">
+        <div className="flex items-center mb-1 sm:mb-2">
           {product.inStock ? (
-            <span className="text-green-600 text-sm flex items-center">
+            <span className="text-green-600 text-xs sm:text-sm flex items-center">
               <span className="mr-1">✔</span> In stock
             </span>
           ) : (
-            <span className="text-red-600 text-sm">Out of stock</span>
+            <span className="text-red-600 text-xs sm:text-sm">Out of stock</span>
           )}
         </div>
         
         {/* Qiymət */}
-        <div className="text-lg font-bold text-[#5C4977] mb-3">
+        <div className="text-base sm:text-lg font-bold text-[#5C4977] mb-2 sm:mb-3">
           {product.price}
         </div>
         
         {/* Add to Cart button */}
-        <button className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200 mb-2 cursor-pointer">
+        <button className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 mb-2 cursor-pointer">
           Add To Cart
         </button>
       </div>
@@ -81,8 +81,8 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
       <div className={`w-full ${showBanner ? 'flex flex-col lg:flex-row gap-6' : ''}`}>
         {/* Sol Banner Alanı */}
         {showBanner && bannerData && (
-          <div className="w-full lg:w-[32%] flex-shrink-0 hidden lg:block">
-            <div className="promo-banner-wrapper relative overflow-hidden rounded-2xl h-full" style={{ minHeight: '500px' }}>
+          <div className="w-full lg:w-[32%] flex-shrink-0">
+            <div className="promo-banner-wrapper relative overflow-hidden rounded-2xl h-full" style={{ minHeight: showBanner ? '400px' : '500px' }}>
               <div className="promo-banner banner-default banner-hover-zoom color-scheme-light with-btn relative h-full">
                 
                 {/* Əsas şəkil wrapper */}
@@ -115,7 +115,7 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
                     
                     {/* Title */}
                     {bannerData.title && (
-                      <h4 className="banner-title text-3xl font-bold text-white mb-6">
+                      <h4 className="banner-title text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">
                         {bannerData.title}
                       </h4>
                     )}
@@ -147,12 +147,12 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
         {/* Sağ Ürün Alanı */}
         <div className={showBanner ? "w-full lg:w-[68%]" : "w-full"}>
         {/* Başlıq ve More Products Button */}
-        <div className="flex items-center justify-between sm:mb-5 mb-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between sm:mb-5 mb-4 gap-3 sm:gap-0">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
             {title}
           </h2>
           <button 
-            className="flex items-center gap-2 px-6 py-3 rounded-3xl transition-all duration-200 cursor-pointer hover:shadow-md"
+            className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-3xl transition-all duration-200 cursor-pointer hover:shadow-md text-xs sm:text-sm"
             style={{
               backgroundColor: '#E1EBFF',
               borderColor: '#E1EBFF',
@@ -168,8 +168,8 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
               e.currentTarget.style.borderColor = '#E1EBFF';
             }}
           >
-            <span className="text-sm font-medium">More Products</span>
-            <ArrowRight className="w-5 h-5" style={{ color: '#1C61E7' }} />
+            <span className="text-xs sm:text-sm font-medium">More Products</span>
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: '#1C61E7' }} />
           </button>
         </div>
 
@@ -186,11 +186,11 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
               }
             }}
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-700" />
           </button>
           
           <button 
-            className="best-offers-next absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 sm:p-3 shadow-lg opacity-0 transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
+            className="best-offers-next absolute right-1 sm:right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-1.5 sm:p-2 md:p-3 shadow-lg opacity-0 transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -199,7 +199,7 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
               }
             }}
           >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-700" />
           </button>
 
           {/* Swiper */}
@@ -215,22 +215,22 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
               // Mobile: 1 slide
               320: {
                 slidesPerView: 1,
-                spaceBetween: 16,
+                spaceBetween: 12,
               },
-              // Small tablets: 2 slides
+              // Small tablets: 2 slides (banner yoksa) veya 1 slide (banner varsa)
               640: {
-                slidesPerView: 2,
-                spaceBetween: 24,
+                slidesPerView: showBanner ? 1 : 2,
+                spaceBetween: 16,
               },
               // Tablets: 2 slides
               768: {
-                slidesPerView: 2,
-                spaceBetween: 28,
+                slidesPerView: showBanner ? 2 : 2,
+                spaceBetween: 20,
               },
               // Large tablets: 4 slides (banner yoksa) veya 3 slides (banner varsa)
               1024: {
                 slidesPerView: showBanner ? 3 : 4,
-                spaceBetween: 32,
+                spaceBetween: 24,
               },
               // Desktop: 4 slides (banner yoksa) veya 3 slides (banner varsa)
               1280: {
@@ -289,8 +289,15 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
           /* Product card specific styling */
           .best-offers-swiper .swiper-slide > div {
             width: 100%;
-            max-width: 280px;
+            max-width: 100%;
             flex-shrink: 0;
+          }
+          
+          /* Tablet ve üzeri için kart genişliği */
+          @media (min-width: 640px) {
+            .best-offers-swiper .swiper-slide > div {
+              max-width: 280px;
+            }
           }
           
           /* Desktop'ta slide genişliğini container'a göre ayarla */

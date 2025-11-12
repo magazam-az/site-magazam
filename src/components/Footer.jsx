@@ -65,7 +65,7 @@ export default function Footer() {
       {/* 🖥️ Əsas Footer Məzmunu */}
       <div className="border-b border-gray-200 py-8 sm:py-10 lg:py-12">
         {/* Responsive Grid: Kiçik ekranlarda 1 sütun, orta ekranlarda 2, böyük ekranlarda 5 */}
-        <div className="max-w-[1400px] mx-auto">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
           
           {/* 🌳 WoodMart Bölməsi */}
