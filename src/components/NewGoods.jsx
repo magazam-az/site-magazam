@@ -146,7 +146,7 @@ export default function NewGoods() {
   const bannerImageUrl = "https://metashop.az/wp-content/uploads/2023/01/nothing-phone-1.jpg";
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-4 py-6">
+    <div className="max-w-[1350px] mx-auto w-full py-6">
       <div className="flex flex-col lg:flex-row gap-6">
         
         {/* Sol Banner Alanı */}

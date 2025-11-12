@@ -40,7 +40,7 @@ export default function ProductBanners() {
   ];
 
   return (
-    <div className=" mx-auto w-full p-4 sm:p-6">
+    <div className="max-w-[1350px] mx-auto w-full">
       <div className="flex flex-col lg:flex-row gap-6">
         
         {/* --- 1. Left Column (Apple Banner with Swiper) --- */}

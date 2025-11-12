@@ -120,9 +120,9 @@ const FAQPage = () => {
 
   const popularFaqs = faqData.filter(faq => faq.popular);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+  return (
+    <div className="min-h-screen bg-gradient-to-br py-8">
+      <div className="max-w-[1350px] mx-auto">
         
         {/* Header Section */}
         <div className="text-center mb-12">
