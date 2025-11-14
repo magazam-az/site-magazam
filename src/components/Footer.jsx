@@ -231,35 +231,41 @@ export default function Footer() {
       </div>
 
       {/* ©️ Ən Aşağı Bölmə */}
-      <div className="py-4 sm:py-5 bg-gray-50">
-        <div className="max-w-[1300px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          
-          {/* Müəllif Hüququ */}
-          <p className="text-xs text-gray-600 order-2 md:order-1 text-center md:text-left">
-            Müəllif hüquqları © 2025. <span className="font-semibold text-gray-900">WoodMart</span> teması əsasında.{" "}
-            <span className="font-semibold text-gray-900">WooCommerce Temaları</span>.
-          </p>
+<div className="py-4 sm:py-5 bg-gray-50">
+  <div className="max-w-[1300px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 order-1 md:order-2">
-            {/* Dil Seçicisi */}
-            <button className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition flex items-center gap-1">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                <path
-                  strokeWidth="2"
-                  d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-                />
-              </svg>
-              <span className="whitespace-nowrap">Azərbaycan dili</span>
-            </button>
+    {/* Sol tərəf - Müəllif Hüququ */}
+    <p className="text-xs text-gray-600 text-center md:text-left md:flex-1">
+      Müəllif hüquqları © 2025.{" "}
+      <span className="font-semibold text-gray-900">WoodMart</span> teması əsasında.{" "}
+      <span className="font-semibold text-gray-900">WooCommerce Temaları</span>.
+    </p>
 
-            {/* Ödəniş İkonları */}
-            <div>
-              <img src="https://metashop.az/wp-content/themes/woodmart/images/payments.png" alt="Ödəniş üsulları" className="h-4 sm:h-5" />
-            </div>
-          </div>
-        </div>
-      </div>
+    {/* Orta - Dil seçimi */}
+    <div className="flex justify-center md:justify-center flex-1">
+      <button className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition flex items-center gap-1">
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" strokeWidth="2" />
+          <path
+            strokeWidth="2"
+            d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+          />
+        </svg>
+        <span className="whitespace-nowrap">Azərbaycan dili</span>
+      </button>
+    </div>
+
+    {/* Sağ - Ödəniş ikonları */}
+    <div className="flex justify-center md:justify-end flex-1">
+      <img
+        src="https://metashop.az/wp-content/themes/woodmart/images/payments.png"
+        alt="Ödəniş üsulları"
+        className="h-4 sm:h-5"
+      />
+    </div>
+  </div>
+</div>
+
     </footer>
   )
 }
