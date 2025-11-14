@@ -153,11 +153,11 @@ const HomeAppliance = () => {
       {/* Swiper Container with Navigation */}
       <div className="relative group h-full">
         {/* Navigation Buttons - Kartın düz sağ ve solunda */}
-        <button className="best-offers-prev absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:shadow-xl">
+        <button className="home-appliance-prev absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:shadow-xl">
           <ChevronLeft className="w-4 h-4 text-gray-700" />
         </button>
         
-        <button className="best-offers-next absolute -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:shadow-xl">
+        <button className="home-appliance-next absolute -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:shadow-xl">
           <ChevronRight className="w-4 h-4 text-gray-700" />
         </button>
 
@@ -167,10 +167,10 @@ const HomeAppliance = () => {
           spaceBetween={12}
           slidesPerView={1}
           navigation={{
-            prevEl: '.best-offers-prev',
-            nextEl: '.best-offers-next',
+            prevEl: '.home-appliance-prev',
+            nextEl: '.home-appliance-next',
           }}
-          className="best-offers-swiper h-full"
+          className="home-appliance-swiper h-full"
           style={{
             padding: '8px 0'
           }}
@@ -190,10 +190,9 @@ const HomeAppliance = () => {
 
 export default function ProductShowcase() {
   return (
-    <div className="min-h-screen">
-      {/* Ana Container */}
-      <div className="max-w-[1400px] mx-auto">
-        
+    <div className="w-full py-4 sm:py-6">
+      <Container>
+      <div className="w-full">
         {/* Üst Bölüm: Hero ve Swiper Yan Yana */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">
           {/* Microsoft Accessories - 3/4 genişlik */}
@@ -288,6 +287,7 @@ export default function ProductShowcase() {
           </div>
         </div>
       </div>
+      </Container>
     </div>
   );
 }
