@@ -103,11 +103,11 @@
 }
 @media(min-width:300px) and (max-width:700px){
   .swiper {
-  width: 90%;
+  width: 100%;
   border-radius: 20px;
 }
 .bg-qulaq,.bg-ps4,.bg-cam {
-  width: 90%;
+  width: 100%;
   
  
   margin: auto !important;   

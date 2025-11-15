@@ -1,11 +1,5 @@
 import React from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Container from '../ui/Container';
-
-import 'swiper/css';
-import 'swiper/css/navigation';
 
 // Kategoriyalar üçün məlumatlar
 const categories = [
@@ -56,15 +50,15 @@ const categories = [
 // Tək bir kategoriya elementinin komponenti
 const CategoryCard = ({ name, productCount, imageUrl, imageAlt }) => (
   <div 
-    className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col items-center justify-between p-4 cursor-pointer w-full border border-gray-100 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none"
-    style={{ minHeight: '260px' }}
+    className="bg-transparent rounded-xl transition-all duration-300 flex flex-col items-center justify-between p-0 cursor-pointer w-full max-w-[200px] mx-auto group focus:outline-none"
+    style={{ minHeight: '200px' }}
   >
     {/* Məhsul Şəkili sahəsi */}
-    <div className="w-full flex justify-center items-center h-40">
+    <div className="w-full aspect-square flex justify-center items-center bg-white">
       <img 
         src={imageUrl} 
         alt={imageAlt} 
-        className="object-contain w-36 h-36"
+        className="object-contain w-36 h-36 transition-transform duration-300 group-hover:scale-105"
         onError={(e) => { 
           e.target.onerror = null; 
           e.target.src = "https://placehold.co/150x150/6B7280/ffffff?text=Image+Error"; 
@@ -73,8 +67,8 @@ const CategoryCard = ({ name, productCount, imageUrl, imageAlt }) => (
     </div>
 
     {/* Məhsul Məlumatı */}
-    <div className="text-center mt-3 w-full">
-      <h3 className="text-base font-semibold text-gray-800 line-clamp-2">{name}</h3>
+    <div className="text-center mt-2 sm:mt-4 w-full">
+      <h3 className="font-bold text-gray-800 line-clamp-2" style={{ fontSize: '19px' }}>{name}</h3>
       <p className={`text-sm mt-1 ${productCount > 0 ? 'text-gray-600' : 'text-gray-400'}`}>
         {productCount} product{productCount !== 1 ? 's' : ''}
       </p>
@@ -88,117 +82,27 @@ export default function Categories() {
     <Container>
       <div className="w-full py-8 sm:py-12">
         {/* Başlıq */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-5 tracking-tight text-center sm:text-left">
           Popular Categories
         </h2>
 
-        {/* Swiper Container with Navigation */}
-        <div className="relative group">
-          {/* Navigation Buttons - Hidden until hover */}
-          <button className="category-prev absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 sm:p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:shadow-xl">
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-          </button>
-
-          <button className="category-next absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 sm:p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:shadow-xl">
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-          </button>
-
-          {/* Swiper */}
-          <Swiper
-            modules={[Navigation]}
-            spaceBetween={16}
-            slidesPerView={2}
-            navigation={{
-              prevEl: '.category-prev',
-              nextEl: '.category-next',
-            }}
-            breakpoints={{
-              // Mobile: 2 slides
-              320: {
-                slidesPerView: 2,
-                spaceBetween: 12,
-              },
-              // Small tablets: 3 slides
-              640: {
-                slidesPerView: 3,
-                spaceBetween: 16,
-              },
-              // Tablets: 4 slides
-              768: {
-                slidesPerView: 4,
-                spaceBetween: 20,
-              },
-              // Large tablets: 5 slides
-              1024: {
-                slidesPerView: 5,
-                spaceBetween: 24,
-              },
-              // Desktop: 6 slides
-              1280: {
-                slidesPerView: 6,
-                spaceBetween: 24,
-              },
-              // Large desktop: 7 slides
-              1536: {
-                slidesPerView: 5,
-                spaceBetween: 24,
-              },
-            }}
-            className="popular-categories-swiper"
-          >
-            {categories.map((category, index) => (
-              <SwiperSlide key={index}>
-                <CategoryCard 
-                  name={category.name} 
-                  productCount={category.productCount}
-                  imageUrl={category.imageUrl}
-                  imageAlt={category.imageAlt}
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        {/* Categories Grid */}
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+          {categories.map((category, index) => (
+            <div 
+              key={index} 
+              className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-15px)] lg:w-[calc(20%-24px)] xl:w-[calc(16.666%-20px)]"
+              style={{ minWidth: '140px', maxWidth: '200px' }}
+            >
+              <CategoryCard 
+                name={category.name} 
+                productCount={category.productCount}
+                imageUrl={category.imageUrl}
+                imageAlt={category.imageAlt}
+              />
+            </div>
+          ))}
         </div>
-
-        {/* Custom Styles */}
-        <style jsx>{`
-          .popular-categories-swiper {
-            padding: 8px 4px;
-            margin: 0 -4px;
-          }
-          
-          @media (min-width: 640px) {
-            .popular-categories-swiper {
-              padding: 12px 8px;
-              margin: 0 -8px;
-            }
-          }
-          
-          @media (min-width: 1024px) {
-            .popular-categories-swiper {
-              padding: 16px 12px;
-              margin: 0 -12px;
-            }
-          }
-
-          /* Swiper slide styling */
-          .popular-categories-swiper .swiper-slide {
-            height: auto;
-          }
-
-          /* Hide navigation buttons on touch devices when not hovering */
-          @media (hover: none) {
-            .category-prev,
-            .category-next {
-              opacity: 0.7 !important;
-            }
-          }
-
-          /* Ensure smooth transitions */
-          .category-prev,
-          .category-next {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-        `}</style>
       </div>
     </Container>
   );
