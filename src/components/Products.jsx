@@ -293,12 +293,7 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
             flex-shrink: 0;
           }
           
-          /* Tablet ve üzeri için kart genişliği */
-          @media (min-width: 640px) {
-            .best-offers-swiper .swiper-slide > div {
-              max-width: 280px;
-            }
-          }
+          
           
           /* Desktop'ta slide genişliğini container'a göre ayarla */
           @media (min-width: 1024px) {

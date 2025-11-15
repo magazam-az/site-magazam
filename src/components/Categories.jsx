@@ -87,7 +87,7 @@ export default function Categories() {
         </h2>
 
         {/* Categories Grid */}
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+        <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 md:gap-5 lg:gap-6">
           {categories.map((category, index) => (
             <div 
               key={index} 
