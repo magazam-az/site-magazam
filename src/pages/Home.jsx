@@ -7,7 +7,7 @@ import ShoppingEvent from "../components/ShoppingEvent";
 import Categories from "../components/Categories";
 import Products from "../components/Products";
 import Container from "../ui/Container";
-import ProductShowcase from "../components/Thumbnail.Jsx";
+import Accessory from "../components/Accessory";
 import ArticleSection from "../components/BlogCards";
 import ContentCard from "../components/Text";
 
@@ -290,7 +290,7 @@ const Home = () => {
           }
         ]}
       />
-      <ProductShowcase />
+      <Accessory />
       {/* <FAQPage /> */}
       <ArticleSection/>
       <ContentCard/>
