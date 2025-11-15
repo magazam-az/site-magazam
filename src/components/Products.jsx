@@ -74,6 +74,56 @@ const ProductCard = ({ product }) => (
 // Əsas Products Komponenti
 const Products = ({ title = "Products", products = [], showBanner = false, bannerData = null }) => {
   const [swiperInstance, setSwiperInstance] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const scrollContainerRef = React.useRef(null);
+
+  // Mobil/tablet kontrolü
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Drag handlers for horizontal scroll
+  const handleMouseDown = (e) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    scrollContainerRef.current.style.cursor = 'grabbing';
+    scrollContainerRef.current.style.userSelect = 'none';
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.style.cursor = 'grab';
+      scrollContainerRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.style.cursor = 'grab';
+      scrollContainerRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed multiplier
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   return (
     <div className="w-full py-4 sm:py-6">
@@ -173,88 +223,128 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
           </button>
         </div>
 
-        {/* Swiper Container with Navigation */}
-        <div className="relative slider-container w-full overflow-hidden">
-          {/* Navigation Buttons - Hidden until hover */}
-          <button 
-            className="best-offers-prev absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 sm:p-3 shadow-lg opacity-0 transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (swiperInstance) {
-                swiperInstance.slidePrev();
-              }
-            }}
+        {/* Mobil/Tablet: Horizontal Scroll, Desktop: Swiper */}
+        {isMobile ? (
+          /* Mobil ve Tablet - Horizontal Scroll */
+          <div 
+            ref={scrollContainerRef}
+            className="overflow-x-auto -mx-4 px-4 products-scroll" 
+            style={{ WebkitOverflowScrolling: 'touch', paddingBottom: '12px', cursor: 'grab' }}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
           >
-            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-700" />
-          </button>
-          
-          <button 
-            className="best-offers-next absolute right-1 sm:right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-1.5 sm:p-2 md:p-3 shadow-lg opacity-0 transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (swiperInstance) {
-                swiperInstance.slideNext();
-              }
-            }}
-          >
-            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-700" />
-          </button>
+            <div className="flex gap-3 sm:gap-4 md:gap-5" style={{ width: 'max-content' }}>
+              {products.map((product, index) => (
+                <div 
+                  key={`${product.sku || product.id || index}-${index}`}
+                  className="flex-shrink-0"
+                  style={{ width: '280px', minWidth: '280px', pointerEvents: isDragging ? 'none' : 'auto' }}
+                >
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Desktop - Swiper */
+          <div className="relative slider-container w-full overflow-hidden">
+            {/* Navigation Buttons - Hidden until hover */}
+            <button 
+              className="best-offers-prev absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 sm:p-3 shadow-lg opacity-0 transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (swiperInstance) {
+                  swiperInstance.slidePrev();
+                }
+              }}
+            >
+              <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-700" />
+            </button>
+            
+            <button 
+              className="best-offers-next absolute right-1 sm:right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-1.5 sm:p-2 md:p-3 shadow-lg opacity-0 transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (swiperInstance) {
+                  swiperInstance.slideNext();
+                }
+              }}
+            >
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-700" />
+            </button>
 
-          {/* Swiper */}
-          <Swiper
-            modules={[Navigation]}
-            spaceBetween={24}
-            slidesPerView={2}
-            watchOverflow={true}
-            resistance={false}
-            resistanceRatio={0}
-            onSwiper={setSwiperInstance}
-            breakpoints={{
-              // Mobile: 1 slide
-              320: {
-                slidesPerView: 1,
-                spaceBetween: 12,
-              },
-              // Small tablets: 2 slides (banner yoksa) veya 1 slide (banner varsa)
-              640: {
-                slidesPerView: showBanner ? 1 : 2,
-                spaceBetween: 16,
-              },
-              // Tablets: 2 slides
-              768: {
-                slidesPerView: showBanner ? 2 : 2,
-                spaceBetween: 20,
-              },
-              // Large tablets: 4 slides (banner yoksa) veya 3 slides (banner varsa)
-              1024: {
-                slidesPerView: showBanner ? 3 : 4,
-                spaceBetween: 24,
-              },
-              // Desktop: 4 slides (banner yoksa) veya 3 slides (banner varsa)
-              1280: {
-                slidesPerView: showBanner ? 3 : 4,
-                spaceBetween: 32,
-              },
-              // Large desktop: 4 slides (banner yoksa) veya 3 slides (banner varsa)
-              1536: {
-                slidesPerView: showBanner ? 3 : 4,
-                spaceBetween: 20,
-              },
-            }}
-            className={`best-offers-swiper w-full ${showBanner ? 'with-banner' : ''}`}
-          >
-            {products.map((product, index) => (
-              <SwiperSlide key={`${product.sku || product.id || index}-${index}`}>
-                <ProductCard product={product} />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
+            {/* Swiper */}
+            <Swiper
+              modules={[Navigation]}
+              spaceBetween={24}
+              slidesPerView={showBanner ? 3 : 4}
+              watchOverflow={true}
+              resistance={false}
+              resistanceRatio={0}
+              onSwiper={setSwiperInstance}
+              breakpoints={{
+                // Large tablets: 4 slides (banner yoksa) veya 3 slides (banner varsa)
+                1024: {
+                  slidesPerView: showBanner ? 3 : 4,
+                  spaceBetween: 24,
+                },
+                // Desktop: 4 slides (banner yoksa) veya 3 slides (banner varsa)
+                1280: {
+                  slidesPerView: showBanner ? 3 : 4,
+                  spaceBetween: 32,
+                },
+                // Large desktop: 4 slides (banner yoksa) veya 3 slides (banner varsa)
+                1536: {
+                  slidesPerView: showBanner ? 3 : 4,
+                  spaceBetween: 20,
+                },
+              }}
+              className={`best-offers-swiper w-full ${showBanner ? 'with-banner' : ''}`}
+            >
+              {products.map((product, index) => (
+                <SwiperSlide key={`${product.sku || product.id || index}-${index}`}>
+                  <ProductCard product={product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        )}
 
         {/* Custom Styles */}
         <style jsx="true">{`
+          /* Horizontal scrollbar styling */
+          .products-scroll {
+            margin-top: 12px;
+            padding-top: 12px;
+          }
+          
+          .products-scroll::-webkit-scrollbar {
+            height: 10px;
+          }
+          
+          .products-scroll::-webkit-scrollbar-track {
+            background: #ffffff;
+            border-radius: 10px;
+          }
+          
+          .products-scroll::-webkit-scrollbar-thumb {
+            background: #5C4977;
+            border-radius: 10px;
+          }
+          
+          .products-scroll::-webkit-scrollbar-thumb:hover {
+            background: #4a3a62;
+          }
+          
+          .products-scroll {
+            scrollbar-width: auto;
+            scrollbar-color: #5C4977 #ffffff;
+          }
+          
           .slider-container:hover .best-offers-prev,
           .slider-container:hover .best-offers-next {
             opacity: 1 !important;
@@ -292,8 +382,6 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
             max-width: 100%;
             flex-shrink: 0;
           }
-          
-          
           
           /* Desktop'ta slide genişliğini container'a göre ayarla */
           @media (min-width: 1024px) {
