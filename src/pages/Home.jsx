@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import MainSlider from "../components/MainSlider";
 import FAQPage from "../components/FAQ";
-import IpadSection from "../components/IpadSection";
+import ShoppingEvent from "../components/ShoppingEvent";
 import Categories from "../components/Categories";
 import Products from "../components/Products";
 import Container from "../ui/Container";
@@ -219,7 +219,7 @@ const Home = () => {
           }
         ]}
       />
-      <IpadSection />
+      <ShoppingEvent />
       <Products 
         title="Home Appliance"
         products={[

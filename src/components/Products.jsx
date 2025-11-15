@@ -63,7 +63,7 @@ const ProductCard = ({ product }) => (
         </div>
         
         {/* Add to Cart button */}
-        <button className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 mb-2 cursor-pointer">
+        <button className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 cursor-pointer">
           Add To Cart
         </button>
       </div>
