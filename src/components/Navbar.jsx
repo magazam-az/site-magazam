@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown } from "lucide-react"
+import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package } from "lucide-react"
 
 export default function MetaShopHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -234,7 +234,7 @@ export default function MetaShopHeader() {
                 </button>
 
                 <button className="relative flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer">
-                  <Heart className="w-6 h-6" />
+                  <Heart className="w-6 h-6 -ml-2" />
                   <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)' }}>1</span>
                 </button>
 
@@ -271,31 +271,34 @@ export default function MetaShopHeader() {
             <div className="flex items-center justify-between">
               {/* Logo */}
               <div className="flex-shrink-0">
-                <img 
-                  src="/images/logo.svg" 
-                  alt="META SHOP Logo" 
-                  className="h-10"
-                />
+                <a href="/">
+                  <img 
+                    src="/images/logo.svg" 
+                    alt="META SHOP Logo" 
+                    className="h-10 cursor-pointer"
+                  />
+                </a>
               </div>
 
               {/* Right Actions */}
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  className="p-2 text-gray-600 hover:text-purple-900"
+                  className="p-2 text-gray-600 hover:text-purple-900 cursor-pointer"
                 >
-                  <Search className="w-5 h-5" />
+                  <Search className="w-5 h-5 cursor-pointer" />
                 </button>
 
-                <button className="p-2 text-gray-600 hover:text-purple-900">
-                  <ShoppingCart className="w-5 h-5" />
+                <button className="relative p-2 text-gray-600 hover:text-purple-900 cursor-pointer">
+                  <ShoppingCart className="w-5 h-5 cursor-pointer" />
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)' }}>1</span>
                 </button>
 
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 text-gray-600 hover:text-purple-900"
+                  className="p-2 text-gray-600 hover:text-purple-900 cursor-pointer"
                 >
-                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  <Menu className="w-5 h-5 cursor-pointer" />
                 </button>
               </div>
             </div>
@@ -317,23 +320,26 @@ export default function MetaShopHeader() {
         </div>
 
         {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 bg-white">
-            <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-              <img 
-                src="/images/logo.svg" 
-                alt="META SHOP Logo" 
-                className="h-8"
-              />
-              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-600">
-                <X className="w-6 h-6" />
+        <div className={`fixed inset-0 z-50 bg-white transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'transform translate-x-0' : 'transform -translate-x-full pointer-events-none'
+        }`}>
+          <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+              <a href="/">
+                <img 
+                  src="/images/logo.svg" 
+                  alt="META SHOP Logo" 
+                  className="h-8 cursor-pointer"
+                />
+              </a>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 cursor-pointer">
+                <X className="w-6 h-6 cursor-pointer text-gray-600 hover:text-[#5C4977] transition-all duration-300" />
               </button>
             </div>
 
             <div className="h-screen overflow-y-auto pb-20">
               {/* User Section */}
               <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                <button className="flex items-center gap-3 w-full text-left">
+                <button className="flex items-center gap-3 w-full text-left cursor-pointer">
                   <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-purple-900" />
                   </div>
@@ -347,12 +353,12 @@ export default function MetaShopHeader() {
               {/* Categories */}
               <div className="border-b border-gray-200">
                 <button
-                  className="flex items-center justify-between w-full px-4 py-4 text-left font-medium text-gray-900 hover:bg-gray-50"
+                  className="flex items-center justify-between w-full px-4 py-4 text-left font-medium text-gray-900 hover:bg-gray-50 cursor-pointer"
                   onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
                 >
                   <span>Bütün Kateqoriyalar</span>
                   <ChevronDown
-                    className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isCategoriesOpen ? "rotate-180" : ""}`}
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-300 cursor-pointer ${isCategoriesOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
@@ -362,11 +368,11 @@ export default function MetaShopHeader() {
                       <div key={index}>
                         <button
                           onClick={() => setExpandedCategory(expandedCategory === index ? null : index)}
-                          className="flex items-center justify-between w-full px-6 py-3 text-left text-sm font-medium text-gray-900 hover:bg-white border-b border-gray-200"
+                          className="flex items-center justify-between w-full px-6 py-3 text-left text-sm font-medium text-gray-900 hover:bg-white border-b border-gray-200 cursor-pointer"
                         >
                           <span>{category.name}</span>
                           <ChevronDown
-                            className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${expandedCategory === index ? "rotate-180" : ""}`}
+                            className={`w-4 h-4 text-gray-400 transition-transform duration-300 cursor-pointer ${expandedCategory === index ? "rotate-180" : ""}`}
                           />
                         </button>
 
@@ -376,7 +382,7 @@ export default function MetaShopHeader() {
                               <button
                                 key={subIndex}
                                 onClick={() => handleSubcategoryClick(subcategory)}
-                                className="block w-full text-left px-8 py-3 text-sm text-gray-700 hover:text-purple-900 hover:bg-purple-50 border-b border-gray-100"
+                                className="block w-full text-left px-8 py-3 text-sm text-gray-700 hover:text-purple-900 hover:bg-purple-50 border-b border-gray-100 cursor-pointer"
                               >
                                 {subcategory}
                               </button>
@@ -394,7 +400,7 @@ export default function MetaShopHeader() {
                 {["Aksiyalar", "Mağazalar", "Bizimlə Əlaqə", "Çatdırılma & Geri Qaytarılma", "Outlet"].map((item, index) => (
                   <button
                     key={index}
-                    className="block w-full text-left px-4 py-4  text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200"
+                    className="block w-full text-left px-4 py-4  text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
                   >
                     {item}
                   </button>
@@ -402,43 +408,35 @@ export default function MetaShopHeader() {
               </div>
             </div>
           </div>
-        )}
 
         {/* Bottom Navigation Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden">
           <div className="flex items-center justify-around py-2">
-            <button className="flex flex-col items-center text-purple-900">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <button className="flex flex-col items-center text-purple-900 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+              <svg className="w-5 h-5 transition-all duration-300 cursor-pointer" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
-              <span className="text-xs mt-1 font-medium">Ana səhifə</span>
+              <span className="text-xs mt-1 font-medium transition-all duration-300 cursor-pointer">Ana səhifə</span>
             </button>
 
-            <button className="flex flex-col items-center text-gray-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
-              <span className="text-xs mt-1">Məhsullar</span>
+            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+              <Package className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Məhsullar</span>
             </button>
 
-            <button className="flex flex-col items-center text-gray-500">
-              <ShoppingCart className="w-5 h-5" />
-              <span className="text-xs mt-1">Səbət</span>
+            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+              <ShoppingCart className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Səbət</span>
             </button>
 
-            <button className="flex flex-col items-center text-gray-500">
-              <Heart className="w-5 h-5" />
-              <span className="text-xs mt-1">Seçilmiş</span>
+            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+              <Heart className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Seçilmiş</span>
             </button>
 
-            <button className="flex flex-col items-center text-gray-500">
-              <User className="w-5 h-5" />
-              <span className="text-xs mt-1">Hesab</span>
+            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+              <User className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Hesab</span>
             </button>
           </div>
         </div>

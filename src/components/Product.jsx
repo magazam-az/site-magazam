@@ -1,4 +1,5 @@
 import React from 'react';
+import { Heart } from 'lucide-react';
 import Rating from './Rating';
 
 // Product Card Component
@@ -16,6 +17,11 @@ const Product = ({ product }) => (
         HOT
       </div>
     )}
+    
+    {/* Heart icon */}
+    <button className="absolute top-2 right-2 z-10 cursor-pointer">
+      <Heart className="w-6 h-6 text-gray-400 hover:text-[#5C4977] transition-all duration-300 cursor-pointer" />
+    </button>
     
     {/* Məhsul Şəkili sahəsi - sabit ölçü */}
     <div className="w-full flex justify-center items-center mb-3 sm:mb-4" style={{ height: '200px' }}>
