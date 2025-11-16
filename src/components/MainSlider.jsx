@@ -171,7 +171,7 @@ export default function ProductBanners() {
           {/* Card 2.1: Aurora Headset */}
           <div className="relative bg-qulaq p-5 rounded-xl overflow-hidden h-[250px] group">
             <img 
-              src="/src/assets/images/hero1/logitech-aurora-headset-opt.png" 
+              src="/images/hero1/logitech-aurora-headset-opt.png" 
               alt="Aurora Headset"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
             />
@@ -195,7 +195,7 @@ export default function ProductBanners() {
             {/* Card 2.2: New Dual Sense */}
             <div className="bg-ps4 text-white p-5 rounded-xl flex-1 h-[170px] relative overflow-hidden group">
               <img 
-                src="/src/assets/images/hero1/new-dualsense.png" 
+                src="/images/hero1/new-dualsense.png" 
                 alt="New Dual Sense"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               />
@@ -218,7 +218,7 @@ export default function ProductBanners() {
             {/* Card 2.3: Instant Cameras */}
             <div className="bg-cam text-gray-900 p-5 rounded-xl flex-1 h-[170px] relative overflow-hidden group">
               <img 
-                src="/src/assets/images/hero1/instant-cameras.png" 
+                src="/images/hero1/instant-cameras.png" 
                 alt="Instant Cameras"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               />

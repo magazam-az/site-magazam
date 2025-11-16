@@ -20,7 +20,7 @@ const products = [
     price: "30,00 ₼",
     inStock: true,
     sku: "5334126",
-    imageUrl: "/src/assets/images/thebestoffers/acer-sa100-sataiii-1.jpg",
+    imageUrl: "/images/thebestoffers/acer-sa100-sataiii-1.jpg",
     imageAlt: "Acer SA100 SATA SSD Drive",
     isHot: true
   },
@@ -32,7 +32,7 @@ const products = [
     price: "50,00 ₼",
     inStock: true,
     sku: "5334127",
-    imageUrl: "/src/assets/images/thebestoffers/alogic1.jpg",
+    imageUrl: "/images/thebestoffers/alogic1.jpg",
     imageAlt: "Alogic Ultra Mini USB",
     isHot: true
   },
@@ -44,7 +44,7 @@ const products = [
     price: "299,00 ₼",
     inStock: true,
     sku: "5334128",
-    imageUrl: "/src/assets/images/thebestoffers/amd-ryzen-5-7600x-1.jpg",
+    imageUrl: "/images/thebestoffers/amd-ryzen-5-7600x-1.jpg",
     imageAlt: "AMD Ryzen 5 7600X",
     isHot: true
   },
@@ -56,7 +56,7 @@ const products = [
     price: "500,00 ₼ – 600,00 ₼",
     inStock: true,
     sku: "5334129",
-    imageUrl: "/src/assets/images/thebestoffers/apple-ipad-mini-pink-1.jpg",
+    imageUrl: "/images/thebestoffers/apple-ipad-mini-pink-1.jpg",
     imageAlt: "Apple iPad Mini 6 Wi-Fi",
     isHot: true
   },
@@ -68,7 +68,7 @@ const products = [
     price: "2.999,00 ₼",
     inStock: true,
     sku: "5334130",
-    imageUrl: "/src/assets/images/thebestoffers/apple-macbook-pro-16.jpg",
+    imageUrl: "/images/thebestoffers/apple-macbook-pro-16.jpg",
     imageAlt: "Apple MacBook Pro 16″ M1",
     isHot: true
   }

@@ -70,9 +70,13 @@ const ShoppingEvent = () => {
         <div className="mb-4 sm:mb-6 md:mb-0 md:mr-8 lg:mr-12 w-full md:w-auto flex justify-center">
           <div className="w-full max-w-[200px] sm:max-w-sm md:max-w-md lg:max-w-xl xl:max-w-2xl h-32 sm:h-40 md:h-64 lg:h-80 xl:h-96 flex items-center justify-center overflow-hidden">
             <img 
-              src="src/assets/images/ipad-section/iosmodels.webp" 
+              src="/images/ipad-section/iosmodels.webp" 
               alt="Apple Devices" 
               className="object-contain w-full h-full" 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://placehold.co/800x600/6B7280/ffffff?text=Apple+Devices";
+              }}
             />
           </div>
         </div>
@@ -117,11 +121,11 @@ const ShoppingEvent = () => {
         
         {/* Məhsul Kartları - 3-5 arası ulduz reytinqi əlavə edildi */}
         {[
-          { name: "Acer ProDesigner", price: "750,00 ₼", img: "src/assets/images/ipad-section/iosmodels.webp", rating: 4 },
-          { name: "Acer SA100", price: "30,00 ₼", img: "src/assets/images/ipad-section/acerkart.webp", rating: 5 },
-          { name: "Ailink Aluminium", price: "40,00 ₼", img: "src/assets/images/ipad-section/alim.webp", rating: 3 },
-          { name: "Alogic Ultra Mini", price: "50,00 ₼", img: "src/assets/images/ipad-section/alagocig.webp", rating: 5 },
-          { name: "AMD Radeon Pro", price: "480,00 ₼", img: "src/assets/images/ipad-section/amdpro.webp", rating: 4 },
+          { name: "Acer ProDesigner", price: "750,00 ₼", img: "/images/ipad-section/iosmodels.webp", rating: 4 },
+          { name: "Acer SA100", price: "30,00 ₼", img: "/images/ipad-section/acerkart.webp", rating: 5 },
+          { name: "Ailink Aluminium", price: "40,00 ₼", img: "/images/ipad-section/alim.webp", rating: 3 },
+          { name: "Alogic Ultra Mini", price: "50,00 ₼", img: "/images/ipad-section/alagocig.webp", rating: 5 },
+          { name: "AMD Radeon Pro", price: "480,00 ₼", img: "/images/ipad-section/amdpro.webp", rating: 4 },
         ].map((product, index) => (
           // Məhsul kartları: Ağ arxa plan və kölgə
           <div key={index} className="bg-white rounded-xl p-2 sm:p-3 md:p-4 shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 flex items-center gap-2 sm:gap-3">
@@ -131,6 +135,10 @@ const ShoppingEvent = () => {
                 src={product.img} 
                 alt={product.name} 
                 className="object-contain max-h-full max-w-full p-1 sm:p-2" 
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://placehold.co/200x200/6B7280/ffffff?text=Product";
+                }}
               />
             </div>
             
