@@ -1,8 +1,8 @@
 import React from 'react';
 import Rating from './Rating';
 
-// Product Card Component - Products.jsx'teki gibi
-const ProductCard = ({ product }) => (
+// Product Card Component
+const Product = ({ product }) => (
   <div 
     className="bg-white rounded-xl transition-all duration-300 flex flex-col p-3 sm:p-4 cursor-pointer w-full border border-gray-100 focus:outline-none relative product-card group"
     style={{ 
@@ -64,4 +64,4 @@ const ProductCard = ({ product }) => (
   </div>
 );
 
-export default ProductCard;
+export default Product;

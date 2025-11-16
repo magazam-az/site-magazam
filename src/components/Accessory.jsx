@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Container from '../ui/Container';
-import ProductCard from './Product';
+import Product from './Product';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -208,7 +208,7 @@ export default function Accessory() {
                     {products.map((product, index) => (
                       <SwiperSlide key={`${product.sku}-${index}`}>
                         <div className="flex justify-center">
-                          <ProductCard product={{
+                          <Product product={{
                             name: product.name,
                             brand: product.brand,
                             model: product.model,

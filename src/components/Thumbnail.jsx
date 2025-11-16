@@ -74,7 +74,7 @@ const products = [
 ];
 
 // Məhsul kartı komponenti
-const ProductCard = ({ product }) => (
+const Product = ({ product }) => (
   <div 
     className="bg-white rounded-xl hover:shadow-xl transition-all duration-300 flex flex-col p-4 cursor-pointer w-full border-gray-100 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none relative product-card"
     style={{ 
@@ -178,7 +178,7 @@ const HomeAppliance = () => {
           {products.map((product, index) => (
             <SwiperSlide key={`${product.sku}-${index}`}>
               <div className="flex justify-center">
-                <ProductCard product={product} />
+                <Product product={product} />
               </div>
             </SwiperSlide>
           ))}

@@ -116,13 +116,13 @@ export default function MetaShopHeader() {
             {/* Right Section */}
             <div className="flex items-center gap-8">
               <div className="flex gap-8">
-                <div className="flex items-center gap-3">
+                <a href="tel:+994123101010" className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
                   <Phone className="w-6 h-6 text-gray-700" />
                   <div>
                     <div className="text-black text-sm font-bold">24/7 Dəstək</div>
                     <div className="text-blue-600 text-sm">+994 12 310 10 10</div>
                   </div>
-                </div>
+                </a>
                 <div className="flex items-center gap-3">
                   <Globe className="w-6 h-6 text-gray-700" />
                   <div>
@@ -253,10 +253,10 @@ export default function MetaShopHeader() {
         {/* Top Bar */}
         <div className="bg-white border-b border-gray-200">
           <div className="px-4 py-2 flex justify-between items-center text-xs">
-            <div className="flex items-center gap-1">
+            <a href="tel:+994123101010" className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
               <Phone className="w-3 h-3 text-gray-700" />
               <span className="text-blue-600">+994 12 310 10 10</span>
-            </div>
+            </a>
 
             <div className="flex items-center gap-1">
               <Globe className="w-3 h-3 text-gray-700" />
@@ -405,7 +405,7 @@ export default function MetaShopHeader() {
         )}
 
         {/* Bottom Navigation Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden">
           <div className="flex items-center justify-around py-2">
             <button className="flex flex-col items-center text-purple-900">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

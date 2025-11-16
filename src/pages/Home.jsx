@@ -8,12 +8,12 @@ import Categories from "../components/Categories";
 import Products from "../components/Products";
 import Container from "../ui/Container";
 import Accessory from "../components/Accessory";
-import ArticleSection from "../components/BlogCards";
-import ContentCard from "../components/Text";
+import Blogs from "../components/Blogs";
+import About from "../components/About";
 
 const Home = () => {
   return (
-    <div>
+    <div className="pb-14 md:pb-0 bg-[#F3F4F6]">
       {/* <Container> */}
       <Navbar />
       <MainSlider />
@@ -292,8 +292,8 @@ const Home = () => {
       />
       <Accessory />
       {/* <FAQPage /> */}
-      <ArticleSection/>
-      <ContentCard/>
+      <Blogs/>
+      <About/>
      
       <Footer />
 

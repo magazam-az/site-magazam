@@ -4,64 +4,6 @@ export default function Footer() {
   return (
     <footer className="bg-white text-gray-800 font-sans">
       
-      {/* 📍 Mağaza Ünvanları Bölməsi */}
-      <div className="border-b mt-16 border-gray-200 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-7xl mx-auto">
-          {/* Broadway Mağazası */}
-          <div>
-            <h3 className="font-bold text-base sm:text-lg mb-2 flex items-center gap-2">
-              <span className="truncate">Broadway Mağazası</span>
-              <span className="bg-blue-600 text-white rounded-full p-1 flex-shrink-0">
-                {/* İrəli oxu simvolu */}
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </h3>
-            <p className="text-gray-600 text-xs sm:text-sm">1260 Broadway, San Francisco, CA 94109</p>
-          </div>
-
-          {/* Valencia Mağazası */}
-          <div>
-            <h3 className="font-bold text-base sm:text-lg mb-2 flex items-center gap-2">
-              <span className="truncate">Valencia Mağazası</span>
-              <span className="bg-blue-600 text-white rounded-full p-1 flex-shrink-0">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </h3>
-            <p className="text-gray-600 text-xs sm:text-sm">1501 Valencia St, San Francisco, CA 94110</p>
-          </div>
-
-          {/* Emeryville Mağazası */}
-          <div>
-            <h3 className="font-bold text-base sm:text-lg mb-2 flex items-center gap-2">
-              <span className="truncate">Emeryville Mağazası</span>
-              <span className="bg-blue-600 text-white rounded-full p-1 flex-shrink-0">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </h3>
-            <p className="text-gray-600 text-xs sm:text-sm">1034 36th St, Emeryville, CA 94608</p>
-          </div>
-
-          {/* Alameda Mağazası */}
-          <div>
-            <h3 className="font-bold text-base sm:text-lg mb-2 flex items-center gap-2">
-              <span className="truncate">Alameda Mağazası</span>
-              <span className="bg-blue-600 text-white rounded-full p-1 flex-shrink-0">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </h3>
-            <p className="text-gray-600 text-xs sm:text-sm">1433 High St, Alameda, CA 94501</p>
-          </div>
-        </div>
-      </div>
-
       {/* 🖥️ Əsas Footer Məzmunu */}
       <div className="border-b border-gray-200 py-8 sm:py-10 lg:py-12">
         {/* Responsive Grid: Kiçik ekranlarda 1 sütun, orta ekranlarda 2, böyük ekranlarda 5 */}
@@ -232,31 +174,16 @@ export default function Footer() {
 
       {/* ©️ Ən Aşağı Bölmə */}
 <div className="py-4 sm:py-5 bg-gray-50">
-  <div className="max-w-[1300px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+  <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
 
     {/* Sol tərəf - Müəllif Hüququ */}
-    <p className="text-xs text-gray-600 text-center md:text-left md:flex-1">
-      Müəllif hüquqları © 2025.{" "}
-      <span className="font-semibold text-gray-900">WoodMart</span> teması əsasında.{" "}
-      <span className="font-semibold text-gray-900">WooCommerce Temaları</span>.
+    <p className="text-xs text-gray-600 text-center md:text-left font-semibold">
+      Müəllif hüquqları qorunur © 2026
     </p>
 
-    {/* Orta - Dil seçimi */}
-    <div className="flex justify-center md:justify-center flex-1">
-      <button className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition flex items-center gap-1">
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <circle cx="12" cy="12" r="10" strokeWidth="2" />
-          <path
-            strokeWidth="2"
-            d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-          />
-        </svg>
-        <span className="whitespace-nowrap">Azərbaycan dili</span>
-      </button>
-    </div>
-
+    
     {/* Sağ - Ödəniş ikonları */}
-    <div className="flex justify-center md:justify-end flex-1">
+    <div className="flex justify-center md:justify-end">
       <img
         src="https://metashop.az/wp-content/themes/woodmart/images/payments.png"
         alt="Ödəniş üsulları"
