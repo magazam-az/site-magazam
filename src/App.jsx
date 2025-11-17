@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import './App.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
@@ -37,3 +38,20 @@ function App() {
 }
 
 export default App
+=======
+
+import './App.css'
+import Home from './pages/Home'
+
+function App() {
+
+
+  return (
+    <>
+  <Home/>
+    </>
+  )
+}
+
+export default App
+>>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
