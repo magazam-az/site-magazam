@@ -1,28 +1,21 @@
 import { useState } from "react"
-<<<<<<< HEAD
 import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package, LogOut } from "lucide-react"
 import { useSelector, useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import { logout } from "../redux/features/userSlice"
 import { useLazyLogoutQuery } from "../redux/api/authApi"
-=======
-import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package } from "lucide-react"
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
 
 export default function MetaShopHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [expandedCategory, setExpandedCategory] = useState(null)
-<<<<<<< HEAD
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   const { user, isAuthenticated } = useSelector(state => state.user)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const [triggerLogout] = useLazyLogoutQuery()
-=======
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
 
   const categories = [
     {
@@ -91,23 +84,13 @@ export default function MetaShopHeader() {
     },
   ]
 
-<<<<<<< HEAD
   const handleSubcategoryClick = (subcategoryName) => {
     console.log("Seçildi:", subcategoryName)
-=======
-  // Subkateqoriyalara klik zamanı
-  const handleSubcategoryClick = (subcategoryName) => {
-    // Burada sizin routing məntiqinizə uyğun hərəkət edə bilərsiniz
-    console.log("Seçildi:", subcategoryName)
-    
-    // Dropdownları bağla
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
     setIsCategoriesOpen(false)
     setExpandedCategory(null)
     setIsMobileMenuOpen(false)
   }
 
-<<<<<<< HEAD
   const handleLoginClick = () => {
     navigate('/login')
     setIsUserMenuOpen(false)
@@ -138,8 +121,6 @@ export default function MetaShopHeader() {
     setIsMobileMenuOpen(false)
   }
 
-=======
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
   return (
     <div className="w-full bg-white">
       {/* Desktop Header */}
@@ -153,10 +134,7 @@ export default function MetaShopHeader() {
                 src="/images/logo.svg" 
                 alt="META SHOP Logo" 
                 className="h-14 cursor-pointer"
-<<<<<<< HEAD
                 onClick={() => navigate('/')}
-=======
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
               />
             </div>
 
@@ -201,7 +179,6 @@ export default function MetaShopHeader() {
               {/* Left Navigation */}
               <div className="flex items-center gap-6">
                 {/* Categories Dropdown */}
-<<<<<<< HEAD
                 <div className="relative">
                   <div
                     className="flex items-center gap-3 px-4 py-2 transition-all duration-300 cursor-pointer select-none"
@@ -260,76 +237,6 @@ export default function MetaShopHeader() {
                     </div>
                   )}
                 </div>
-=======
-            <div className="relative">
-  {/* Baş düymə */}
-  <div
-    className="flex items-center gap-3 px-4 py-2 transition-all duration-300 cursor-pointer select-none"
-    onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-  >
-    {/* Sol — Icon düymə */}
-    <button className="flex items-center justify-center w-11 h-11 rounded-full bg-[#5C4977] text-white hover:bg-[#5C4977]/90 transition-all duration-300 shadow-md shadow-[#5C4977]/30 hover:shadow-[#5C4977]/50 border border-[#5C4977] cursor-pointer">
-      <Menu className="w-5 h-5 cursor-pointer" />
-    </button>
-
-    {/* Sağ — Yazı + Aşağı ox */}
-    <div className="flex items-center gap-2">
-      <span className="text-base font-medium text-[#5C4977] select-none cursor-pointer">Bütün Kateqoriyalar</span>
-      <ChevronDown
-        className={`w-4 h-4 text-[#5C4977]/70 transition-transform duration-300 cursor-pointer ${
-          isCategoriesOpen ? "rotate-180" : ""
-        }`}
-      />
-    </div>
-  </div>
-
-  {/* Aşağı açılan menyu */}
-  {isCategoriesOpen && (
-    <div
-      className="absolute top-full left-0 w-80 bg-white shadow-2xl border border-[#5C4977]/20 rounded-2xl mt-2 z-50 overflow-hidden transition-all duration-300"
-    >
-      <div className="p-4 max-h-96 overflow-y-auto">
-        {categories.map((category, index) => (
-          <div key={index} className="mb-2 last:mb-0">
-            {/* Ana kateqoriya */}
-            <button
-              onClick={() =>
-                setExpandedCategory(expandedCategory === index ? null : index)
-              }
-              className="flex items-center justify-between w-full p-3 hover:bg-[#f5f2fa] rounded-xl cursor-pointer group transition-all select-none"
-            >
-              <span className="font-medium text-[#5C4977] text-left flex-1 select-none">
-                {category.name}
-              </span>
-              <ChevronDown
-                className={`w-4 h-4 text-[#5C4977]/60 transition-transform duration-300 ${
-                  expandedCategory === index ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {/* Subcategories */}
-            {expandedCategory === index && (
-              <div className="ml-4 mt-2 space-y-1">
-                {category.subcategories.map((subcategory, subIndex) => (
-                  <button
-                    key={subIndex}
-                    onClick={() => handleSubcategoryClick(subcategory)}
-                    className="block w-full text-left px-3 py-2 text-sm text-[#5C4977]/80 hover:text-[#5C4977] hover:bg-[#f3effa] rounded-lg transition-all select-none"
-                  >
-                    {subcategory}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  )}
-</div>
-
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
 
                 <nav className="flex items-center gap-0">
                   <button className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none">
@@ -349,7 +256,6 @@ export default function MetaShopHeader() {
 
               {/* Right Icons */}
               <div className="flex items-center gap-6">
-<<<<<<< HEAD
                 {/* User Menu */}
                 <div className="relative">
                   <button 
@@ -400,11 +306,6 @@ export default function MetaShopHeader() {
                     </div>
                   )}
                 </div>
-=======
-                <button className="flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer">
-                  <User className="w-6 h-6" />
-                </button>
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
 
                 <button className="relative flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer">
                   <Heart className="w-6 h-6 -ml-2" />
@@ -444,22 +345,12 @@ export default function MetaShopHeader() {
             <div className="flex items-center justify-between">
               {/* Logo */}
               <div className="flex-shrink-0">
-<<<<<<< HEAD
                 <img 
                   src="/images/logo.svg" 
                   alt="META SHOP Logo" 
                   className="h-10 cursor-pointer"
                   onClick={() => navigate('/')}
                 />
-=======
-                <a href="/">
-                  <img 
-                    src="/images/logo.svg" 
-                    alt="META SHOP Logo" 
-                    className="h-10 cursor-pointer"
-                  />
-                </a>
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
               </div>
 
               {/* Right Actions */}
@@ -506,7 +397,6 @@ export default function MetaShopHeader() {
           isMobileMenuOpen ? 'transform translate-x-0' : 'transform -translate-x-full pointer-events-none'
         }`}>
           <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-<<<<<<< HEAD
             <img 
               src="/images/logo.svg" 
               alt="META SHOP Logo" 
@@ -616,104 +506,14 @@ export default function MetaShopHeader() {
             </div>
           </div>
         </div>
-=======
-              <a href="/">
-                <img 
-                  src="/images/logo.svg" 
-                  alt="META SHOP Logo" 
-                  className="h-8 cursor-pointer"
-                />
-              </a>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 cursor-pointer">
-                <X className="w-6 h-6 cursor-pointer text-gray-600 hover:text-[#5C4977] transition-all duration-300" />
-              </button>
-            </div>
-
-            <div className="h-screen overflow-y-auto pb-20">
-              {/* User Section */}
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                <button className="flex items-center gap-3 w-full text-left cursor-pointer">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-purple-900" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">Hesabıma daxil ol</div>
-                    <div className="text-xs text-gray-500">Giriş və ya qeydiyyat</div>
-                  </div>
-                </button>
-              </div>
-
-              {/* Categories */}
-              <div className="border-b border-gray-200">
-                <button
-                  className="flex items-center justify-between w-full px-4 py-4 text-left font-medium text-gray-900 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                >
-                  <span>Bütün Kateqoriyalar</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-gray-400 transition-transform duration-300 cursor-pointer ${isCategoriesOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-
-                {isCategoriesOpen && (
-                  <div className="bg-gray-50 border-t border-gray-200">
-                    {categories.map((category, index) => (
-                      <div key={index}>
-                        <button
-                          onClick={() => setExpandedCategory(expandedCategory === index ? null : index)}
-                          className="flex items-center justify-between w-full px-6 py-3 text-left text-sm font-medium text-gray-900 hover:bg-white border-b border-gray-200 cursor-pointer"
-                        >
-                          <span>{category.name}</span>
-                          <ChevronDown
-                            className={`w-4 h-4 text-gray-400 transition-transform duration-300 cursor-pointer ${expandedCategory === index ? "rotate-180" : ""}`}
-                          />
-                        </button>
-
-                        {expandedCategory === index && (
-                          <div className="bg-white border-b border-gray-200">
-                            {category.subcategories.map((subcategory, subIndex) => (
-                              <button
-                                key={subIndex}
-                                onClick={() => handleSubcategoryClick(subcategory)}
-                                className="block w-full text-left px-8 py-3 text-sm text-gray-700 hover:text-purple-900 hover:bg-purple-50 border-b border-gray-100 cursor-pointer"
-                              >
-                                {subcategory}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Main Menu Items */}
-              <div className="border-b border-gray-200">
-                {["Aksiyalar", "Mağazalar", "Bizimlə Əlaqə", "Çatdırılma & Geri Qaytarılma", "Outlet"].map((item, index) => (
-                  <button
-                    key={index}
-                    className="block w-full text-left px-4 py-4  text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
 
         {/* Bottom Navigation Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden">
           <div className="flex items-center justify-around py-2">
-<<<<<<< HEAD
             <button 
               className="flex flex-col items-center text-purple-900 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
               onClick={() => navigate('/')}
             >
-=======
-            <button className="flex flex-col items-center text-purple-900 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
               <svg className="w-5 h-5 transition-all duration-300 cursor-pointer" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
@@ -735,7 +535,6 @@ export default function MetaShopHeader() {
               <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Seçilmiş</span>
             </button>
 
-<<<<<<< HEAD
             <button 
               className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
               onClick={() => {
@@ -746,9 +545,6 @@ export default function MetaShopHeader() {
                 }
               }}
             >
-=======
-            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
               <User className="w-5 h-5 transition-all duration-300 cursor-pointer" />
               <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Hesab</span>
             </button>

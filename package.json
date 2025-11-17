@@ -12,10 +12,7 @@
   "dependencies": {
     "@radix-ui/react-menubar": "^1.1.16",
     "@radix-ui/react-navigation-menu": "^1.2.14",
-<<<<<<< HEAD
     "@reduxjs/toolkit": "^2.10.1",
-=======
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
     "@tailwindcss/vite": "^4.1.17",
     "class-variance-authority": "^0.7.1",
     "flowbite": "^3.1.2",
@@ -24,16 +21,11 @@
     "patch-package": "^8.0.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-<<<<<<< HEAD
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.5",
     "react-toastify": "^11.0.5",
-=======
-    "react-icons": "^5.5.0",
-    "react-router-dom": "^7.9.5",
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
     "swiper": "^12.0.3",
     "tailwindcss": "^4.1.17"
   },

@@ -10,11 +10,8 @@ import Container from "../ui/Container";
 import Accessory from "../components/Accessory";
 import Blogs from "../components/Blogs";
 import About from "../components/About";
-<<<<<<< HEAD
 import RegisterForm from "../components/Register";
 import LoginForm from "../components/Login";
-=======
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
 
 const Home = () => {
   return (
@@ -299,10 +296,7 @@ const Home = () => {
       {/* <FAQPage /> */}
       <Blogs/>
       <About/>
-<<<<<<< HEAD
     
-=======
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
      
       <Footer />
 

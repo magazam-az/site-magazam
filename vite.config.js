@@ -3,33 +3,20 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'node:url'
 
-<<<<<<< HEAD
 export default defineConfig({
   plugins: [
     tailwindcss(),
     react()
   ],
 
-=======
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    tailwindcss(), 
-    react()
-  ],
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-<<<<<<< HEAD
 
   base: '/',
 
-=======
-  base: '/',
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
   build: {
     assetsDir: 'assets',
     rollupOptions: {
@@ -38,7 +25,6 @@ export default defineConfig({
       }
     }
   },
-<<<<<<< HEAD
 
   publicDir: 'public',
 
@@ -59,11 +45,3 @@ export default defineConfig({
     }
   }
 })
-=======
-  publicDir: 'public',
-  server: {
-    port: 3000,
-    open: true
-  }
-})
->>>>>>> a0ff0f0880f16d1edb13bead9f63d14e48577c5a
