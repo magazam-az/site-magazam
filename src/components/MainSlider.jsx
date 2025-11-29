@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Container from '../ui/Container';
+import Container from '../components/ui/Container';
 
 import '../assets/css/HeroSection.css';
 

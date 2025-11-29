@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useRegisterMutation } from '../redux/api/authApi';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, User, Lock, Mail, UserPlus } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { setUser, setIsAuthenticated } from '../redux/features/userSlice';
 
 const RegisterForm = () => {
   const [register, { isLoading, error }] = useRegisterMutation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -81,6 +84,15 @@ const RegisterForm = () => {
       const result = await register(registerData).unwrap();
       
       console.log('Qeydiyyat uğurla tamamlandı!', result);
+      
+      // User məlumatlarını Redux store və localStorage-a yaz
+      dispatch(setUser({
+        name: formData.name,
+        email: formData.email,
+        id: result.user?.id,
+        token: result.token
+      }));
+      dispatch(setIsAuthenticated(true));
       
       setFormData({
         name: '',

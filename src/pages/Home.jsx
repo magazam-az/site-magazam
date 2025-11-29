@@ -6,17 +6,20 @@ import FAQPage from "../components/FAQ";
 import ShoppingEvent from "../components/ShoppingEvent";
 import Categories from "../components/Categories";
 import Products from "../components/Products";
-import Container from "../ui/Container";
+import Container from "../components/ui/Container";
 import Accessory from "../components/Accessory";
 import Blogs from "../components/Blogs";
 import About from "../components/About";
 import RegisterForm from "../components/Register";
 import LoginForm from "../components/Login";
+import Products2 from "../components/Products2";
 
 const Home = () => {
   return (
     <div className="pb-14 md:pb-0 bg-[#F3F4F6]">
       {/* <Container> */}
+            <Products2/>
+
       <Navbar />
       <MainSlider />
       <Categories />

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import Container from "../ui/Container"
+import Container from "../components/ui/Container"
 
 export default function About() {
   const [isExpanded, setIsExpanded] = useState(false)

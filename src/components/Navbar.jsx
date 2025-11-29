@@ -1,9 +1,123 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package, LogOut } from "lucide-react"
 import { useSelector, useDispatch } from "react-redux"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { logout } from "../redux/features/userSlice"
 import { useLazyLogoutQuery } from "../redux/api/authApi"
+import {
+  useGetCartQuery,
+  useGetFavoritesQuery,
+  useSearchProductsQuery,
+} from "../redux/api/productsApi"
+import SebetCart from "./ShoppingCard"
+
+// Desktop üçün İstifadəçi Menyusu (admin linkləri daxil)
+const UserMenu = ({ name, email, imageUrl, role, onLogout }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer"
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="Profile"
+            width={32}
+            height={32}
+            className="h-8 w-8 object-cover rounded-full border-2 border-[#5C4977]"
+          />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center bg-[#5C4977] text-white rounded-full border-2 border-[#5C4977]">
+            {name && name.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-12 w-64 bg-white shadow-2xl border border-[#5C4977]/20 rounded-xl py-3 z-50">
+          <div className="px-4 pb-2 border-b border-gray-100">
+            <p className="text-sm font-medium text-gray-900">{name}</p>
+            <p className="text-xs text-gray-500 truncate">{email}</p>
+          </div>
+          
+          {/* Ümumi Menyu */}
+          <div className="mt-2">
+            <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-[#f5f2fa] hover:text-[#5C4977] cursor-pointer">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Settings
+            </button>
+            <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-[#f5f2fa] hover:text-[#5C4977] cursor-pointer">
+              Help
+            </button>
+          </div>
+
+          {/* Yalnız adminlər üçün linklər */}
+          {role === "admin" && (
+            <div className="mt-2 border-t border-gray-100 pt-2">
+              <div className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">Admin Panel</div>
+              <Link
+                to="/admin/adminproducts"
+                className="block px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-[#f5f2fa] hover:text-[#5C4977] cursor-pointer"
+                onClick={() => setIsOpen(false)}
+              >
+                Admin Products
+              </Link>
+              <Link
+                to="/admin/add-products"
+                className="block px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-[#f5f2fa] hover:text-[#5C4977] cursor-pointer"
+                onClick={() => setIsOpen(false)}
+              >
+                Add Product
+              </Link>
+              <Link
+                to="/admin/admin-blogs"
+                className="block px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-[#f5f2fa] hover:text-[#5C4977] cursor-pointer"
+                onClick={() => setIsOpen(false)}
+              >
+                Admin Blog
+              </Link>
+              <Link
+                to="/admin/add-blog"
+                className="block px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-[#f5f2fa] hover:text-[#5C4977] cursor-pointer"
+                onClick={() => setIsOpen(false)}
+              >
+                Add Blog
+              </Link>
+            </div>
+          )}
+
+          <div className="mt-2 border-t border-gray-100 pt-2">
+            <button
+              onClick={onLogout}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function MetaShopHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -11,11 +125,177 @@ export default function MetaShopHeader() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [expandedCategory, setExpandedCategory] = useState(null)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  
+  // Axtarış state-ləri
+  const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
-  const { user, isAuthenticated } = useSelector(state => state.user)
+  // Fərqli store strukturları üçün useSelector
+  const userState = useSelector(state => state.user || state.userSlice || state.auth)
+  const { user, isAuthenticated } = userState || {}
+  
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const [triggerLogout] = useLazyLogoutQuery()
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // RTK Query ilə dinamik axtarış
+  const {
+    data: searchResults,
+    isLoading: searchLoading,
+    isError: searchError,
+  } = useSearchProductsQuery(
+    { query: debouncedSearchQuery },
+    { 
+      skip: debouncedSearchQuery.trim() === "" || debouncedSearchQuery.length < 2 
+    }
+  )
+
+  // Səbət və favorit sorğuları
+  const {
+    data: cartData,
+    isLoading: cartLoading,
+    error: cartError,
+  } = useGetCartQuery()
+  
+  const {
+    data: favoriteData,
+    isLoading: favoriteLoading,
+    error: favoriteError,
+  } = useGetFavoritesQuery()
+
+  // Səbət məhsul sayını hesabla - DÜZƏLDİ (YENİ HƏLL)
+  const getCartItemCount = () => {
+    if (cartLoading) return 0
+    if (cartError) return 0
+    
+    // Müxtəlif API strukturları üçün yoxlama
+    if (cartData?.cart?.items && Array.isArray(cartData.cart.items)) {
+      // Struktur: { cart: { items: [...] } }
+      const validItems = cartData.cart.items.filter(item => item?.product)
+      return validItems.reduce((total, item) => total + (item.quantity || 1), 0)
+    } else if (cartData?.items && Array.isArray(cartData.items)) {
+      // Struktur: { items: [...] }
+      const validItems = cartData.items.filter(item => item?.product)
+      return validItems.reduce((total, item) => total + (item.quantity || 1), 0)
+    } else if (Array.isArray(cartData?.cart)) {
+      // Struktur: { cart: [...] }
+      const validItems = cartData.cart.filter(item => item?.product)
+      return validItems.reduce((total, item) => total + (item.quantity || 1), 0)
+    } else if (Array.isArray(cartData)) {
+      // Struktur: [...]
+      const validItems = cartData.filter(item => item?.product)
+      return validItems.reduce((total, item) => total + (item.quantity || 1), 0)
+    }
+    
+    return 0
+  }
+
+  // Favorit məhsul sayını hesabla - DÜZƏLDİ
+  const getFavoriteItemCount = () => {
+    if (favoriteLoading) return 0
+    if (favoriteError) return 0
+    
+    // Müxtəlif API strukturları üçün yoxlama
+    if (favoriteData?.favorites && Array.isArray(favoriteData.favorites)) {
+      return favoriteData.favorites.length
+    } else if (Array.isArray(favoriteData)) {
+      return favoriteData.length
+    }
+    
+    return 0
+  }
+
+  // Axtarış funksiyası
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/search-results?query=${encodeURIComponent(searchQuery)}`)
+      setIsSearchOpen(false)
+      setSearchQuery("")
+      setShowSuggestions(false)
+    }
+  }
+
+  // Input focus/unfocus handler
+  const handleSearchFocus = () => {
+    setShowSuggestions(true)
+  }
+
+  const handleSearchBlur = () => {
+    // Kiçik gecikmə ilə suggestions gizlət ki, klik işləyə bilsin
+    setTimeout(() => setShowSuggestions(false), 200)
+  }
+
+  // Axtarış nəticələrini göstər
+  const renderSearchSuggestions = () => {
+    if (!showSuggestions || debouncedSearchQuery.trim() === "" || debouncedSearchQuery.length < 2) return null
+    const defaultImageUrl = "https://via.placeholder.com/300"
+    
+    return (
+      <div className="absolute top-full left-0 right-0 bg-white shadow-2xl border border-[#5C4977]/20 rounded-xl mt-2 max-h-60 overflow-y-auto z-50">
+        {searchLoading ? (
+          <div className="p-4 text-gray-500 text-center">Yüklənir...</div>
+        ) : searchError ? (
+          <div className="p-4 text-red-500 text-center">Xəta baş verdi</div>
+        ) : searchResults?.products?.length > 0 ? (
+          <>
+            {searchResults.products.slice(0, 8).map((product) => (
+              <Link
+                key={product._id}
+                to={`/product/${product._id}`}
+                className="flex items-center gap-3 p-3 hover:bg-[#f5f2fa] transition-colors border-b border-gray-100 last:border-b-0"
+                onClick={() => {
+                  setSearchQuery("")
+                  setShowSuggestions(false)
+                  setIsSearchOpen(false)
+                }}
+              >
+                <img
+                  src={product?.images?.[0]?.url || defaultImageUrl}
+                  alt={product.name}
+                  className="w-10 h-10 object-cover rounded-lg"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-[#5C4977]">{product.name}</span>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {product.category} • {product.price?.toFixed(2)} ₼
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {/* Bütün nəticələri göstər linki */}
+            <div className="p-3 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  navigate(`/search-results?query=${encodeURIComponent(searchQuery)}`)
+                  setShowSuggestions(false)
+                  setIsSearchOpen(false)
+                  setSearchQuery("")
+                }}
+                className="w-full text-center text-sm text-[#5C4977] font-medium hover:text-[#5C4977]/80 transition-colors"
+              >
+                Bütün nəticələri göstər ({searchResults.products.length})
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="p-4 text-gray-500 text-center">
+            "{debouncedSearchQuery}" üçün nəticə tapılmadı
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const categories = [
     {
@@ -121,6 +401,42 @@ export default function MetaShopHeader() {
     setIsMobileMenuOpen(false)
   }
 
+  const handleFavoritesClick = () => {
+    navigate('/favourites')
+    setIsMobileMenuOpen(false)
+  }
+
+  const handleShoppingCartClick = () => {
+    setIsCartOpen(true)
+    setIsMobileMenuOpen(false)
+  }
+
+  const handleHomeClick = () => {
+    navigate('/')
+    setIsMobileMenuOpen(false)
+  }
+
+  // Get user info safely - bütün mümkün strukturları yoxla
+  const getUserName = () => {
+    return user?.user?.name || user?.name || user?.username || "İstifadəçi"
+  }
+
+  const getUserEmail = () => {
+    return user?.user?.email || user?.email || ""
+  }
+
+  const getUserAvatar = () => {
+    return user?.user?.avatar?.url || user?.avatar?.url || user?.profilePicture || ""
+  }
+
+  const getUserRole = () => {
+    return user?.user?.role || user?.role || "user"
+  }
+
+  // Əgər user state undefined-dırsa, default dəyərlər istifadə et
+  const safeIsAuthenticated = isAuthenticated || false
+  const safeUser = user || {}
+
   return (
     <div className="w-full bg-white">
       {/* Desktop Header */}
@@ -134,19 +450,26 @@ export default function MetaShopHeader() {
                 src="/images/logo.svg" 
                 alt="META SHOP Logo" 
                 className="h-14 cursor-pointer"
-                onClick={() => navigate('/')}
+                onClick={handleHomeClick}
               />
             </div>
 
             {/* Search Bar */}
             <div className="flex-1 max-w-3xl">
               <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Məhsul axtar..."
-                  className="w-full px-5 py-2 pl-12 bg-white rounded-full text-base text-[#5c4977] placeholder-[#5c4977]/50 focus:outline-none focus:ring-2 focus:ring-[#5c4977] focus:bg-white transition-colors border border-[#5c4977]/30"
-                />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5c4977]" />
+                <form onSubmit={handleSearch}>
+                  <input
+                    type="text"
+                    placeholder="Məhsul axtar..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={handleSearchFocus}
+                    onBlur={handleSearchBlur}
+                    className="w-full px-5 py-2 pl-12 bg-white rounded-full text-base text-[#5c4977] placeholder-[#5c4977]/50 focus:outline-none focus:ring-2 focus:ring-[#5c4977] focus:bg-white transition-colors border border-[#5c4977]/30"
+                  />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5c4977]" />
+                  {renderSearchSuggestions()}
+                </form>
               </div>
             </div>
 
@@ -257,64 +580,66 @@ export default function MetaShopHeader() {
               {/* Right Icons */}
               <div className="flex items-center gap-6">
                 {/* User Menu */}
-                <div className="relative">
-                  <button 
-                    className="flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer"
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  >
-                    <User className="w-6 h-6" />
-                  </button>
+                {safeIsAuthenticated ? (
+                  <UserMenu
+                    name={getUserName()}
+                    email={getUserEmail()}
+                    imageUrl={getUserAvatar()}
+                    role={getUserRole()}
+                    onLogout={handleLogout}
+                  />
+                ) : (
+                  <div className="relative">
+                    <button 
+                      className="flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer"
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    >
+                      <User className="w-6 h-6" />
+                    </button>
 
-                  {isUserMenuOpen && (
-                    <div className="absolute top-full right-0 w-48 bg-white shadow-2xl border border-[#5C4977]/20 rounded-xl mt-2 z-50 overflow-hidden">
-                      {isAuthenticated ? (
-                        <>
-                          <div className="px-4 py-3 border-b border-gray-100">
-                            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                          </div>
-                          <button
-                            onClick={handleProfileClick}
-                            className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#f5f2fa] hover:text-[#5C4977] transition-colors cursor-pointer"
-                          >
-                            Profilim
-                          </button>
-                          <button
-                            onClick={handleLogout}
-                            className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#f5f2fa] hover:text-[#5C4977] transition-colors cursor-pointer flex items-center gap-2"
-                          >
-                            <LogOut className="w-4 h-4" />
-                            Çıxış
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={handleLoginClick}
-                            className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#f5f2fa] hover:text-[#5C4977] transition-colors cursor-pointer"
-                          >
-                            Giriş
-                          </button>
-                          <button
-                            onClick={handleRegisterClick}
-                            className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#f5f2fa] hover:text-[#5C4977] transition-colors cursor-pointer"
-                          >
-                            Qeydiyyat
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    {isUserMenuOpen && (
+                      <div className="absolute top-full right-0 w-48 bg-white shadow-2xl border border-[#5C4977]/20 rounded-xl mt-2 z-50 overflow-hidden">
+                        <button
+                          onClick={handleLoginClick}
+                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#f5f2fa] hover:text-[#5C4977] transition-colors cursor-pointer"
+                        >
+                          Giriş
+                        </button>
+                        <button
+                          onClick={handleRegisterClick}
+                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#f5f2fa] hover:text-[#5C4977] transition-colors cursor-pointer"
+                        >
+                          Qeydiyyat
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Favorites */}
+                <button 
+                  className="relative flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer"
+                  onClick={handleFavoritesClick}
+                >
+                  <Heart className="w-6 h-6" />
+                  {getFavoriteItemCount() > 0 && (
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300 shadow-lg">
+                      {getFavoriteItemCount()}
+                    </span>
                   )}
-                </div>
-
-                <button className="relative flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer">
-                  <Heart className="w-6 h-6 -ml-2" />
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)' }}>1</span>
                 </button>
 
-                <button className="relative flex items-center justify-center w-10 h-10 rounded-full bg-[#5C4977] hover:bg-[#5C4977]/90 transition-colors duration-200 cursor-pointer p-0">
-                  <ShoppingCart className="w-5 h-5 text-white -ml-0.5" />
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)' }}>1</span>
+                {/* Shopping Cart - DÜZƏLDİ (YENİ HƏLL) */}
+                <button 
+                  className="relative flex items-center justify-center w-10 h-10 rounded-full bg-[#5C4977] hover:bg-[#5C4977]/90 transition-colors duration-200 cursor-pointer p-0"
+                  onClick={handleShoppingCartClick}
+                >
+                  <ShoppingCart className="w-5 h-5 text-white" />
+                  {getCartItemCount() > 0 && (
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300 shadow-lg">
+                      {getCartItemCount()}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -349,7 +674,7 @@ export default function MetaShopHeader() {
                   src="/images/logo.svg" 
                   alt="META SHOP Logo" 
                   className="h-10 cursor-pointer"
-                  onClick={() => navigate('/')}
+                  onClick={handleHomeClick}
                 />
               </div>
 
@@ -362,9 +687,17 @@ export default function MetaShopHeader() {
                   <Search className="w-5 h-5 cursor-pointer" />
                 </button>
 
-                <button className="relative p-2 text-gray-600 hover:text-purple-900 cursor-pointer">
+                {/* Shopping Cart - DÜZƏLDİ (YENİ HƏLL) */}
+                <button 
+                  className="relative p-2 text-gray-600 hover:text-purple-900 cursor-pointer"
+                  onClick={handleShoppingCartClick}
+                >
                   <ShoppingCart className="w-5 h-5 cursor-pointer" />
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)' }}>1</span>
+                  {getCartItemCount() > 0 && (
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-white text-[#5C4977] text-xs font-bold rounded-full border border-gray-300 shadow-lg">
+                      {getCartItemCount()}
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -380,12 +713,19 @@ export default function MetaShopHeader() {
             {isSearchOpen && (
               <div className="mt-3">
                 <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Məhsul axtar..."
-                    className="w-full px-4 py-3 pl-12 bg-white rounded-full text-base text-[#5c4977] placeholder-[#5c4977]/50 focus:outline-none focus:ring-2 focus:ring-[#5c4977] focus:bg-white transition-colors border border-[#5c4977]/30"
-                  />
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5c4977]" />
+                  <form onSubmit={handleSearch}>
+                    <input
+                      type="text"
+                      placeholder="Məhsul axtar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={handleSearchFocus}
+                      onBlur={handleSearchBlur}
+                      className="w-full px-4 py-3 pl-12 bg-white rounded-full text-base text-[#5c4977] placeholder-[#5c4977]/50 focus:outline-none focus:ring-2 focus:ring-[#5c4977] focus:bg-white transition-colors border border-[#5c4977]/30"
+                    />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5c4977]" />
+                    {renderSearchSuggestions()}
+                  </form>
                 </div>
               </div>
             )}
@@ -401,10 +741,7 @@ export default function MetaShopHeader() {
               src="/images/logo.svg" 
               alt="META SHOP Logo" 
               className="h-8 cursor-pointer"
-              onClick={() => {
-                navigate('/')
-                setIsMobileMenuOpen(false)
-              }}
+              onClick={handleHomeClick}
             />
             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 cursor-pointer">
               <X className="w-6 h-6 cursor-pointer text-gray-600 hover:text-[#5C4977] transition-all duration-300" />
@@ -414,14 +751,22 @@ export default function MetaShopHeader() {
           <div className="h-screen overflow-y-auto pb-20">
             {/* User Section */}
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-              {isAuthenticated ? (
+              {safeIsAuthenticated ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-purple-900" />
-                  </div>
+                  {getUserAvatar() ? (
+                    <img
+                      src={getUserAvatar()}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-[#5C4977]"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-[#5C4977] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      {getUserName().charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">{user?.name}</div>
-                    <div className="text-xs text-gray-500">{user?.email}</div>
+                    <div className="text-sm font-medium text-gray-900">{getUserName()}</div>
+                    <div className="text-xs text-gray-500">{getUserEmail()}</div>
                   </div>
                   <button
                     onClick={handleLogout}
@@ -495,6 +840,17 @@ export default function MetaShopHeader() {
 
             {/* Main Menu Items */}
             <div className="border-b border-gray-200">
+              <button
+                onClick={handleFavoritesClick}
+                className="relative flex items-center justify-between w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
+              >
+                <span>Seçilmişlər</span>
+                {getFavoriteItemCount() > 0 && (
+                  <span className="bg-[#5C4977] text-white text-xs rounded-full px-2 py-1 min-w-5 h-5 flex items-center justify-center">
+                    {getFavoriteItemCount()}
+                  </span>
+                )}
+              </button>
               {["Aksiyalar", "Mağazalar", "Bizimlə Əlaqə", "Çatdırılma & Geri Qaytarılma", "Outlet"].map((item, index) => (
                 <button
                   key={index}
@@ -504,6 +860,30 @@ export default function MetaShopHeader() {
                 </button>
               ))}
             </div>
+
+            {/* Admin Links for Mobile */}
+            {safeIsAuthenticated && getUserRole() === "admin" && (
+              <div className="border-b border-gray-200">
+                <div className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  Admin Panel
+                </div>
+                {[
+                  { to: "/admin/adminproducts", label: "Admin Products" },
+                  { to: "/admin/add-products", label: "Add Product" },
+                  { to: "/admin/admin-blogs", label: "Admin Blog" },
+                  { to: "/admin/add-blog", label: "Add Blog" },
+                ].map((item, index) => (
+                  <Link
+                    key={index}
+                    to={item.to}
+                    className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-purple-900 hover:bg-purple-50 border-b border-gray-100 cursor-pointer"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -512,7 +892,7 @@ export default function MetaShopHeader() {
           <div className="flex items-center justify-around py-2">
             <button 
               className="flex flex-col items-center text-purple-900 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
-              onClick={() => navigate('/')}
+              onClick={handleHomeClick}
             >
               <svg className="w-5 h-5 transition-all duration-300 cursor-pointer" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
@@ -525,23 +905,40 @@ export default function MetaShopHeader() {
               <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Məhsullar</span>
             </button>
 
-            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+            {/* Shopping Cart - DÜZƏLDİ (YENİ HƏLL) */}
+            <button 
+              className="relative flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
+              onClick={handleShoppingCartClick}
+            >
               <ShoppingCart className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+              {getCartItemCount() > 0 && (
+                <span className="absolute -top-1 right-4 flex items-center justify-center w-5 h-5 bg-[#5C4977] text-white text-xs font-bold rounded-full">
+                  {getCartItemCount()}
+                </span>
+              )}
               <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Səbət</span>
             </button>
 
-            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+            <button 
+              className="relative flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
+              onClick={handleFavoritesClick}
+            >
               <Heart className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+              {getFavoriteItemCount() > 0 && (
+                <span className="absolute -top-1 right-4 flex items-center justify-center w-5 h-5 bg-[#5C4977] text-white text-xs font-bold rounded-full">
+                  {getFavoriteItemCount()}
+                </span>
+              )}
               <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Seçilmiş</span>
             </button>
 
             <button 
               className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
               onClick={() => {
-                if (isAuthenticated) {
-                  navigate('/profile')
+                if (safeIsAuthenticated) {
+                  handleProfileClick()
                 } else {
-                  navigate('/login')
+                  handleLoginClick()
                 }
               }}
             >
@@ -551,6 +948,9 @@ export default function MetaShopHeader() {
           </div>
         </div>
       </div>
+
+      {/* Shopping Cart Modal */}
+      <SebetCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   )
 }

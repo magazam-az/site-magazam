@@ -4,7 +4,7 @@ import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Container from '../ui/Container';
+import Container from "../components/ui/Container"
 
 import 'swiper/css';
 import 'swiper/css/navigation';
