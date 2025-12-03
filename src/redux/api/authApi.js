@@ -19,8 +19,11 @@ export const authApi = createApi({
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data));
+
+          // ⭐ DÜZƏLDİLMİŞ
+          dispatch(setUser(data.user));
           dispatch(setIsAuthenticated(true));
+
         } catch (err) {}
       },
     }),
@@ -36,8 +39,11 @@ export const authApi = createApi({
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data));
+
+          // ⭐ DÜZƏLDİLMİŞ
+          dispatch(setUser(data.user));
           dispatch(setIsAuthenticated(true));
+
         } catch (err) {}
       },
     }),
@@ -62,7 +68,6 @@ export const authApi = createApi({
       }),
     }),
 
-    // 🔥🔥 UPDATE PROFILE BURADA 🔥🔥
     updateProfile: builder.mutation({
       query: (body) => ({
         url: "/me/update",
@@ -72,7 +77,10 @@ export const authApi = createApi({
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data.user));   // userSlice yenilənir
+
+          // ⭐ DÜZƏLDİLMİŞ
+          dispatch(setUser(data.user));
+
         } catch (error) {
           console.log(error);
         }

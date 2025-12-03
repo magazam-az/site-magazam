@@ -18,32 +18,63 @@ const StarRating = ({ rating = 0 }) => {
 };
 
 const ProductCard = ({ mehsul }) => {
+  const isOutOfStock = mehsul?.stock === 0;
+
   const handleAddToCart = (e) => {
-    e.preventDefault(); // Link-in naviqasiyasını dayandır
-    e.stopPropagation(); // Event-in yayılmasını dayandır
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isOutOfStock) return; // ehtiyat üçün, disabled olsa da
+
     // Səbətə əlavə etmə funksiyası burada
     console.log("Məhsul səbətə əlavə edildi:", mehsul?.name);
   };
 
   return (
     <Link to={`/product/${mehsul?._id}`}>
-      <div className="border rounded-lg p-4 shadow-md hover:shadow-xl transition bg-white cursor-pointer">
+      <div className="relative border rounded-lg p-4 shadow-md hover:shadow-xl transition bg-white cursor-pointer">
+        {/* Stokda bitib badge-i */}
+        {isOutOfStock && (
+          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+            Stokda bitib
+          </span>
+        )}
+
         <img
           src={mehsul?.image}
           alt={mehsul?.name}
           className="w-full h-40 object-cover rounded-md"
         />
 
-        <h3 className="font-semibold mt-3 text-lg">{mehsul?.name}</h3>
+        <h3 className="font-semibold mt-3 text-lg line-clamp-2">
+          {mehsul?.name}
+        </h3>
+
         <p className="text-gray-600">{mehsul?.price} AZN</p>
+
+        {/* Stok məlumatı */}
+        <p
+          className={`mt-1 text-sm font-medium ${
+            isOutOfStock ? "text-red-500" : "text-green-600"
+          }`}
+        >
+          {isOutOfStock
+            ? "Stokda bitib"
+            : `Stokda: ${mehsul?.stock ?? 0} ədəd`}
+        </p>
 
         <StarRating rating={mehsul?.rating || 4} />
 
-        <button 
+        <button
           onClick={handleAddToCart}
-          className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md"
+          disabled={isOutOfStock}
+          className={`w-full mt-3 py-2 rounded-md text-white transition ${
+            isOutOfStock
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          Səbətə əlavə et
+          {isOutOfStock ? "Stokda bitib" : "Səbətə əlavə et"}
         </button>
       </div>
     </Link>

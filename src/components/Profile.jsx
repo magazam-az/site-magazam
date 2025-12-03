@@ -1,85 +1,77 @@
 // src/pages/Profile.js
-import { useState, useEffect } from "react"
-import { useSelector, useDispatch } from "react-redux"
-import { useNavigate } from "react-router-dom"
-import { User, Mail, Edit, Save, X, Package, Heart, ShoppingCart } from "lucide-react"
-import { setUser } from "../redux/features/userSlice"
-import { useUpdateProfileMutation } from "../redux/api/authApi"
-import { toast } from "react-hot-toast"
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { User, Mail, Edit, Save, X, Package, Heart, ShoppingCart } from "lucide-react";
+import { useUpdateProfileMutation } from "../redux/api/authApi";
+import { toast } from "react-hot-toast";
 
 export default function Profile() {
-  const { user, isAuthenticated } = useSelector(state => state.user)
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  
-  const [isEditing, setIsEditing] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [message, setMessage] = useState({ type: '', text: '' })
+  const { user, isAuthenticated } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   // RTK Query mutation for updating profile
-  const [updateProfile, { isLoading }] = useUpdateProfileMutation()
+  const [updateProfile, { isLoading }] = useUpdateProfileMutation();
 
   // Initialize form with user data
   useEffect(() => {
     if (user) {
-      // Check both possible user object structures
-      setName(user?.user?.name || user?.name || "")
-      setEmail(user?.user?.email || user?.email || "")
+      // Artıq user birbaşa obyekt kimi gəlir: { name, email, ... }
+      setName(user?.name || "");
+      setEmail(user?.email || "");
     }
-  }, [user])
+  }, [user]);
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login')
+      navigate("/login");
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate]);
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setMessage({ type: 'error', text: 'Ad boş ola bilməz' })
-      return
+      setMessage({ type: "error", text: "Ad boş ola bilməz" });
+      return;
     }
 
-    setMessage({ type: '', text: '' })
+    setMessage({ type: "", text: "" });
 
     try {
-      // Use the RTK Query mutation to update profile
-      const res = await updateProfile({ name }).unwrap()
-      
-      // Update Redux state with the new user data
-      const updatedUser = res?.user || res
-      dispatch(setUser(updatedUser))
-      
-      // Show success message
-      toast.success("Adınız uğurla dəyişdirildi!")
-      setMessage({ type: 'success', text: 'Profil uğurla yeniləndi' })
-      setIsEditing(false)
-      
-      // Clear success message after 3 seconds
+      // Backend-ə yalnız name göndəririk
+      await updateProfile({ name }).unwrap();
+
+      // userSlice artıq authApi.onQueryStarted içində yenilənir
+      toast.success("Adınız uğurla dəyişdirildi!");
+      setMessage({ type: "success", text: "Profil uğurla yeniləndi" });
+      setIsEditing(false);
+
+      // 3 saniyədən sonra mesajı sil
       setTimeout(() => {
-        setMessage({ type: '', text: '' })
-      }, 3000)
-      
+        setMessage({ type: "", text: "" });
+      }, 3000);
     } catch (err) {
-      // Show error message
-      toast.error("Xəta baş verdi!")
-      setMessage({ type: 'error', text: 'Yeniləmə uğursuz oldu' })
-      console.error('Update error:', err)
+      console.error("Update error:", err);
+      toast.error("Xəta baş verdi!");
+      setMessage({ type: "error", text: "Yeniləmə uğursuz oldu" });
     }
-  }
+  };
 
   const handleCancel = () => {
-    // Reset form to original values
-    setName(user?.user?.name || user?.name || "")
-    setEmail(user?.user?.email || user?.email || "")
-    setIsEditing(false)
-    setMessage({ type: '', text: '' })
-  }
+    // Formu redux-dakı user dəyərlərinə qaytarırıq
+    setName(user?.name || "");
+    setEmail(user?.email || "");
+    setIsEditing(false);
+    setMessage({ type: "", text: "" });
+  };
 
   if (!isAuthenticated) {
-    return null
+    return null;
   }
 
   return (
@@ -103,8 +95,8 @@ export default function Profile() {
                     <User className="w-10 h-10 text-white" />
                   </div>
                   <div className="text-white">
-                    <h2 className="text-2xl font-bold">{user?.user?.name || user?.name}</h2>
-                    <p className="text-white/80">{user?.user?.email || user?.email}</p>
+                    <h2 className="text-2xl font-bold">{user?.name}</h2>
+                    <p className="text-white/80">{user?.email}</p>
                   </div>
                 </div>
               </div>
@@ -112,11 +104,13 @@ export default function Profile() {
               {/* Profile Form */}
               <div className="p-6">
                 {message.text && (
-                  <div className={`mb-6 p-4 rounded-lg ${
-                    message.type === 'success' 
-                      ? 'bg-green-50 text-green-800 border border-green-200' 
-                      : 'bg-red-50 text-red-800 border border-red-200'
-                  }`}>
+                  <div
+                    className={`mb-6 p-4 rounded-lg ${
+                      message.type === "success"
+                        ? "bg-green-50 text-green-800 border border-green-200"
+                        : "bg-red-50 text-red-800 border border-red-200"
+                    }`}
+                  >
                     {message.text}
                   </div>
                 )}
@@ -135,9 +129,9 @@ export default function Profile() {
                         onChange={(e) => setName(e.target.value)}
                         disabled={!isEditing}
                         className={`flex-1 px-4 py-3 border rounded-xl transition-all ${
-                          isEditing 
-                            ? 'border-[#5C4977] bg-white focus:ring-2 focus:ring-[#5C4977] focus:border-transparent' 
-                            : 'border-gray-200 bg-gray-50'
+                          isEditing
+                            ? "border-[#5C4977] bg-white focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
+                            : "border-gray-200 bg-gray-50"
                         }`}
                       />
                       {!isEditing ? (
@@ -197,8 +191,8 @@ export default function Profile() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Sürətli Girişlər</h3>
               <div className="space-y-3">
-                <button 
-                  onClick={() => navigate('/orders')}
+                <button
+                  onClick={() => navigate("/orders")}
                   className="w-full flex items-center gap-3 p-4 text-left rounded-xl border border-gray-200 hover:border-[#5C4977] hover:bg-[#f5f2fa] transition-all group"
                 >
                   <Package className="w-5 h-5 text-gray-400 group-hover:text-[#5C4977]" />
@@ -208,8 +202,8 @@ export default function Profile() {
                   </div>
                 </button>
 
-                <button 
-                  onClick={() => navigate('/wishlist')}
+                <button
+                  onClick={() => navigate("/wishlist")}
                   className="w-full flex items-center gap-3 p-4 text-left rounded-xl border border-gray-200 hover:border-[#5C4977] hover:bg-[#f5f2fa] transition-all group"
                 >
                   <Heart className="w-5 h-5 text-gray-400 group-hover:text-[#5C4977]" />
@@ -219,8 +213,8 @@ export default function Profile() {
                   </div>
                 </button>
 
-                <button 
-                  onClick={() => navigate('/cart')}
+                <button
+                  onClick={() => navigate("/cart")}
                   className="w-full flex items-center gap-3 p-4 text-left rounded-xl border border-gray-200 hover:border-[#5C4977] hover:bg-[#f5f2fa] transition-all group"
                 >
                   <ShoppingCart className="w-5 h-5 text-gray-400 group-hover:text-[#5C4977]" />
@@ -254,5 +248,5 @@ export default function Profile() {
         </div>
       </div>
     </div>
-  )
+  );
 }

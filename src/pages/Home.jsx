@@ -18,7 +18,7 @@ const Home = () => {
   return (
     <div className="pb-14 md:pb-0 bg-[#F3F4F6]">
       {/* <Container> */}
-            <Products2/>
+            {/* <Products2/> */}
 
       <Navbar />
       <MainSlider />

@@ -1,51 +1,6 @@
-import React from 'react';
-import Container from "../components/ui/Container"
-
-// Kategoriyalar üçün məlumatlar
-const categories = [
-  {
-    name: "Headsets",
-    productCount: 0,
-    imageUrl: "/images/250701160018572691.webp",
-    imageAlt: "Qara rəngli qulaqlıq şəkili"
-  },
-  {
-    name: "Motherboards",
-    productCount: 0,
-    imageUrl: "/images/fwebp.webp",
-    imageAlt: "Oyun anakartının şəkili"
-  },
-  {
-    name: "Apple MacBook",
-    productCount: 2,
-    imageUrl: "/images/1700920103.png",
-    imageAlt: "MacBook Pro-nun şəkili"
-  },
-  {
-    name: "Apple iPad",
-    productCount: 1,
-    imageUrl: "/images/250331120252145280.webp",
-    imageAlt: "Apple iPad Pro-nun şəkili"
-  },
-  {
-    name: "Drones",
-    productCount: 0,
-    imageUrl: "/images/ae5d8b9987be8d5ecdeb5d502a1e887c.png",
-    imageAlt: "Kiçik dron şəkili"
-  },
-  {
-    name: "Mirrorless",
-    productCount: 0,
-    imageUrl: "/images/D12.webp",
-    imageAlt: "Rəqəmsal güzgüsüz kamera şəkili"
-  },
-  {
-    name: "Apple iPhone",
-    productCount: 1,
-    imageUrl: "/images/gamenote_img_76_1702640727.png.webp",
-    imageAlt: "iPhone 15 Pro şəkili"
-  },
-];
+import React, { useMemo } from "react";
+import Container from "../components/ui/Container";
+import { useGetProductsQuery } from "../redux/api/productsApi";
 
 // Tək bir kategoriya elementinin komponenti
 const CategoryCard = ({ name, productCount, imageUrl, imageAlt }) => (
@@ -68,7 +23,9 @@ const CategoryCard = ({ name, productCount, imageUrl, imageAlt }) => (
 
     {/* Məhsul Məlumatı */}
     <div className="text-center mt-2 sm:mt-4 w-full">
-      <h3 className="font-bold text-gray-800 line-clamp-2" style={{ fontSize: '19px' }}>{name}</h3>
+      <h3 className="font-bold text-gray-800 line-clamp-2" style={{ fontSize: '19px' }}>
+        {name}
+      </h3>
       <p className={`text-sm mt-1 ${productCount > 0 ? 'text-gray-600' : 'text-gray-400'}`}>
         {productCount} product{productCount !== 1 ? 's' : ''}
       </p>
@@ -78,6 +35,71 @@ const CategoryCard = ({ name, productCount, imageUrl, imageAlt }) => (
 
 // Əsas Kateqoriya Bölməsi Komponenti
 export default function Categories() {
+  const { data, isLoading, isError } = useGetProductsQuery();
+
+  const categories = useMemo(() => {
+    const products = data?.products || [];
+
+    const categoryMap = products.reduce((acc, product) => {
+      const category = product.category;
+      if (!category) return acc;
+
+      if (!acc[category]) {
+        acc[category] = {
+          name: category,
+          productCount: 0,
+          imageUrl: "",
+          imageAlt: `${category} kateqoriyası`
+        };
+      }
+
+      acc[category].productCount += 1;
+
+      if (!acc[category].imageUrl) {
+        const url =
+          (product.images && product.images.length > 0 && product.images[0]?.url) ||
+          product.image ||
+          "";
+        if (url) {
+          acc[category].imageUrl = url;
+        }
+      }
+
+      return acc;
+    }, {});
+
+    return Object.values(categoryMap).map((cat) => ({
+      ...cat,
+      imageUrl:
+        cat.imageUrl ||
+        "https://placehold.co/150x150/6B7280/ffffff?text=No+Image",
+    }));
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <Container>
+        <div className="w-full py-8 sm:py-12 flex justify-center items-center">
+          <span className="text-gray-600 text-sm sm:text-base">
+            Yüklənir...
+          </span>
+        </div>
+      </Container>
+    );
+  }
+
+  if (isError || !categories.length) {
+    return (
+      <Container>
+        <div className="w-full py-8 sm:py-12 flex justify-center items-center">
+          <span className="text-gray-600 text-sm sm:text-base">
+            Kateqoriya tapılmadı.
+          </span>
+        </div>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <div className="w-full py-8 sm:py-12">
@@ -107,4 +129,3 @@ export default function Categories() {
     </Container>
   );
 }
-

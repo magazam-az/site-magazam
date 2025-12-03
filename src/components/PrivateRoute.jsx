@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const PrivateRoute = ({ children }) => {
-  // Store strukturuna uyğun olaraq userSlice-dan məlumatları alırıq
-  const { isAuthenticated, user } = useSelector((state) => state.userSlice);
+  const { isAuthenticated } = useSelector((state) => state.user);
   const navigate = useNavigate();
 
   useEffect(() => {
