@@ -48,7 +48,56 @@ const AdminProducts = () => {
                 console.error("Məhsul silinərkən xəta baş verdi:", error);
                 Swal.fire({
                     title: "Xəta!",
-                    text: "Məhsul silinirken xəta baş verdi.",
+                    text: "Məhsul silinərkən xəta baş verdi.",
+                    icon: "error",
+                    confirmButtonColor: "#DC2626",
+                });
+            }
+        }
+    };
+
+    // ✅ BÜTÜN MƏHSULLARI SİL DÜYMƏSİ
+    const handleDeleteAll = async () => {
+        if (!data?.products || data.products.length === 0) {
+            Swal.fire({
+                title: "Xəbərdarlıq",
+                text: "Silinəcək məhsul yoxdur.",
+                icon: "warning",
+                confirmButtonColor: "#5C4977",
+            });
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: "Bütün məhsulları silmək istədiyinizdən əminsiniz?",
+            text: "Bu əməliyyat geri qaytarıla bilməz və bütün məhsullar silinəcək!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Bəli, hamısını sil",
+            cancelButtonText: "Xeyr, ləğv et",
+            reverseButtons: true,
+            confirmButtonColor: "#DC2626",
+            cancelButtonColor: "#6B7280",
+        });
+
+        if (result.isConfirmed) {
+            try {
+                for (const product of data.products) {
+                    await deleteProduct(product._id);
+                }
+                await refetch();
+
+                Swal.fire({
+                    title: "Uğurlu!",
+                    text: "Bütün məhsullar uğurla silindi.",
+                    icon: "success",
+                    confirmButtonColor: "#5C4977",
+                });
+            } catch (error) {
+                console.error("Bütün məhsullar silinərkən xəta baş verdi:", error);
+                Swal.fire({
+                    title: "Xəta!",
+                    text: "Məhsullar silinərkən xəta baş verdi.",
                     icon: "error",
                     confirmButtonColor: "#DC2626",
                 });
@@ -96,13 +145,25 @@ const AdminProducts = () => {
                             <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Admin Panel</h1>
                             <p className="text-gray-600">Məhsulların idarə edilməsi</p>
                         </div>
-                        <button
-                            onClick={handleCreate}
-                            className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20"
-                        >
-                            <FaPlus className="h-5 w-5" />
-                            Yeni Məhsul
-                        </button>
+
+                        {/* ✅ Yuxarı sağ tərəfə 2 düymə: Bütün Məhsulları Sil + Yeni Məhsul */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <button
+                                onClick={handleDeleteAll}
+                                className="bg-red-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-red-300/50"
+                            >
+                                <MdDeleteSweep className="h-5 w-5" />
+                                Bütün Məhsulları Sil
+                            </button>
+
+                            <button
+                                onClick={handleCreate}
+                                className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20"
+                            >
+                                <FaPlus className="h-5 w-5" />
+                                Yeni Məhsul
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -126,15 +187,17 @@ const AdminProducts = () => {
                             </thead>
                             <tbody>
                                 {data?.products?.map((product) => (
-                                    <tr 
-                                        key={product._id} 
-                                        className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/2 transition-colors"
+                                    <tr
+                                        key={product._id}
+                                        className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
                                     >
                                         <td className="py-4 px-4">
                                             <div className="font-medium text-gray-800">{product.name}</div>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <span className="font-bold text-[#5C4977]">{product.price} AZN</span>
+                                            <span className="font-bold text-[#5C4977]">
+                                                {product.price} AZN
+                                            </span>
                                         </td>
                                         <td className="py-4 px-4">
                                             <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">

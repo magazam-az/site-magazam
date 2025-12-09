@@ -14,38 +14,55 @@ import AdminProducts from './components/admin/AdminProducts'
 import EditProduct from './components/admin/EditProduct'
 import AdminBlog from './components/admin/AdminBlog'
 import AddBlogs from './components/admin/AddBlogs'
+import CategoryManagement from './components/admin/CategoryManagement'
+import BrandManagement from './components/admin/BrandManagement'
+import SpecsManagement from './components/admin/SpecsManagement'
 
 import PrivateRoute from './components/PrivateRoute'
-import AdminRoute from './components/AdminRoues'   // ⭐ <-- BURADA IMPORT ET
+import AdminRoute from './components/AdminRoues'
 
 import ProductDetail from './components/ProductDetail'
 import Profile from './components/Profile'
 import SebetCart from './components/ShoppingCard'
 import FavoriteButton from './components/Favorites'
 import UpdateName from './components/Uptade'
-import EcommerceApp from './components/Filter'
+
+// ⭐ Filter Page (kategoriya + subcategory + dynamic breadcrumb)
+import Filter from './components/Filter'
+
 import AdminDashboard from './components/admin/AdminDashboard'
 
 function App() {
   return (
     <BrowserRouter>
       <div className="App">
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          theme="light"
-        />
+        <ToastContainer position="top-right" autoClose={3000} theme="light" />
 
         <Routes>
+          {/* ====================== PUBLIC ROUTES ====================== */}
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RegisterForm />} />
           <Route path="/login" element={<LoginForm />} />
-          <Route path='/product/:id' element={<ProductDetail />} />
-          <Route path='/profile' element={<PrivateRoute><Profile /></PrivateRoute>} />
-          <Route path='/favourites' element={<PrivateRoute><FavoriteButton /></PrivateRoute>} />
-          <Route path='/update' element={<PrivateRoute><UpdateName /></PrivateRoute>} />
-          <Route path='/filter' element={<EcommerceApp />} />
-          <Route path='/shoppingcard' element={<PrivateRoute><SebetCart /></PrivateRoute>} />
+
+          {/* Product Detail */}
+          <Route path="/product/:id" element={<ProductDetail />} />
+
+          {/* Profile & User Routes */}
+          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          <Route path="/favourites" element={<PrivateRoute><FavoriteButton /></PrivateRoute>} />
+          <Route path="/update" element={<PrivateRoute><UpdateName /></PrivateRoute>} />
+          <Route path="/shoppingcard" element={<PrivateRoute><SebetCart /></PrivateRoute>} />
+
+          {/* ====================== FILTER ROUTES (YENİ) ====================== */}
+          {/* No category → bütün məhsullar */}
+          <Route path="/catalog" element={<Filter />} />
+
+          {/* Category seçilib */}
+          <Route path="/catalog/:category" element={<Filter />} />
+
+          {/* Category + Subcategory */}
+          <Route path="/catalog/:category/:subcategory" element={<Filter />} />
+
 
           {/* ====================== ADMIN ROUTES ====================== */}
           <Route path='/admin/add-products' element={
@@ -60,8 +77,7 @@ function App() {
             </AdminRoute>
           } />
 
-
-                    <Route path='/admin/admin-dashboard' element={
+          <Route path='/admin/admin-dashboard' element={
             <AdminRoute>
               <AdminDashboard />
             </AdminRoute>
@@ -82,6 +98,24 @@ function App() {
           <Route path='/admin/add-blog' element={
             <AdminRoute>
               <AddBlogs />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/categories' element={
+            <AdminRoute>
+              <CategoryManagement />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/brands' element={
+            <AdminRoute>
+              <BrandManagement />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/specs' element={
+            <AdminRoute>
+              <SpecsManagement />
             </AdminRoute>
           } />
         </Routes>

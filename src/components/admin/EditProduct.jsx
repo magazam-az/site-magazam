@@ -5,6 +5,9 @@ import {
   useEditProductMutation, 
   useGetProductsQuery 
 } from '../../redux/api/productsApi';
+import { useGetCategoriesQuery } from '../../redux/api/categoryApi';
+import { useGetBrandsQuery } from '../../redux/api/brandApi';
+import { useGetSpecsQuery } from '../../redux/api/specApi';
 import Swal from 'sweetalert2';
 import { 
   Upload, 
@@ -15,10 +18,12 @@ import {
   DollarSign, 
   FileText, 
   Layers, 
-  ShoppingBag,
   Cpu,
   Image as ImageIcon,
-  Save
+  Save,
+  Check,
+  ArrowLeft,
+  Info
 } from 'lucide-react';
 
 const EditProduct = () => {
@@ -27,11 +32,14 @@ const EditProduct = () => {
   const { data, error, isLoading } = useGetProductDetailsQuery(id);
   const { refetch } = useGetProductsQuery();
   const [editProduct, { isLoading: isUpdating }] = useEditProductMutation();
+  const { data: categoriesData } = useGetCategoriesQuery();
+  const categories = categoriesData?.categories || [];
 
-  const categories = [
-    "Phone", "Laptop", "Tablet", "TV", "Headphones", 
-    "Smartwatch", "Console", "Camera", "Accessory"
-  ];
+  const { data: brandsData } = useGetBrandsQuery();
+  const brands = brandsData?.brands || [];
+
+  const { data: specsData } = useGetSpecsQuery();
+  const specs = specsData?.specs || [];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -40,12 +48,18 @@ const EditProduct = () => {
     price: '',
     description: '',
     category: '',
-    seller: '',
+    subcategory: '',
     stock: '',
   });
+  
+  // Seçilmiş xüsusiyyətlər
+  const [selectedSpecs, setSelectedSpecs] = useState({});
+  
+  // Seçilmiş kateqoriyanın alt kateqoriyalarını tap
+  const selectedCategory = categories.find((cat) => cat.name === formData.category);
+  const subcategories = selectedCategory?.subcategories || [];
 
   const [formErrors, setFormErrors] = useState({});
-  const [specsInput, setSpecsInput] = useState([{ key: "", value: "" }]);
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [removedImages, setRemovedImages] = useState([]);
@@ -61,28 +75,55 @@ const EditProduct = () => {
         price: product.price || '',
         description: product.description || '',
         category: product.category || '',
-        seller: product.seller || '',
+        subcategory: product.subcategory || '',
         stock: product.stock || '',
       });
 
+      // Xüsusiyyətləri yüklə
       if (product.specs && typeof product.specs === 'object') {
-        const specsArray = Object.entries(product.specs).map(([key, value]) => ({
-          key,
-          value: String(value)
-        }));
-        setSpecsInput(specsArray.length > 0 ? specsArray : [{ key: "", value: "" }]);
-      }
-
-      if (product.images && product.images.length > 0) {
-        setPreviews(product.images.map(img => img.url));
-        setMainImageIndex(0);
+        // Product specs-də spec name və value var
+        // Bizim selectedSpecs-də specId -> specName saxlamalıyıq
+        const selectedSpecsMap = {};
+        Object.entries(product.specs).forEach(([specName, specValue]) => {
+          // Specs array-dən spec name-ə uyğun gələn spec-i tap
+          const spec = specs.find(s => s.name === specName);
+          if (spec) {
+            selectedSpecsMap[spec._id] = spec.name;
+          }
+        });
+        setSelectedSpecs(selectedSpecsMap);
       }
     }
-  }, [data]);
+
+    if (data?.product && data.product.images && data.product.images.length > 0) {
+      setPreviews(data.product.images.map(img => img.url));
+      setMainImageIndex(0);
+    }
+  }, [data, specs]);
+
+  // Xüsusiyyət seçimi üçün funksiya
+  const handleSpecChange = (specId, specName) => {
+    setSelectedSpecs(prev => {
+      // Əgər spec artıq seçilibsə, sil
+      if (prev[specId]) {
+        const newSpecs = { ...prev };
+        delete newSpecs[specId];
+        return newSpecs;
+      }
+      // Əgər spec seçilməyibsə, əlavə et
+      return { ...prev, [specId]: specName };
+    });
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      // Əgər kateqoriya dəyişirsə, alt kateqoriyanı sıfırla
+      if (name === "category") {
+        return { ...prev, [name]: value, subcategory: "" };
+      }
+      return { ...prev, [name]: value };
+    });
     
     if (formErrors[name]) {
       setFormErrors(prev => ({
@@ -119,9 +160,6 @@ const EditProduct = () => {
       case 'category':
         if (!value.trim()) errors.category = 'Kateqoriya tələb olunur';
         break;
-      case 'seller':
-        if (!value.trim()) errors.seller = 'Satıcı tələb olunur';
-        break;
     }
     
     setFormErrors(prev => ({ ...prev, ...errors }));
@@ -137,7 +175,8 @@ const EditProduct = () => {
         text: "Maksimum 6 şəkil ola bilər",
         icon: "warning",
         background: '#f8f7fa',
-        color: '#5C4977'
+        color: '#5C4977',
+        confirmButtonColor: '#5C4977'
       });
       return;
     }
@@ -149,7 +188,8 @@ const EditProduct = () => {
           text: `${file.name} faylının ölçüsü çox böyükdür (maksimum 5MB)`,
           icon: "warning",
           background: '#f8f7fa',
-          color: '#5C4977'
+          color: '#5C4977',
+          confirmButtonColor: '#5C4977'
         });
         return false;
       }
@@ -193,28 +233,11 @@ const EditProduct = () => {
     setMainImageIndex(index);
   };
 
-  const addSpecField = () => {
-    setSpecsInput((prev) => [...prev, { key: "", value: "" }]);
-  };
-
-  const removeSpecField = (idx) => {
-    setSpecsInput((prev) => prev.filter((_, index) => index !== idx));
-  };
-
-  const handleSpecChange = (e, idx) => {
-    const { name, value } = e.target;
-    setSpecsInput((prev) => {
-      const updated = [...prev];
-      updated[idx][name] = value;
-      return updated;
-    });
-  };
-
   const validateForm = () => {
     const errors = {};
     const requiredFields = {
       name: "Ad", brand: "Brend", model: "Model", price: "Qiymət",
-      description: "Açıqlama", category: "Kateqoriya", stock: "Stok", seller: "Satıcı"
+      description: "Açıqlama", category: "Kateqoriya", stock: "Stok"
     };
 
     for (const [field, fieldName] of Object.entries(requiredFields)) {
@@ -231,6 +254,11 @@ const EditProduct = () => {
       errors.stock = "Stok miqdarı düzgün formatda olmalıdır";
     }
 
+    // Əgər kateqoriya seçilibsə və alt kateqoriyalar varsa, alt kateqoriya tələb olunur
+    if (formData.category && subcategories.length > 0 && !formData.subcategory) {
+      errors.subcategory = "Alt kateqoriya seçilməlidir";
+    }
+
     const remainingImages = previews.length - removedImages.length;
     if (remainingImages === 0 && images.length === 0) {
       Swal.fire({ 
@@ -238,7 +266,8 @@ const EditProduct = () => {
         text: "Ən azı bir şəkil olmalıdır", 
         icon: "error",
         background: '#f8f7fa',
-        color: '#5C4977'
+        color: '#5C4977',
+        confirmButtonColor: '#5C4977'
       });
       return false;
     }
@@ -258,22 +287,21 @@ const EditProduct = () => {
       const updatedData = new FormData();
       
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
+        // subcategory-ni ayrıca idarə et
+        if (key === "subcategory") {
+          if (value && value.trim() !== "") {
+            updatedData.append(key, value.toString().trim());
+          }
+        } else if (value !== undefined && value !== null && value !== '') {
           updatedData.append(key, value.toString());
         }
       });
 
       updatedData.append("mainImageIndex", mainImageIndex.toString());
 
-      const specsObj = {};
-      specsInput.forEach((item) => {
-        if (item.key && item.value && item.key.trim() !== '' && item.value.trim() !== '') {
-          specsObj[item.key.trim()] = item.value.trim();
-        }
-      });
-      
-      if (Object.keys(specsObj).length > 0) {
-        updatedData.append("specs", JSON.stringify(specsObj));
+      // Seçilmiş xüsusiyyətləri əlavə et
+      if (Object.keys(selectedSpecs).length > 0) {
+        updatedData.append("specs", JSON.stringify(selectedSpecs));
       }
 
       images.forEach((file) => {
@@ -300,7 +328,10 @@ const EditProduct = () => {
         text: "Məhsul uğurla yeniləndi!",
         icon: "success",
         background: '#f8f7fa',
-        color: '#5C4977'
+        color: '#5C4977',
+        confirmButtonColor: '#5C4977',
+        timer: 2000,
+        showConfirmButton: false
       }).then(() => {
         navigate("/admin/adminproducts");
         refetch();
@@ -330,13 +361,14 @@ const EditProduct = () => {
         text: errorMessage,
         icon: "error",
         background: '#f8f7fa',
-        color: '#5C4977'
+        color: '#5C4977',
+        confirmButtonColor: '#5C4977'
       });
     }
   };
 
   if (isLoading) return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 flex items-center justify-center">
       <div className="flex flex-col items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977] mb-4"></div>
         <div className="text-lg text-[#5C4977]">Məhsul məlumatları yüklənir...</div>
@@ -345,17 +377,17 @@ const EditProduct = () => {
   );
   
   if (error) return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl border border-red-200 p-8 max-w-md w-full">
         <div className="text-red-500 text-center">
           <X className="h-12 w-12 mx-auto mb-4" />
-          <h3 className="text-xl font-bold mb-2">Xəta baş verdi</h3>
-          <p>{error.message}</p>
+          <h3 className="text-xl font-bold mb-2 text-[#5C4977]">Xəta baş verdi</h3>
+          <p className="text-gray-600 mb-4">{error.message}</p>
           <button
-            onClick={() => navigate(-1)}
-            className="mt-4 w-full bg-[#5C4977] text-white py-2 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 transition-colors"
+            onClick={() => navigate("/admin/adminproducts")}
+            className="mt-4 w-full bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 transition-colors"
           >
-            Geri qayıt
+            Admin məhsullarına qayıt
           </button>
         </div>
       </div>
@@ -363,59 +395,52 @@ const EditProduct = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 px-4 pb-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-[#5C4977] hover:text-[#5C4977]/70 transition-colors mb-6"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Geri qayıt
-          </button>
-          
-          <div className="flex items-center gap-3 mb-2">
-            <Package className="h-8 w-8 text-[#5C4977]" />
-            <h1 className="text-3xl font-bold text-[#5C4977]">Məhsulu Redaktə Et</h1>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Məhsulu Redaktə Et</h1>
+              <p className="text-gray-600">"{formData.name}" məhsulunun məlumatlarını yeniləyin</p>
+            </div>
+            <button
+              onClick={() => navigate("/admin/adminproducts")}
+              className="flex items-center gap-2 text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Geri qayıt
+            </button>
           </div>
-          <p className="text-gray-600">"{formData.name}" məhsulunun məlumatlarını yeniləyin</p>
         </div>
 
         {/* Form Container */}
-        <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Basic Information Section */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Tag className="h-5 w-5 text-[#5C4977]" />
-                <h2 className="text-xl font-semibold text-[#5C4977]">Əsas Məlumatlar</h2>
-              </div>
-
+            {/* Əsas məlumatlar */}
+            <div className="border-b border-[#5C4977]/10 pb-6">
+              <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                <Info className="h-5 w-5" />
+                Əsas Məlumatlar
+              </h2>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Name */}
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-[#5C4977] mb-2">
-                    <span className="flex items-center gap-1">
-                      <Package className="h-4 w-4" />
-                      Ad *
-                    </span>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Məhsul Adı *
                   </label>
                   <input
-                    type="text"
-                    id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
                     onBlur={(e) => validateField('name', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                    placeholder="Məhsul adını daxil edin"
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
                       formErrors.name 
                         ? 'border-red-500 bg-red-50' 
                         : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
                     }`}
-                    placeholder="Məhsulun adı"
                     disabled={isUpdating}
                   />
                   {formErrors.name && (
@@ -423,29 +448,30 @@ const EditProduct = () => {
                   )}
                 </div>
 
-                {/* Brand */}
+                {/* Brand - SELECT olaraq */}
                 <div>
-                  <label htmlFor="brand" className="block text-sm font-medium text-[#5C4977] mb-2">
-                    <span className="flex items-center gap-1">
-                      <Tag className="h-4 w-4" />
-                      Brend *
-                    </span>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Brend *
                   </label>
-                  <input
-                    type="text"
-                    id="brand"
+                  <select
                     name="brand"
                     value={formData.brand}
                     onChange={handleInputChange}
                     onBlur={(e) => validateField('brand', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
                       formErrors.brand 
                         ? 'border-red-500 bg-red-50' 
                         : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
                     }`}
-                    placeholder="Brend"
                     disabled={isUpdating}
-                  />
+                  >
+                    <option value="">Brend seçin</option>
+                    {brands.map((brand) => (
+                      <option key={brand._id} value={brand.name}>
+                        {brand.name}
+                      </option>
+                    ))}
+                  </select>
                   {formErrors.brand && (
                     <p className="mt-1 text-sm text-red-600">{formErrors.brand}</p>
                   )}
@@ -453,25 +479,20 @@ const EditProduct = () => {
 
                 {/* Model */}
                 <div>
-                  <label htmlFor="model" className="block text-sm font-medium text-[#5C4977] mb-2">
-                    <span className="flex items-center gap-1">
-                      <Cpu className="h-4 w-4" />
-                      Model *
-                    </span>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Model *
                   </label>
                   <input
-                    type="text"
-                    id="model"
                     name="model"
                     value={formData.model}
                     onChange={handleInputChange}
                     onBlur={(e) => validateField('model', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                    placeholder="Model adını daxil edin"
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
                       formErrors.model 
                         ? 'border-red-500 bg-red-50' 
                         : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
                     }`}
-                    placeholder="Model"
                     disabled={isUpdating}
                   />
                   {formErrors.model && (
@@ -481,25 +502,21 @@ const EditProduct = () => {
 
                 {/* Price */}
                 <div>
-                  <label htmlFor="price" className="block text-sm font-medium text-[#5C4977] mb-2">
-                    <span className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
-                      Qiymət *
-                    </span>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Qiymət (AZN) *
                   </label>
                   <input
-                    type="number"
-                    id="price"
                     name="price"
+                    type="number"
                     value={formData.price}
                     onChange={handleInputChange}
                     onBlur={(e) => validateField('price', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                    placeholder="Qiyməti daxil edin"
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
                       formErrors.price 
                         ? 'border-red-500 bg-red-50' 
                         : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
                     }`}
-                    placeholder="0.00"
                     step="0.01"
                     min="0"
                     disabled={isUpdating}
@@ -509,55 +526,23 @@ const EditProduct = () => {
                   )}
                 </div>
 
-                {/* Seller */}
-                <div>
-                  <label htmlFor="seller" className="block text-sm font-medium text-[#5C4977] mb-2">
-                    <span className="flex items-center gap-1">
-                      <ShoppingBag className="h-4 w-4" />
-                      Satıcı *
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    id="seller"
-                    name="seller"
-                    value={formData.seller}
-                    onChange={handleInputChange}
-                    onBlur={(e) => validateField('seller', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
-                      formErrors.seller 
-                        ? 'border-red-500 bg-red-50' 
-                        : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
-                    }`}
-                    placeholder="Satıcı"
-                    disabled={isUpdating}
-                  />
-                  {formErrors.seller && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.seller}</p>
-                  )}
-                </div>
-
                 {/* Stock */}
                 <div>
-                  <label htmlFor="stock" className="block text-sm font-medium text-[#5C4977] mb-2">
-                    <span className="flex items-center gap-1">
-                      <Layers className="h-4 w-4" />
-                      Stok *
-                    </span>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Stok Miqdarı *
                   </label>
                   <input
-                    type="number"
-                    id="stock"
                     name="stock"
+                    type="number"
                     value={formData.stock}
                     onChange={handleInputChange}
                     onBlur={(e) => validateField('stock', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                    placeholder="Stok miqdarını daxil edin"
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
                       formErrors.stock 
                         ? 'border-red-500 bg-red-50' 
                         : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
                     }`}
-                    placeholder="0"
                     min="0"
                     disabled={isUpdating}
                   />
@@ -567,20 +552,16 @@ const EditProduct = () => {
                 </div>
 
                 {/* Category */}
-                <div className="md:col-span-2">
-                  <label htmlFor="category" className="block text-sm font-medium text-[#5C4977] mb-2">
-                    <span className="flex items-center gap-1">
-                      <Tag className="h-4 w-4" />
-                      Kateqoriya *
-                    </span>
+                <div>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Kateqoriya *
                   </label>
                   <select
-                    id="category"
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
                     onBlur={(e) => validateField('category', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
                       formErrors.category 
                         ? 'border-red-500 bg-red-50' 
                         : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
@@ -589,36 +570,71 @@ const EditProduct = () => {
                   >
                     <option value="">Kateqoriya seçin</option>
                     {categories.map((category) => (
-                      <option key={category} value={category}>{category}</option>
+                      <option key={category._id} value={category.name}>
+                        {category.name}
+                      </option>
                     ))}
                   </select>
                   {formErrors.category && (
                     <p className="mt-1 text-sm text-red-600">{formErrors.category}</p>
                   )}
                 </div>
-              </div>
 
-              {/* Description */}
+                {/* Subcategory */}
+                {formData.category && subcategories.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                      Alt Kateqoriya *
+                    </label>
+                    <select
+                      name="subcategory"
+                      value={formData.subcategory}
+                      onChange={handleInputChange}
+                      onBlur={(e) => validateField('subcategory', e.target.value)}
+                      className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                        formErrors.subcategory 
+                          ? 'border-red-500 bg-red-50' 
+                          : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
+                      }`}
+                      disabled={isUpdating}
+                    >
+                      <option value="">Alt kateqoriya seçin</option>
+                      {subcategories.map((subcategory) => (
+                        <option key={subcategory._id} value={subcategory.name}>
+                          {subcategory.name}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.subcategory && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.subcategory}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Açıqlama */}
+            <div className="border-b border-[#5C4977]/10 pb-6">
+              <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Açıqlama
+              </h2>
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-[#5C4977] mb-2">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    Açıqlama *
-                  </span>
+                <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                  Məhsul Haqqında *
                 </label>
                 <textarea
-                  id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   onBlur={(e) => validateField('description', e.target.value)}
+                  placeholder="Məhsul haqqında ətraflı məlumat yazın..."
                   rows="4"
-                  className={`block w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
+                  className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors ${
                     formErrors.description 
                       ? 'border-red-500 bg-red-50' 
                       : 'border-[#5C4977]/20 hover:border-[#5C4977]/40'
                   }`}
-                  placeholder="Məhsul haqqında ətraflı məlumat..."
                   disabled={isUpdating}
                 />
                 {formErrors.description && (
@@ -627,205 +643,221 @@ const EditProduct = () => {
               </div>
             </div>
 
-            {/* Specs Section */}
-            <div className="border-t border-[#5C4977]/10 pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Cpu className="h-5 w-5 text-[#5C4977]" />
-                <h2 className="text-xl font-semibold text-[#5C4977]">Texniki Xüsusiyyətlər</h2>
-                <span className="text-sm text-gray-500">(İstəyə bağlı)</span>
+            {/* Texniki Xüsusiyyətlər */}
+            <div className="border-b border-[#5C4977]/10 pb-6">
+              <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                Xüsusiyyətlər (Seçmək üçün klikləyin)
+              </h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {specs.map((spec) => (
+                    <button
+                      key={spec._id}
+                      type="button"
+                      onClick={() => handleSpecChange(spec._id, spec.name)}
+                      className={`p-3 border rounded-xl text-left transition-all duration-200 ${
+                        selectedSpecs[spec._id]
+                          ? 'bg-[#5C4977] text-white border-[#5C4977]'
+                          : 'border-[#5C4977]/20 hover:border-[#5C4977] hover:bg-[#5C4977]/5'
+                      }`}
+                      disabled={isUpdating}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{spec.name}</span>
+                        {selectedSpecs[spec._id] && (
+                          <Check className="h-5 w-5 text-white" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {specs.length === 0 && (
+                  <p className="text-sm text-gray-500">
+                    Xüsusiyyət yoxdur. Admin panelindən xüsusiyyət əlavə edin.
+                  </p>
+                )}
+                {Object.keys(selectedSpecs).length > 0 && (
+                  <div className="mt-4 p-4 bg-[#5C4977]/5 rounded-xl">
+                    <p className="text-sm font-medium text-[#5C4977] mb-2">
+                      Seçilmiş Xüsusiyyətlər:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(selectedSpecs).map(([specId, specName]) => (
+                        <span
+                          key={specId}
+                          className="inline-flex items-center gap-1 bg-[#5C4977] text-white px-3 py-1 rounded-full text-sm"
+                        >
+                          {specName}
+                          <button
+                            type="button"
+                            onClick={() => handleSpecChange(specId, specName)}
+                            className="ml-1 hover:text-red-200"
+                            disabled={isUpdating}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Şəkillər */}
+            <div className="pb-6">
+              <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                Məhsul Şəkilləri
+              </h2>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-[#5C4977] mb-3">
+                  Yeni şəkillər əlavə edin (Maksimum 6 şəkil)
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={previews.length - removedImages.length + images.length >= 6 || isUpdating}
+                    className="w-full p-3 border-2 border-dashed border-[#5C4977]/30 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5C4977]/10 file:text-[#5C4977] hover:file:bg-[#5C4977]/20 disabled:opacity-50 cursor-pointer"
+                  />
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <Upload className="h-5 w-5 text-[#5C4977]/60" />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                {specsInput.map((spec, index) => (
-                  <div key={index} className="flex gap-3 items-start">
-                    <div className="flex-1">
-                      <input
-                        name="key"
-                        value={spec.key}
-                        onChange={(e) => handleSpecChange(e, index)}
-                        placeholder="Xüsusiyyət (məs: RAM)"
-                        className="w-full px-4 py-2 border border-[#5C4977]/20 rounded-lg focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
-                      />
+              {/* Əsas Şəkil */}
+              {previews.length > 0 && (
+                <div className="mb-6 p-4 border-2 border-green-500 rounded-xl bg-green-50">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={previews[mainImageIndex]}
+                      alt="Əsas şəkil"
+                      className="w-32 h-32 object-cover border-2 border-green-500 rounded-lg shadow-md"
+                    />
+                    <div>
+                      <div className="inline-flex items-center gap-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium mb-2">
+                        <Star className="h-3 w-3" />
+                        Əsas Şəkil
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Bu şəkil məhsulun ön şəkili kimi göstəriləcək
+                      </p>
                     </div>
-                    
-                    <div className="flex-1">
-                      <input
-                        name="value"
-                        value={spec.value}
-                        onChange={(e) => handleSpecChange(e, index)}
-                        placeholder="Dəyər (məs: 16GB)"
-                        className="w-full px-4 py-2 border border-[#5C4977]/20 rounded-lg focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
-                      />
-                    </div>
-                    
-                    {specsInput.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeSpecField(index)}
-                        className="text-red-500 hover:text-red-700 p-2 transition-colors"
-                        title="Sil"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    )}
                   </div>
-                ))}
-                
+                </div>
+              )}
+
+              {/* Şəkil Previews */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {previews.length > 0 ? (
+                  previews.map((preview, index) => {
+                    const existingImage = data?.product?.images?.find(img => img.url === preview);
+                    const isExistingImage = !!existingImage;
+                    const isRemoved = removedImages.includes(existingImage?.public_id);
+
+                    if (isRemoved) return null;
+
+                    return (
+                      <div key={index} className="relative group">
+                        <div className={`aspect-square overflow-hidden rounded-lg border-2 ${
+                          index === mainImageIndex ? 'border-green-500' : 'border-[#5C4977]/20'
+                        } group-hover:border-[#5C4977]/40 transition-colors`}>
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
+                        {index === mainImageIndex && (
+                          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            Əsas
+                          </div>
+                        )}
+
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {index !== mainImageIndex && (
+                            <button
+                              type="button"
+                              onClick={() => setAsMainImage(index)}
+                              className="bg-green-500 hover:bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md"
+                              title="Əsas şəkil et"
+                              disabled={isUpdating}
+                            >
+                              <Star className="h-3 w-3" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index, isExistingImage, existingImage?.public_id)}
+                            className="bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md"
+                            title="Sil"
+                            disabled={isUpdating}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full flex flex-col items-center justify-center p-8 border-2 border-dashed border-[#5C4977]/20 rounded-xl bg-[#5C4977]/5">
+                    <ImageIcon className="h-12 w-12 text-[#5C4977]/40 mb-4" />
+                    <p className="text-[#5C4977]/70 text-center">
+                      Heç bir şəkil əlavə edilməyib
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-sm text-gray-500">
+                  {previews.length - removedImages.length + images.length}/6 şəkil • Maksimum ölçü: 5MB
+                </p>
                 <button
                   type="button"
-                  onClick={addSpecField}
-                  className="flex items-center gap-2 text-[#5C4977] hover:text-[#5C4977]/70 transition-colors"
+                  onClick={() => document.querySelector('input[type="file"]').click()}
+                  disabled={previews.length - removedImages.length + images.length >= 6 || isUpdating}
+                  className="text-sm text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors disabled:opacity-50"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Yeni Xüsusiyyət Əlavə Et
+                  <Upload className="inline mr-1 h-4 w-4" />
+                  Şəkil əlavə et
                 </button>
               </div>
             </div>
 
-            {/* Images Section */}
-            <div className="border-t border-[#5C4977]/10 pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <ImageIcon className="h-5 w-5 text-[#5C4977]" />
-                <h2 className="text-xl font-semibold text-[#5C4977]">Məhsul Şəkilləri</h2>
-              </div>
-
-              <div className="space-y-6">
-                {/* Main Image Preview */}
-                {previews.length > 0 && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Star className="h-5 w-5 text-green-600" />
-                      <span className="font-medium text-green-700">Əsas Şəkil</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <img
-                        src={previews[mainImageIndex]}
-                        alt="Əsas şəkil"
-                        className="w-32 h-32 object-cover rounded-lg border-2 border-green-500 shadow-lg"
-                      />
-                      <div>
-                        <p className="text-sm text-gray-600">
-                          Bu şəkil məhsulun ön şəkili kimi göstəriləcək
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Digər şəkillərin üzərindəki ★ düyməsinə klikləyərək əssas şəkili dəyişə bilərsiniz
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Upload Area */}
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Yeni şəkillər əlavə edin (Maksimum 6)
-                  </label>
-                  <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                    previews.length - removedImages.length + images.length >= 6
-                      ? 'border-gray-300 bg-gray-50'
-                      : 'border-[#5C4977]/30 hover:border-[#5C4977]/50 bg-[#5C4977]/5'
-                  }`}>
-                    <Upload className="h-12 w-12 text-[#5C4977]/50 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">Şəkilləri buraya sürüşdürün və ya klikləyin</p>
-                    <p className="text-sm text-gray-500 mb-4">Maksimum 6 şəkil, hər biri 5MB-dan az olmalıdır</p>
-                    <label className="inline-block cursor-pointer">
-                      <span className="bg-[#5C4977] text-white py-2 px-6 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        Şəkil Seç
-                      </span>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        disabled={previews.length - removedImages.length + images.length >= 6 || isUpdating}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {/* Image Gallery */}
-                {previews.length > 0 && (
-                  <div>
-                    <h3 className="font-medium text-[#5C4977] mb-3">Şəkillər ({previews.length}/6)</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {previews.map((preview, index) => {
-                        const existingImage = data?.product?.images?.find(img => img.url === preview);
-                        const isExistingImage = !!existingImage;
-                        const isRemoved = removedImages.includes(existingImage?.public_id);
-
-                        if (isRemoved) return null;
-
-                        return (
-                          <div key={index} className="relative group">
-                            <div className={`aspect-square rounded-lg overflow-hidden border-2 ${
-                              index === mainImageIndex ? 'border-green-500' : 'border-gray-200'
-                            }`}>
-                              <img
-                                src={preview}
-                                alt={`Preview ${index}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            
-                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                type="button"
-                                onClick={() => removeImage(index, isExistingImage, existingImage?.public_id)}
-                                className="bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-colors"
-                                title="Sil"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                              {index !== mainImageIndex && (
-                                <button
-                                  type="button"
-                                  onClick={() => setAsMainImage(index)}
-                                  className="bg-green-500 hover:bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-colors"
-                                  title="Əsas şəkil et"
-                                >
-                                  <Star className="h-4 w-4" />
-                                </button>
-                              )}
-                            </div>
-                            
-                            {index === mainImageIndex && (
-                              <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                                Əsas
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Submit Button */}
-            <div className="border-t border-[#5C4977]/10 pt-6">
-              <button
-                type="submit"
-                disabled={isUpdating}
-                className="w-full bg-gradient-to-r from-[#5C4977] to-[#7A659E] text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
-                {isUpdating ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Məhsul yenilənir...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <Save className="h-5 w-5" />
-                    Məhsulu Yenilə
-                  </div>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isUpdating}
+              className="w-full bg-[#5C4977] text-white py-4 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5C4977]/20"
+            >
+              {isUpdating ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                  Məhsul yenilənir...
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <Save className="h-5 w-5" />
+                  Məhsulu Yenilə
+                </div>
+              )}
+            </button>
           </form>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <p className="text-sm text-gray-500">
+            © 2024 META SHOP Admin Panel. Bütün hüquqlar qorunur.
+          </p>
         </div>
       </div>
     </div>
