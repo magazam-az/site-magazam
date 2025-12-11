@@ -1,23 +1,13 @@
 // src/pages/Filter.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  SlidersHorizontal,
-  Check,
-  Shuffle,
-  Search,
-  Heart,
-  Filter as FilterIcon,
-  X,
-  Star,
-  Tag,
-  ChevronRight,
-} from "lucide-react";
+import { Check, Shuffle, Search, Heart, Filter as FilterIcon } from "lucide-react";
 import {
   useFilterProductsQuery,
   useGetProductsQuery,
 } from "../redux/api/productsApi";
 import { useGetCategoriesQuery } from "../redux/api/categoryApi";
 import { useGetSpecsQuery } from "../redux/api/specApi";
+import { useGetBrandsQuery } from "../redux/api/brandApi";
 import { toast } from "react-hot-toast";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Breadcrumb from "./ui/Breadcrumb";
@@ -185,16 +175,14 @@ const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax })
   const maxPercentage = ((valueMax - min) / (max - min)) * 100;
 
   return (
-    <div className="relative pt-6">
-      <div className="relative w-full h-6">
-        {/* Track */}
-        <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-gray-200 rounded-full transform -translate-y-1/2">
-          {/* Active segment */}
+    <div className="relative pt-4">
+      <div className="relative w-full h-5">
+        <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 rounded-full -translate-y-1/2">
           <div
             className="absolute top-0 h-full bg-[#5C4977] rounded-full"
-            style={{ 
-              left: `${minPercentage}%`, 
-              width: `${maxPercentage - minPercentage}%` 
+            style={{
+              left: `${minPercentage}%`,
+              width: `${maxPercentage - minPercentage}%`,
             }}
           />
         </div>
@@ -263,6 +251,28 @@ const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax })
   );
 };
 
+/*---------------------- Helper: specs fieldini obyektə çevir ----------------------*/
+const normalizeProductSpecs = (specsField) => {
+  if (!specsField) return null;
+
+  // Əgər artıq obyektdirsə (Map-dən gələn plain object)
+  if (typeof specsField === "object" && !Array.isArray(specsField)) {
+    return specsField;
+  }
+
+  // DB-dən String kimi gəlirsə: "{\"id\":\"val\"}"
+  if (typeof specsField === "string") {
+    try {
+      const parsed = JSON.parse(specsField);
+      if (parsed && typeof parsed === "object") return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  return null;
+};
+
 /*---------------------- Main Filter Component ----------------------*/
 const Filter = () => {
   const navigate = useNavigate();
@@ -276,6 +286,10 @@ const Filter = () => {
   const { data: specsData } = useGetSpecsQuery();
   const specs = specsData?.specs || [];
 
+  // Brands
+  const { data: brandsData } = useGetBrandsQuery();
+  const brands = brandsData?.brands || [];
+
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -284,15 +298,13 @@ const Filter = () => {
 
   const [priceMin, setPriceMin] = useState(0);
   const [priceMax, setPriceMax] = useState(3000);
+  const [selectedPricePreset, setSelectedPricePreset] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState("newest");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [selectedSpecs, setSelectedSpecs] = useState([]);
-  const [onSaleFilter, setOnSaleFilter] = useState(false);
-  const [featuredFilter, setFeaturedFilter] = useState(false);
-  const [inStockFilter, setInStockFilter] = useState(false);
 
   // URL-dən slug-a görə category/subcategory tap
   useEffect(() => {
@@ -322,6 +334,7 @@ const Filter = () => {
       setSelectedSubcategory("");
     }
     setSelectedBrand("");
+    setSelectedBrands([]);
   }, [categorySlugParam, subcategorySlugParam, categories]);
 
   // Bütün məhsullar
@@ -334,17 +347,23 @@ const Filter = () => {
 
     if (selectedCategory) query.category = selectedCategory;
     if (selectedSubcategory) query.subcategory = selectedSubcategory;
-    if (selectedBrand) query.brand = selectedBrand;
-    if (selectedBrands.length > 0) query.brands = selectedBrands;
+
+    // Brand filter
+    if (selectedBrands.length > 0) {
+      query.brands = selectedBrands;
+    } else if (selectedBrand) {
+      query.brand = selectedBrand;
+    }
+
     if (priceMin > 0) query.minPrice = priceMin;
     if (priceMax < 3000) query.maxPrice = priceMax;
     if (searchTerm) query.search = searchTerm;
     if (sort) query.sort = sort;
+
+    // Spec filter → ID-lərlə
     if (selectedSpecs.length > 0) query.specs = selectedSpecs;
+
     if (selectedSizes.length > 0) query.sizes = selectedSizes;
-    if (onSaleFilter) query.onSale = true;
-    if (featuredFilter) query.featured = true;
-    if (inStockFilter) query.inStock = true;
 
     return query;
   }, [
@@ -358,9 +377,6 @@ const Filter = () => {
     sort,
     selectedSpecs,
     selectedSizes,
-    onSaleFilter,
-    featuredFilter,
-    inStockFilter,
   ]);
 
   const { data, error, isError, isLoading } = useFilterProductsQuery(filterQuery);
@@ -374,52 +390,67 @@ const Filter = () => {
 
   const products = data?.products || [];
 
-  // Dinamik subcategory və brand
-  const subcategories = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          allProducts
-            .filter((p) => (selectedCategory ? p.category === selectedCategory : true))
-            .map((p) => p.subcategory)
-            .filter(Boolean)
-        )
-      ),
-    [allProducts, selectedCategory]
-  );
-
+  // Brand options (mövcud kateqoriya/subkateqoriya üzrə)
   const brandOptions = useMemo(() => {
+    if (!brands.length) return [];
+
     const filteredProducts = allProducts.filter((p) => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
       return true;
     });
 
-    const brandCounts = {};
-    filteredProducts.forEach((p) => {
-      if (p.brand) {
-        brandCounts[p.brand] = (brandCounts[p.brand] || 0) + 1;
-      }
+    return brands
+      .map((brand) => {
+        const count = filteredProducts.filter((p) => p.brand === brand.name).length;
+        return {
+          id: brand._id,
+          name: brand.name,
+          count,
+          disabled: count === 0,
+        };
+      })
+      .filter((b) => b.name);
+  }, [brands, allProducts, selectedCategory, selectedSubcategory]);
+
+  // Spec options – BURANI DÜZƏLTDİK
+  const specOptions = useMemo(() => {
+    if (!specs.length) return [];
+
+    const filteredProducts = allProducts.filter((p) => {
+      if (selectedCategory && p.category !== selectedCategory) return false;
+      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
+      return true;
     });
 
-    return Object.entries(brandCounts)
-      .map(([brand, count]) => ({
-        brand,
-        count: count.toString(),
-        isBold: count > 0,
-        disabled: count === 0,
-      }))
-      .sort((a, b) => parseInt(b.count) - parseInt(a.count));
-  }, [allProducts, selectedCategory, selectedSubcategory]);
+    return specs
+      .map((spec) => {
+        const count = filteredProducts.filter((p) => {
+          const specsObj = normalizeProductSpecs(p.specs);
+          if (!specsObj) return false;
 
-  // Size options (from specs)
+          // product.specs içində bu spec-in ID-si varsa → say
+          return Object.prototype.hasOwnProperty.call(specsObj, spec._id);
+        }).length;
+
+        return {
+          id: spec._id,
+          name: spec.name,
+          count,
+          disabled: count === 0,
+        };
+      })
+      .filter((s) => s.name);
+  }, [specs, allProducts, selectedCategory, selectedSubcategory]);
+
+  // Size options (specs-dən) – ən azından parse edək ki, ilişməsin
   const sizeOptions = useMemo(() => {
-    const sizeSpecs = specs.filter(spec => 
-      spec.name.toLowerCase().includes('size') || 
-      spec.name.toLowerCase().includes('ölçü') ||
-      spec.name.toLowerCase().includes('mm') ||
-      spec.name.toLowerCase().includes('×') ||
-      spec.name.toLowerCase().includes('x')
+    const sizeSpecs = specs.filter((spec) =>
+      spec.name.toLowerCase().includes("size") ||
+      spec.name.toLowerCase().includes("ölçü") ||
+      spec.name.toLowerCase().includes("mm") ||
+      spec.name.toLowerCase().includes("×") ||
+      spec.name.toLowerCase().includes("x")
     );
 
     const filteredProducts = allProducts.filter((p) => {
@@ -428,21 +459,31 @@ const Filter = () => {
       return true;
     });
 
-    return sizeSpecs.map(spec => {
-      const count = filteredProducts.filter(p => {
-        if (!p.specs) return false;
-        return Object.keys(p.specs).some(key => 
-          key.includes(spec.name) || 
-          (typeof p.specs[key] === 'string' && p.specs[key].includes(spec.name))
-        );
-      }).length;
+    return sizeSpecs
+      .map((spec) => {
+        const count = filteredProducts.filter((p) => {
+          const specsObj = normalizeProductSpecs(p.specs);
+          if (!specsObj) return false;
 
-      return {
-        name: spec.name,
-        count: count.toString(),
-        disabled: count === 0,
-      };
-    }).filter(opt => opt.name);
+          // Hər hansı value-da ölçü kimi dəyər varsa sadəcə sayırıq
+          return Object.values(specsObj).some((val) => {
+            if (typeof val !== "string") return false;
+            return (
+              val.toLowerCase().includes("mm") ||
+              val.toLowerCase().includes("inch") ||
+              val.toLowerCase().includes("x") ||
+              val.toLowerCase().includes("×")
+            );
+          });
+        }).length;
+
+        return {
+          name: spec.name,
+          count: count.toString(),
+          disabled: count === 0,
+        };
+      })
+      .filter((opt) => opt.name);
   }, [specs, allProducts, selectedCategory, selectedSubcategory]);
 
   const breadcrumbs = useMemo(() => {
@@ -483,9 +524,20 @@ const Filter = () => {
 
     return (currentCategory.subcategories || [])
       .map((sub) => {
-        const subProducts = allProducts.filter(
-          (p) => p.category === currentCategory.name && p.subcategory === sub.name
-        );
+        const subProducts = allProducts.filter((p) => {
+          const sameCategory =
+            p.category === currentCategory.name ||
+            p.category === currentCategory.slug ||
+            (p.category || "").toLowerCase() === (currentCategory.name || "").toLowerCase();
+
+          const sameSub =
+            p.subcategory === sub.name ||
+            p.subcategory === sub.slug ||
+            (p.subcategory || "").toLowerCase() === (sub.name || "").toLowerCase();
+
+          return sameCategory && sameSub;
+        });
+
         return {
           ...sub,
           productCount: subProducts.length,
@@ -552,78 +604,6 @@ const Filter = () => {
     return presets;
   }, [allProducts, selectedCategory, selectedSubcategory]);
 
-  // Histogram data for price ranges
-  const priceHistogram = useMemo(() => {
-    const filteredProducts = allProducts.filter((p) => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
-      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
-      return true;
-    });
-
-    const prices = filteredProducts
-      .map((p) => p.price)
-      .filter((p) => p && typeof p === "number");
-
-    if (prices.length === 0) return [];
-
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const range = maxPrice - minPrice;
-    const bucketCount = 16;
-    const bucketSize = range / bucketCount;
-
-    const histogram = [];
-    for (let i = 0; i < bucketCount; i++) {
-      const bucketMin = minPrice + i * bucketSize;
-      const bucketMax = bucketMin + bucketSize;
-      const count = prices.filter(p => p >= bucketMin && p < bucketMax).length;
-      const percentage = (count / prices.length) * 100;
-      
-      histogram.push({
-        min: bucketMin,
-        max: bucketMax,
-        count,
-        percentage: Math.max(5, percentage),
-      });
-    }
-
-    return histogram;
-  }, [allProducts, selectedCategory, selectedSubcategory]);
-
-  const onSaleCount = useMemo(() => {
-    const filteredProducts = allProducts.filter((p) => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
-      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
-      return (
-        p.specs?.OnSale === true ||
-        p.specs?.onSale === true ||
-        p.specs?.sale === true
-      );
-    });
-    return filteredProducts.length;
-  }, [allProducts, selectedCategory, selectedSubcategory]);
-
-  const featuredCount = useMemo(() => {
-    const filteredProducts = allProducts.filter((p) => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
-      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
-      return (
-        p.specs?.Featured === true ||
-        p.specs?.featured === true
-      );
-    });
-    return filteredProducts.length;
-  }, [allProducts, selectedCategory, selectedSubcategory]);
-
-  const inStockCount = useMemo(() => {
-    const filteredProducts = allProducts.filter((p) => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
-      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
-      return p.stock > 0 || p.stockStatus !== "out_of_stock";
-    });
-    return filteredProducts.length;
-  }, [allProducts, selectedCategory, selectedSubcategory]);
-
   if (isLoading) {
     return (
       <>
@@ -642,7 +622,7 @@ const Filter = () => {
   return (
     <>
       <MetaShopHeader />
-      <div className="min-h-screen bg-[#F3F4F6] pt-24 px-4 pb-8">
+      <div className="min-h-screen bg-white pt-24 px-4 pb-8">
         <div className="max-w-[1400px] mx-auto">
           {/* Breadcrumb */}
           <Breadcrumb items={breadcrumbs} />
@@ -694,393 +674,330 @@ const Filter = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Filter Panel */}
             <div
-              className={`bg-white p-6 rounded-2xl shadow-xl border border-[#5C4977]/10 ${
+              className={`bg-white p-6 rounded-2xl shadow-md border border-gray-200/60 ${
                 isFilterOpen ? "block" : "hidden"
               } lg:block w-full lg:w-80`}
             >
-              {/* Category Section */}
-              <div className="mb-6 pb-4 border-b border-[#5C4977]/10">
-                <div className="flex flex-col mb-4">
-                  <span className="text-xs text-gray-500 mb-1">Kateqoriya</span>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg text-[#5C4977]">
-                      {currentCategory?.name || "Bütün Kateqoriyalar"}
-                    </h3>
-                    {selectedCategory && (
-                      <button
-                        onClick={() => {
-                          setSelectedCategory("");
-                          setSelectedSubcategory("");
-                          navigate("/catalog");
-                        }}
-                        className="text-sm text-[#5C4977] hover:text-[#5C4977]/80 font-medium"
-                      >
-                        Mağazaya qayıt <ChevronRight className="inline h-4 w-4" />
-                      </button>
-                    )}
+              <div className="space-y-8">
+                {/* Category Section */}
+                <div className="pb-6 border-b border-gray-200">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Subcategory</p>
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    {currentCategory?.name || "Bütün məhsullar"}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("");
+                      setSelectedSubcategory("");
+                      navigate("/catalog");
+                    }}
+                    className="text-sm text-[#5C4977] hover:underline mt-1"
+                  >
+                    go back to Laptops
+                  </button>
+
+                  <div className="mt-4 space-y-2">
+                    {!selectedCategory
+                      ? categories.map((category) => {
+                          const categoryProducts = allProducts.filter((p) => {
+                            return (
+                              p.category === category.name ||
+                              p.category === category.slug ||
+                              (p.category || "").toLowerCase() ===
+                                (category.name || "").toLowerCase()
+                            );
+                          });
+                          const categoryCount = categoryProducts.length;
+
+                          return (
+                            <button
+                              key={category._id}
+                              className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border border-transparent transition-colors ${
+                                selectedCategory === category.name
+                                  ? "bg-[#5C4977]/5 border-[#5C4977]/30"
+                                  : "hover:border-gray-200"
+                              }`}
+                              onClick={() => {
+                                setSelectedCategory(category.name);
+                                setSelectedSubcategory("");
+                                navigate(`/catalog/${category.slug}`);
+                              }}
+                            >
+                              <span className="flex items-center gap-2 text-sm text-gray-800">
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    selectedCategory === category.name ? "bg-[#5C4977]" : "bg-gray-300"
+                                  }`}
+                                />
+                                {category.name}
+                              </span>
+                              <span className="text-xs text-gray-500">{categoryCount}</span>
+                            </button>
+                          );
+                        })
+                      : currentCategory?.subcategories?.map((sub) => {
+                          const subProducts = allProducts.filter((p) => {
+                            const sameCategory =
+                              p.category === currentCategory.name ||
+                              p.category === currentCategory.slug ||
+                              (p.category || "").toLowerCase() ===
+                                (currentCategory.name || "").toLowerCase();
+
+                            const sameSub =
+                              p.subcategory === sub.name ||
+                              p.subcategory === sub.slug ||
+                              (p.subcategory || "").toLowerCase() ===
+                                (sub.name || "").toLowerCase();
+
+                            return sameCategory && sameSub;
+                          });
+                          const subCount = subProducts.length;
+
+                          if (subCount === 0) return null;
+
+                          return (
+                            <button
+                              key={sub._id || sub.name}
+                              className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border border-transparent transition-colors ${
+                                selectedSubcategory === sub.name
+                                  ? "bg-[#5C4977]/5 border-[#5C4977]/30"
+                                  : "hover:border-gray-200"
+                              }`}
+                              onClick={() => {
+                                const subSlug =
+                                  sub.slug || encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, "-"));
+                                navigate(`/catalog/${currentCategory.slug}/${subSlug}`);
+                              }}
+                            >
+                              <span className="flex items-center gap-2 text-sm text-gray-800">
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    selectedSubcategory === sub.name ? "bg-[#5C4977]" : "bg-gray-300"
+                                  }`}
+                                />
+                                {sub.name}
+                              </span>
+                              <span className="text-xs text-gray-500">{subCount}</span>
+                            </button>
+                          );
+                        })}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  {!selectedCategory ? (
-                    categories.map((category) => {
-                      const categoryProducts = allProducts.filter((p) => p.category === category.name);
-                      const categoryCount = categoryProducts.length;
+                {/* Price Section */}
+                <div className="pb-6 border-b border-gray-200">
+                  <h3 className="font-semibold text-lg text-gray-800 mb-4">Price</h3>
 
-                      return (
-                        <div key={category._id}>
-                          <div
-                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
-                              selectedCategory === category.name
-                                ? "bg-[#5C4977]/10 border border-[#5C4977]/20"
-                                : "hover:bg-[#5C4977]/5 hover:border-[#5C4977]/20 border border-transparent"
-                            }`}
+                  <div className="mb-4">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">min.</label>
+                        <input
+                          type="number"
+                          value={priceMin}
+                          onChange={(e) => {
+                            setSelectedPricePreset("");
+                            setPriceMin(Number(e.target.value) || 0);
+                          }}
+                          className="w-full p-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">max.</label>
+                        <input
+                          type="number"
+                          value={priceMax}
+                          onChange={(e) => {
+                            setSelectedPricePreset("");
+                            setPriceMax(Number(e.target.value) || 0);
+                          }}
+                          className="w-full p-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+
+                    <RangeSlider
+                      min={0}
+                      max={3000}
+                      valueMin={priceMin}
+                      valueMax={priceMax}
+                      onChangeMin={(val) => {
+                        setSelectedPricePreset("");
+                        setPriceMin(val);
+                      }}
+                      onChangeMax={(val) => {
+                        setSelectedPricePreset("");
+                        setPriceMax(val);
+                      }}
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                      <span>min.</span>
+                      <span>max.</span>
+                    </div>
+                  </div>
+
+                  {pricePresets.length > 0 && (
+                    <div className="space-y-3">
+                      {pricePresets.slice(0, 3).map((preset, index) => {
+                        const isActive = selectedPricePreset === preset.label;
+                        const maxValue = preset.max === Infinity ? 3000 : preset.max;
+
+                        return (
+                          <label
+                            key={`${preset.label}-${index}`}
+                            className="flex items-center justify-between text-sm text-gray-800 cursor-pointer hover:text-[#5C4977]"
                             onClick={() => {
-                              setSelectedCategory(category.name);
-                              setSelectedSubcategory("");
-                              navigate(`/catalog/${category.slug}`);
+                              setSelectedPricePreset(preset.label);
+                              setPriceMin(preset.min || 0);
+                              setPriceMax(maxValue);
                             }}
                           >
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`w-2 h-2 rounded-full ${
-                                  selectedCategory === category.name ? "bg-[#5C4977]" : "bg-gray-300"
+                            <span className="flex items-center gap-2">
+                              <span
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                  isActive ? "border-[#5C4977]" : "border-gray-300"
                                 }`}
-                              />
-                              <span className="font-medium text-[#5C4977]">{category.name}</span>
-                            </div>
-                            <span className="text-sm text-gray-500">{categoryCount}</span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    currentCategory?.subcategories?.map((sub) => {
-                      const subProducts = allProducts.filter(
-                        (p) => p.category === currentCategory.name && p.subcategory === sub.name
-                      );
-                      const subCount = subProducts.length;
-
-                      if (subCount === 0) return null;
-
-                      return (
-                        <div
-                          key={sub._id || sub.name}
-                          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
-                            selectedSubcategory === sub.name
-                              ? "bg-[#5C4977]/10"
-                              : "hover:bg-[#5C4977]/5"
-                          }`}
-                          onClick={() => {
-                            const subSlug = sub.slug || encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, "-"));
-                            navigate(`/catalog/${currentCategory.slug}/${subSlug}`);
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-[#5C4977]">{sub.name}</span>
-                          </div>
-                          <span className="text-xs text-gray-500">{subCount}</span>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Price Section */}
-              <div className="mb-6 pb-4 border-b border-[#5C4977]/10">
-                <h3 className="font-semibold text-lg text-[#5C4977] mb-4">Qiymət</h3>
-
-                <div className="mb-4">
-                  {/* Input fields for min/max */}
-                  <div className="flex gap-2 mb-4">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">min.</label>
-                      <input
-                        type="number"
-                        value={priceMin}
-                        onChange={(e) => setPriceMin(Number(e.target.value) || 0)}
-                        className="w-full p-2 border border-[#5C4977]/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                        min="0"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">max.</label>
-                      <input
-                        type="number"
-                        value={priceMax}
-                        onChange={(e) => setPriceMax(Number(e.target.value) || 0)}
-                        className="w-full p-2 border border-[#5C4977]/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Histogram */}
-                  {priceHistogram.length > 0 && (
-                    <div className="flex gap-0.5 h-12 mb-4">
-                      {priceHistogram.map((bucket, index) => (
-                        <div
-                          key={index}
-                          className="flex-1 flex flex-col justify-end"
-                          title={`${bucket.count} məhsul (${bucket.min.toFixed(0)}-${bucket.max.toFixed(0)} ₼)`}
-                        >
-                          <div
-                            className={`${
-                              priceMin <= bucket.max && priceMax >= bucket.min
-                                ? "bg-[#5C4977]"
-                                : "bg-gray-300"
-                            } rounded-t-sm transition-all duration-200`}
-                            style={{ height: `${bucket.percentage}%` }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Range slider */}
-                  <RangeSlider
-                    min={0}
-                    max={3000}
-                    valueMin={priceMin}
-                    valueMax={priceMax}
-                    onChangeMin={setPriceMin}
-                    onChangeMax={setPriceMax}
-                  />
-
-                  {/* Price range labels */}
-                  <div className="flex justify-between text-xs text-gray-500 mt-2">
-                    <span>min.</span>
-                    <span>max.</span>
-                  </div>
-                </div>
-
-                {/* Price presets as radio buttons */}
-                <div className="space-y-2 mt-4">
-                  {pricePresets.map((item, index) => {
-                    const isSelected = priceMin === item.min && priceMax === (item.max === Infinity ? 999999 : item.max);
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer group transition-colors ${
-                          isSelected ? "bg-[#5C4977]/10" : "hover:bg-[#5C4977]/5"
-                        }`}
-                        onClick={() => {
-                          setPriceMin(item.min);
-                          setPriceMax(item.max === Infinity ? 999999 : item.max);
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
-                              isSelected
-                                ? "border-[#5C4977] bg-[#5C4977]"
-                                : "border-gray-300 group-hover:border-[#5C4977]"
-                            }`}
-                          >
-                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                          </div>
-                          <span className="text-sm text-gray-700">{item.label}</span>
-                        </div>
-                        <span className="text-xs text-gray-500">{item.count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Size Section */}
-              {sizeOptions.length > 0 && (
-                <div className="mb-6 pb-4 border-b border-[#5C4977]/10">
-                  <h3 className="font-semibold text-lg text-[#5C4977] mb-4">Ölçü</h3>
-                  <div className="space-y-2">
-                    {sizeOptions.map((size) => {
-                      const isSelected = selectedSizes.includes(size.name);
-                      const isDisabled = size.disabled;
-
-                      return (
-                        <div
-                          key={size.name}
-                          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer group transition-colors ${
-                            isSelected
-                              ? "bg-[#5C4977]/10"
-                              : isDisabled
-                              ? "opacity-50 cursor-not-allowed"
-                              : "hover:bg-[#5C4977]/5"
-                          }`}
-                          onClick={() => {
-                            if (isDisabled) return;
-                            setSelectedSizes((prev) =>
-                              prev.includes(size.name)
-                                ? prev.filter((s) => s !== size.name)
-                                : [...prev, size.name]
-                            );
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                                isSelected
-                                  ? "border-[#5C4977] bg-[#5C4977]"
-                                  : isDisabled
-                                  ? "border-gray-200"
-                                  : "border-gray-300 group-hover:border-[#5C4977]"
-                              }`}
-                            >
-                              {isSelected && <div className="w-2 h-2 rounded bg-white" />}
-                            </div>
-                            <span className="text-sm text-gray-700">{size.name}</span>
-                          </div>
-                          <span className={`text-xs ${isDisabled ? "text-gray-400" : "text-gray-500"}`}>
-                            {size.count}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* On Sale Section */}
-              <div className="mb-6 pb-4 border-b border-[#5C4977]/10">
-                <h3 className="font-semibold text-lg text-[#5C4977] mb-4">Endirimdə</h3>
-                <div className="space-y-2">
-                  <div
-                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer group transition-colors ${
-                      onSaleFilter ? "bg-[#5C4977]/10" : "hover:bg-[#5C4977]/5"
-                    }`}
-                    onClick={() => setOnSaleFilter(!onSaleFilter)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                          onSaleFilter
-                            ? "border-[#5C4977] bg-[#5C4977]"
-                            : "border-gray-300 group-hover:border-[#5C4977]"
-                        }`}
-                      >
-                        {onSaleFilter && <div className="w-2 h-2 rounded bg-white" />}
-                      </div>
-                      <span className="text-sm text-gray-700">Endirimdə</span>
-                    </div>
-                    <span className="text-xs text-gray-500">{onSaleCount}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Featured Section */}
-              <div className="mb-6 pb-4 border-b border-[#5C4977]/10">
-                <h3 className="font-semibold text-lg text-[#5C4977] mb-4">Seçilmişlər</h3>
-                <div className="space-y-2">
-                  <div
-                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer group transition-colors ${
-                      featuredFilter ? "bg-[#5C4977]/10" : "hover:bg-[#5C4977]/5"
-                    }`}
-                    onClick={() => setFeaturedFilter(!featuredFilter)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                          featuredFilter
-                            ? "border-[#5C4977] bg-[#5C4977]"
-                            : "border-gray-300 group-hover:border-[#5C4977]"
-                        }`}
-                      >
-                        {featuredFilter && <div className="w-2 h-2 rounded bg-white" />}
-                      </div>
-                      <span className="text-sm text-gray-700">Seçilmişlər</span>
-                    </div>
-                    <span className="text-xs text-gray-500">{featuredCount}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Brands Section */}
-              {brandOptions.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-lg text-[#5C4977] mb-4">Brendlər</h3>
-                  <div className="space-y-2">
-                    {brandOptions.map((item, index) => {
-                      const isSelected = selectedBrands.includes(item.brand);
-                      const isDisabled = item.disabled;
-
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer group transition-colors ${
-                            isSelected
-                              ? "bg-[#5C4977]/10"
-                              : isDisabled
-                              ? "opacity-50 cursor-not-allowed"
-                              : "hover:bg-[#5C4977]/5"
-                          }`}
-                          onClick={() => {
-                            if (isDisabled) return;
-                            setSelectedBrands((prev) =>
-                              prev.includes(item.brand)
-                                ? prev.filter((b) => b !== item.brand)
-                                : [...prev, item.brand]
-                            );
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                                isSelected
-                                  ? "border-[#5C4977] bg-[#5C4977]"
-                                  : isDisabled
-                                  ? "border-gray-200"
-                                  : "border-gray-300 group-hover:border-[#5C4977]"
-                              }`}
-                            >
-                              {isSelected && <div className="w-2 h-2 rounded bg-white" />}
-                            </div>
-                            <span
-                              className={`text-sm ${item.isBold ? "font-medium" : ""} ${
-                                isDisabled ? "text-gray-400" : "text-gray-700"
-                              }`}
-                            >
-                              {item.brand}
+                              >
+                                {isActive && <span className="w-2 h-2 rounded-full bg-[#5C4977]" />}
+                              </span>
+                              <span className="whitespace-nowrap">{preset.label}</span>
                             </span>
-                          </div>
-                          <span className={`text-xs ${isDisabled ? "text-gray-400" : "text-gray-500"}`}>
-                            {item.count}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                            <span className="text-xs text-gray-500">{preset.count}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Filter Actions */}
-              <div className="flex gap-3 mt-8">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    setSelectedCategory("");
-                    setSelectedSubcategory("");
-                    setSelectedBrand("");
-                    setSelectedBrands([]);
-                    setSelectedSizes([]);
-                    setPriceMin(0);
-                    setPriceMax(3000);
-                    setSearchTerm("");
-                    setSort("newest");
-                    setSelectedSpecs([]);
-                    setOnSaleFilter(false);
-                    setFeaturedFilter(false);
-                    setInStockFilter(false);
-                    navigate("/catalog");
-                  }}
-                >
-                  Hamısını Təmizlə
-                </Button>
-                <Button variant="primary" size="sm" className="flex-1" onClick={() => setIsFilterOpen(false)}>
-                  Filtrləri Tətbiq Et
-                </Button>
+                {/* Brand Section */}
+                {brandOptions.length > 0 && (
+                  <div className="pb-6 border-b border-gray-200">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-4">Brend</h3>
+                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                      {brandOptions.map((brand) => {
+                        const isSelected = selectedBrands.includes(brand.name);
+                        const isDisabled = brand.disabled;
+
+                        return (
+                          <label
+                            key={brand.id || brand.name}
+                            className={`flex items-center justify-between text-sm text-gray-800 ${
+                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            }`}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              setSelectedBrands((prev) =>
+                                prev.includes(brand.name)
+                                  ? prev.filter((b) => b !== brand.name)
+                                  : [...prev, brand.name]
+                              );
+                              setSelectedBrand("");
+                            }}
+                          >
+                            <span className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                readOnly
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
+                              />
+                              <span>{brand.name}</span>
+                            </span>
+                            <span className="text-xs text-gray-500">{brand.count}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Specs Section – artıq kliklənir */}
+                {specOptions.length > 0 && (
+                  <div className="pb-6 border-b border-gray-200">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-4">Xüsusiyyətlər</h3>
+                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                      {specOptions.map((spec) => {
+                        const isSelected = selectedSpecs.includes(spec.id);
+                        const isDisabled = spec.disabled;
+
+                        return (
+                          <label
+                            key={spec.id || spec.name}
+                            className={`flex items-center justify-between text-sm text-gray-800 ${
+                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            }`}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              setSelectedSpecs((prev) =>
+                                prev.includes(spec.id)
+                                  ? prev.filter((s) => s !== spec.id)
+                                  : [...prev, spec.id]
+                              );
+                            }}
+                          >
+                            <span className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                readOnly
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
+                              />
+                              <span>{spec.name}</span>
+                            </span>
+                            <span className="text-xs text-gray-500">{spec.count}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Size Section */}
+                {sizeOptions.length > 0 && (
+                  <div className="pb-2">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-4">Size</h3>
+                    <div className="space-y-3">
+                      {sizeOptions.map((size) => {
+                        const isSelected = selectedSizes.includes(size.name);
+                        const isDisabled = size.disabled;
+
+                        return (
+                          <label
+                            key={size.name}
+                            className={`flex items-center justify-between text-sm text-gray-800 ${
+                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            }`}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              setSelectedSizes((prev) =>
+                                prev.includes(size.name)
+                                  ? prev.filter((s) => s !== size.name)
+                                  : [...prev, size.name]
+                              );
+                            }}
+                          >
+                            <span className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                readOnly
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
+                              />
+                              <span>{size.name}</span>
+                            </span>
+                            <span className="text-xs text-gray-500">{size.count}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1094,41 +1011,28 @@ const Filter = () => {
                 </Button>
               </div>
 
-              {/* Search and Sort Bar */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="flex-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-[#5C4977]/60" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Məhsul adı, model..."
-                    className="w-full pl-10 p-3 border border-[#5C4977]/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                  />
+              {/* Page header & sorting */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-800">
+                    {currentCategory?.name || "Apple MacBook"}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">Showing all {products.length || 0} results</p>
                 </div>
                 <div className="w-full sm:w-64">
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value)}
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                    className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
                   >
-                    <option value="">Standart sıralama</option>
-                    <option value="price_asc">Qiymət: Aşağıdan yuxarı</option>
-                    <option value="price_desc">Qiymət: Yuxarıdan aşağı</option>
-                    <option value="newest">Ən yenilər</option>
-                    <option value="oldest">Ən köhnələr</option>
-                    <option value="top_rated">Ən çox reytinq</option>
+                    <option value="">Default sorting</option>
+                    <option value="price_asc">Price: low to high</option>
+                    <option value="price_desc">Price: high to low</option>
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="top_rated">Top rated</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-[#5C4977]">Məhsullar</h2>
-                <p className="text-gray-600 mt-1">
-                  Seçilmiş məhsullar: <span className="font-medium text-[#5C4977]">{products.length || 0}</span>
-                </p>
               </div>
 
               {/* Məhsul Kartları */}
@@ -1174,9 +1078,6 @@ const Filter = () => {
                       setSearchTerm("");
                       setSort("newest");
                       setSelectedSpecs([]);
-                      setOnSaleFilter(false);
-                      setFeaturedFilter(false);
-                      setInStockFilter(false);
                     }}
                   >
                     Filtrləri Təmizlə
