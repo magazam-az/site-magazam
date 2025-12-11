@@ -1,6 +1,6 @@
 // src/pages/Filter.jsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Check, Shuffle, Search, Heart, Filter as FilterIcon } from "lucide-react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Check, Shuffle, Search, Heart, Filter as FilterIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useFilterProductsQuery,
   useGetProductsQuery,
@@ -13,6 +13,17 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import Breadcrumb from "./ui/Breadcrumb";
 import Footer from "./Footer";
 import MetaShopHeader from "./Navbar";
+
+// Import Swiper React components
+import { Swiper, SwiperSlide } from 'swiper/react';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+
+// Import required modules
+import { Navigation, Pagination } from 'swiper/modules';
 
 /*---------------------- PRODUCT CARD ----------------------*/
 const ProductCard = ({ mehsul }) => {
@@ -97,8 +108,10 @@ const ProductCard = ({ mehsul }) => {
 
         {/* Stock Status */}
         <div className="flex items-center gap-1 text-gray-700 text-sm pt-1">
-          <Check className="w-4 h-4 text-green-600" />
-          <span>{inStockText}</span>
+          <Check className={`w-4 h-4 ${mehsul?.stock > 0 ? 'text-green-600' : 'text-red-500'}`} />
+          <span className={mehsul?.stock > 0 ? 'text-green-600' : 'text-red-500'}>
+            {inStockText}
+          </span>
         </div>
       </div>
 
@@ -273,6 +286,271 @@ const normalizeProductSpecs = (specsField) => {
   return null;
 };
 
+/*---------------------- Responsive Subcategory Grid ----------------------*/
+const SubcategoryGrid = ({ subcategories, categorySlug }) => {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {subcategories.map((sub) => {
+        const subSlug = sub.slug || encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, "-"));
+        return (
+          <Link
+            key={sub._id || sub.name}
+            to={`/catalog/${categorySlug}/${subSlug}`}
+            className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-[#5C4977]/10 hover:border-[#5C4977]/30"
+          >
+            <div className="w-full aspect-square flex justify-center items-center bg-[#f8f7fa] rounded-lg mb-3 overflow-hidden">
+              {sub.imageUrl ? (
+                <img
+                  src={sub.imageUrl}
+                  alt={sub.name}
+                  className="object-contain w-32 h-32 transform hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://placehold.co/150x150/6B7280/ffffff?text=No+Image";
+                  }}
+                />
+              ) : (
+                <div className="w-32 h-32 flex items-center justify-center text-[#5C4977]/60">
+                  <span className="text-sm text-center px-2">Şəkil yoxdur</span>
+                </div>
+              )}
+            </div>
+            <h3 className="font-bold text-[#5C4977] text-center mb-1 line-clamp-1" style={{ fontSize: "17px" }}>
+              {sub.name}
+            </h3>
+            <p className="text-sm text-gray-600 text-center">
+              {sub.productCount} məhsul
+              {sub.productCount !== 1 ? "" : ""}
+            </p>
+            <div className="mt-2 flex justify-center">
+              <span className="text-xs text-[#5C4977] bg-[#5C4977]/10 px-2 py-1 rounded-full">
+                Bax →
+              </span>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+};
+
+/*---------------------- Subcategory Slider Component ----------------------*/
+const SubcategorySlider = ({ subcategories, categorySlug }) => {
+  const [swiperInstance, setSwiperInstance] = useState(null);
+  const [isBeginning, setIsBeginning] = useState(true);
+  const [isEnd, setIsEnd] = useState(false);
+  const [showNavigation, setShowNavigation] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (containerRef.current && swiperInstance) {
+        const container = containerRef.current;
+        const slides = container.querySelectorAll('.swiper-slide');
+        let totalWidth = 0;
+        
+        slides.forEach(slide => {
+          totalWidth += slide.offsetWidth + 20; // + gap
+        });
+        
+        const containerWidth = container.offsetWidth;
+        
+        // Sadece kaydırma yapılabilecek kadar içerik varsa butonları göster
+        setShowNavigation(totalWidth > containerWidth + 50); // 50px tolerans
+      }
+    };
+
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    
+    // Swiper hazır olduğunda kontrol et
+    if (swiperInstance) {
+      swiperInstance.on('init', checkOverflow);
+      swiperInstance.on('resize', checkOverflow);
+    }
+
+    return () => {
+      window.removeEventListener('resize', checkOverflow);
+      if (swiperInstance) {
+        swiperInstance.off('init', checkOverflow);
+        swiperInstance.off('resize', checkOverflow);
+      }
+    };
+  }, [swiperInstance]);
+
+  const handlePrev = () => {
+    if (swiperInstance) {
+      swiperInstance.slidePrev();
+    }
+  };
+
+  const handleNext = () => {
+    if (swiperInstance) {
+      swiperInstance.slideNext();
+    }
+  };
+
+  const handleSlideChange = (swiper) => {
+    setIsBeginning(swiper.isBeginning);
+    setIsEnd(swiper.isEnd);
+  };
+
+  if (subcategories.length === 0) return null;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      {/* Navigation Buttons - sadece gerekli olduğunda göster */}
+      {showNavigation && (
+        <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 z-10 pointer-events-none">
+          <div className="max-w-[1400px] mx-auto px-4 flex justify-between">
+            <button
+              onClick={handlePrev}
+              disabled={isBeginning}
+              className={`pointer-events-auto w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors ${
+                isBeginning ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:shadow-xl'
+              }`}
+            >
+              <ChevronLeft className="w-5 h-5 text-[#5C4977]" />
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={isEnd}
+              className={`pointer-events-auto w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors ${
+                isEnd ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:shadow-xl'
+              }`}
+            >
+              <ChevronRight className="w-5 h-5 text-[#5C4977]" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Slider */}
+      <Swiper
+        modules={[Navigation, Pagination]}
+        spaceBetween={20}
+        slidesPerView={2}
+        slidesPerGroup={2}
+        breakpoints={{
+          640: {
+            slidesPerView: 3,
+            slidesPerGroup: 3,
+          },
+          768: {
+            slidesPerView: 4,
+            slidesPerGroup: 4,
+          },
+          1024: {
+            slidesPerView: 5,
+            slidesPerGroup: 5,
+          },
+          1280: {
+            slidesPerView: 6,
+            slidesPerGroup: 6,
+          },
+        }}
+        onSwiper={setSwiperInstance}
+        onSlideChange={handleSlideChange}
+        className="pb-6"
+        style={{ 
+          paddingLeft: showNavigation ? '0' : '0',
+          paddingRight: showNavigation ? '0' : '0'
+        }}
+      >
+        {subcategories.map((sub) => {
+          const subSlug = sub.slug || encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, "-"));
+          return (
+            <SwiperSlide key={sub._id || sub.name}>
+              <Link
+                to={`/catalog/${categorySlug}/${subSlug}`}
+                className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-[#5C4977]/10 hover:border-[#5C4977]/30 h-full"
+              >
+                <div className="w-full aspect-square flex justify-center items-center bg-[#f8f7fa] rounded-lg mb-3 overflow-hidden">
+                  {sub.imageUrl ? (
+                    <img
+                      src={sub.imageUrl}
+                      alt={sub.name}
+                      className="object-contain w-32 h-32 transform hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/150x150/6B7280/ffffff?text=No+Image";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-32 h-32 flex items-center justify-center text-[#5C4977]/60">
+                      <span className="text-sm text-center px-2">Şəkil yoxdur</span>
+                    </div>
+                  )}
+                </div>
+                <h3 className="font-bold text-[#5C4977] text-center mb-1 line-clamp-1" style={{ fontSize: "17px" }}>
+                  {sub.name}
+                </h3>
+                <p className="text-sm text-gray-600 text-center">
+                  {sub.productCount} məhsul
+                  {sub.productCount !== 1 ? "" : ""}
+                </p>
+                <div className="mt-2 flex justify-center">
+                  <span className="text-xs text-[#5C4977] bg-[#5C4977]/10 px-2 py-1 rounded-full">
+                    Bax →
+                  </span>
+                </div>
+              </Link>
+            </SwiperSlide>
+          );
+        })}
+      </Swiper>
+
+      {/* Dots Indicator (Pagination) - sadece gerekli olduğunda göster */}
+      {showNavigation && subcategories.length > 6 && (
+        <div className="flex justify-center mt-2 space-x-1">
+          {Array.from({ length: Math.ceil(subcategories.length / 6) }).map((_, index) => (
+            <button
+              key={index}
+              className="w-2 h-2 rounded-full bg-gray-300 hover:bg-[#5C4977]/50 transition-colors"
+              onClick={() => {
+                if (swiperInstance) {
+                  swiperInstance.slideTo(index * 6);
+                }
+              }}
+              aria-label={`Go to page ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/*---------------------- Custom Breadcrumb Component ----------------------*/
+const CustomBreadcrumb = ({ items }) => {
+  return (
+    <nav className="mb-8" aria-label="Breadcrumb">
+      <ol className="flex items-center space-x-2 text-sm">
+        {items.map((item, index) => (
+          <li key={index} className="flex items-center">
+            {index > 0 && (
+              <span className="mx-2 text-gray-400">/</span>
+            )}
+            {index === items.length - 1 ? (
+              // Sonuncu item - qara rəng və böyük font
+              <span className="text-black font-semibold text-lg">
+                {item.label}
+              </span>
+            ) : (
+              <Link
+                to={item.path}
+                className="text-gray-500 hover:text-[#5C4977] transition-colors text-base"
+              >
+                {item.label}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+};
+
 /*---------------------- Main Filter Component ----------------------*/
 const Filter = () => {
   const navigate = useNavigate();
@@ -304,6 +582,8 @@ const Filter = () => {
   const [sort, setSort] = useState("newest");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // Yeni: Stock status filteri
+  const [stockStatus, setStockStatus] = useState(""); // "in_stock", "out_of_stock" və ya ""
   const [selectedSpecs, setSelectedSpecs] = useState([]);
 
   // URL-dən slug-a görə category/subcategory tap
@@ -360,6 +640,11 @@ const Filter = () => {
     if (searchTerm) query.search = searchTerm;
     if (sort) query.sort = sort;
 
+    // Stock status filter
+    if (stockStatus) {
+      query.stockStatus = stockStatus;
+    }
+
     // Spec filter → ID-lərlə
     if (selectedSpecs.length > 0) query.specs = selectedSpecs;
 
@@ -375,6 +660,7 @@ const Filter = () => {
     priceMax,
     searchTerm,
     sort,
+    stockStatus,
     selectedSpecs,
     selectedSizes,
   ]);
@@ -390,6 +676,44 @@ const Filter = () => {
 
   const products = data?.products || [];
 
+  // Active filterləri saymaq üçün
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (stockStatus) count++;
+    if (selectedSpecs.length > 0) count++;
+    if (selectedBrands.length > 0) count++;
+    if (selectedSizes.length > 0) count++;
+    if (priceMin > 0 || priceMax < 3000) count++;
+    return count;
+  }, [stockStatus, selectedSpecs, selectedBrands, selectedSizes, priceMin, priceMax]);
+
+  // Stock status options (dinamik)
+  const stockOptions = useMemo(() => {
+    const filteredProducts = allProducts.filter((p) => {
+      if (selectedCategory && p.category !== selectedCategory) return false;
+      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
+      return true;
+    });
+
+    const inStockCount = filteredProducts.filter((p) => p.stock > 0).length;
+    const outOfStockCount = filteredProducts.filter((p) => p.stock === 0).length;
+
+    return [
+      {
+        value: "in_stock",
+        label: "In Stock",
+        count: inStockCount,
+        disabled: inStockCount === 0,
+      },
+      {
+        value: "out_of_stock",
+        label: "Out of Stock",
+        count: outOfStockCount,
+        disabled: outOfStockCount === 0,
+      },
+    ];
+  }, [allProducts, selectedCategory, selectedSubcategory]);
+
   // Brand options (mövcud kateqoriya/subkateqoriya üzrə)
   const brandOptions = useMemo(() => {
     if (!brands.length) return [];
@@ -397,6 +721,8 @@ const Filter = () => {
     const filteredProducts = allProducts.filter((p) => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
+      if (stockStatus === "in_stock" && p.stock <= 0) return false;
+      if (stockStatus === "out_of_stock" && p.stock > 0) return false;
       return true;
     });
 
@@ -411,15 +737,17 @@ const Filter = () => {
         };
       })
       .filter((b) => b.name);
-  }, [brands, allProducts, selectedCategory, selectedSubcategory]);
+  }, [brands, allProducts, selectedCategory, selectedSubcategory, stockStatus]);
 
-  // Spec options – BURANI DÜZƏLTDİK
+  // Spec options
   const specOptions = useMemo(() => {
     if (!specs.length) return [];
 
     const filteredProducts = allProducts.filter((p) => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
+      if (stockStatus === "in_stock" && p.stock <= 0) return false;
+      if (stockStatus === "out_of_stock" && p.stock > 0) return false;
       return true;
     });
 
@@ -441,9 +769,9 @@ const Filter = () => {
         };
       })
       .filter((s) => s.name);
-  }, [specs, allProducts, selectedCategory, selectedSubcategory]);
+  }, [specs, allProducts, selectedCategory, selectedSubcategory, stockStatus]);
 
-  // Size options (specs-dən) – ən azından parse edək ki, ilişməsin
+  // Size options (specs-dən)
   const sizeOptions = useMemo(() => {
     const sizeSpecs = specs.filter((spec) =>
       spec.name.toLowerCase().includes("size") ||
@@ -456,6 +784,8 @@ const Filter = () => {
     const filteredProducts = allProducts.filter((p) => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
+      if (stockStatus === "in_stock" && p.stock <= 0) return false;
+      if (stockStatus === "out_of_stock" && p.stock > 0) return false;
       return true;
     });
 
@@ -484,7 +814,7 @@ const Filter = () => {
         };
       })
       .filter((opt) => opt.name);
-  }, [specs, allProducts, selectedCategory, selectedSubcategory]);
+  }, [specs, allProducts, selectedCategory, selectedSubcategory, stockStatus]);
 
   const breadcrumbs = useMemo(() => {
     const items = [
@@ -551,6 +881,8 @@ const Filter = () => {
     const filteredProducts = allProducts.filter((p) => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
+      if (stockStatus === "in_stock" && p.stock <= 0) return false;
+      if (stockStatus === "out_of_stock" && p.stock > 0) return false;
       return true;
     });
 
@@ -602,7 +934,46 @@ const Filter = () => {
     }
 
     return presets;
-  }, [allProducts, selectedCategory, selectedSubcategory]);
+  }, [allProducts, selectedCategory, selectedSubcategory, stockStatus]);
+
+  // Bütün filtrləri təmizləmək üçün funksiya
+  const clearAllFilters = () => {
+    setStockStatus("");
+    setSelectedSpecs([]);
+    setSelectedBrands([]);
+    setSelectedSizes([]);
+    setPriceMin(0);
+    setPriceMax(3000);
+    setSelectedPricePreset("");
+    setSearchTerm("");
+    setSort("newest");
+  };
+
+  // "Go back" button üçün dinamik mətn
+  const getGoBackText = () => {
+    if (subcategorySlugParam && currentCategory) {
+      // Alt kategoriyada olduqda -> ana kategoriyaya qayıt
+      return `go back to ${currentCategory.name}`;
+    } else if (categorySlugParam) {
+      // Ana kategoriyada olduqda -> bütün kateqoriyalara qayıt
+      return "go back to all categories";
+    } else {
+      // Heç bir kategoriyada deyil -> hər hansı bir şeyə qayıtmaq lazım deyil
+      return "";
+    }
+  };
+
+  const goBackPath = () => {
+    if (subcategorySlugParam && currentCategory) {
+      // Alt kategoriyadan ana kategoriyaya qayıt
+      return `/catalog/${currentCategory.slug}`;
+    } else if (categorySlugParam) {
+      // Ana kategoriyadan bütün kateqoriyalara qayıt
+      return "/catalog";
+    } else {
+      return "/catalog";
+    }
+  };
 
   if (isLoading) {
     return (
@@ -622,51 +993,34 @@ const Filter = () => {
   return (
     <>
       <MetaShopHeader />
-      <div className="min-h-screen bg-white pt-24 px-4 pb-8">
+      <div className="min-h-screen bg-white pt-10 px-4 pb-8">
         <div className="max-w-[1400px] mx-auto">
-          {/* Breadcrumb */}
-          <Breadcrumb items={breadcrumbs} />
+          {/* Custom Breadcrumb */}
+          <CustomBreadcrumb items={breadcrumbs} />
 
           {/* Popular Categories Section */}
           {categorySlugParam && !subcategorySlugParam && subcategoriesWithData.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-[#5C4977] mb-6">Populyar Kateqoriyalar</h2>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                {subcategoriesWithData.map((sub) => {
-                  const subSlug = sub.slug || encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, "-"));
-                  return (
-                    <Link
-                      key={sub._id || sub.name}
-                      to={`/catalog/${categorySlugParam}/${subSlug}`}
-                      className="shrink-0 bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-[#5C4977]/10 hover:border-[#5C4977]/30 w-[200px]"
-                    >
-                      <div className="w-full aspect-square flex justify-center items-center bg-[#f8f7fa] rounded-lg mb-3">
-                        {sub.imageUrl ? (
-                          <img
-                            src={sub.imageUrl}
-                            alt={sub.name}
-                            className="object-contain w-36 h-36"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = "https://placehold.co/150x150/6B7280/ffffff?text=No+Image";
-                            }}
-                          />
-                        ) : (
-                          <div className="w-36 h-36 flex items-center justify-center text-[#5C4977]/60">
-                            <span className="text-sm">Şəkil yoxdur</span>
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="font-bold text-[#5C4977] text-center mb-1" style={{ fontSize: "19px" }}>
-                        {sub.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 text-center">
-                        {sub.productCount} məhsul
-                        {sub.productCount !== 1 ? "" : ""}
-                      </p>
-                    </Link>
-                  );
-                })}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-gray-500 bg-[#5C4977]/10 px-3 py-1 rounded-full">
+                  {subcategoriesWithData.length} kategoriya
+                </span>
+              </div>
+              
+              {/* Küçük ekranlarda (mobil/tablet) veya fazla kategori varsa slider kullan */}
+              <div className="hidden md:block">
+                <SubcategorySlider 
+                  subcategories={subcategoriesWithData} 
+                  categorySlug={categorySlugParam}
+                />
+              </div>
+              
+              {/* Mobil için basit grid */}
+              <div className="md:hidden">
+                <SubcategoryGrid 
+                  subcategories={subcategoriesWithData} 
+                  categorySlug={categorySlugParam}
+                />
               </div>
             </div>
           )}
@@ -679,22 +1033,94 @@ const Filter = () => {
               } lg:block w-full lg:w-80`}
             >
               <div className="space-y-8">
+                {/* Active Filters */}
+                {activeFiltersCount > 0 && (
+                  <div className="pb-6 border-b border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-lg text-gray-800">Aktiv Filtrlər</h3>
+                      <button
+                        onClick={clearAllFilters}
+                        className="text-sm text-[#5C4977] hover:text-[#5C4977]/80 flex items-center gap-1"
+                      >
+                        <X className="w-4 h-4" />
+                        Hamısını təmizlə
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {stockStatus && (
+                        <span className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
+                          {stockStatus === "in_stock" ? "In Stock" : "Out of Stock"}
+                          <button
+                            onClick={() => setStockStatus("")}
+                            className="hover:text-[#5C4977]/70"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
+                      {selectedSpecs.map((specId) => {
+                        const spec = specs.find((s) => s._id === specId);
+                        if (!spec) return null;
+                        return (
+                          <span key={specId} className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
+                            {spec.name}
+                            <button
+                              onClick={() => setSelectedSpecs(prev => prev.filter(id => id !== specId))}
+                              className="hover:text-[#5C4977]/70"
+                            >
+                              <X className="w-3 h-3" />
+                          </button>
+                          </span>
+                        );
+                      })}
+                      {selectedBrands.map((brandName) => (
+                        <span key={brandName} className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
+                          {brandName}
+                          <button
+                            onClick={() => setSelectedBrands(prev => prev.filter(b => b !== brandName))}
+                            className="hover:text-[#5C4977]/70"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                      {(priceMin > 0 || priceMax < 3000) && (
+                        <span className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
+                          {priceMin.toLocaleString()}₼ - {priceMax.toLocaleString()}₼
+                          <button
+                            onClick={() => {
+                              setPriceMin(0);
+                              setPriceMax(3000);
+                              setSelectedPricePreset("");
+                            }}
+                            className="hover:text-[#5C4977]/70"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Category Section */}
                 <div className="pb-6 border-b border-gray-200">
                   <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Subcategory</p>
                   <h3 className="text-xl font-semibold text-gray-800">
                     {currentCategory?.name || "Bütün məhsullar"}
                   </h3>
-                  <button
-                    onClick={() => {
-                      setSelectedCategory("");
-                      setSelectedSubcategory("");
-                      navigate("/catalog");
-                    }}
-                    className="text-sm text-[#5C4977] hover:underline mt-1"
-                  >
-                    go back to Laptops
-                  </button>
+                  
+                  {/* Dinamik "go back" linki */}
+                  {getGoBackText() && (
+                    <button
+                      onClick={() => {
+                        navigate(goBackPath());
+                      }}
+                      className="text-sm text-[#5C4977] hover:underline mt-1"
+                    >
+                      {getGoBackText()}
+                    </button>
+                  )}
 
                   <div className="mt-4 space-y-2">
                     {!selectedCategory
@@ -784,6 +1210,8 @@ const Filter = () => {
                   </div>
                 </div>
 
+               
+
                 {/* Price Section */}
                 <div className="pb-6 border-b border-gray-200">
                   <h3 className="font-semibold text-lg text-gray-800 mb-4">Price</h3>
@@ -872,7 +1300,85 @@ const Filter = () => {
                   )}
                 </div>
 
-                {/* Brand Section */}
+                 {/* Stock Status Section - İLK BURADA */}
+                <div className="pb-6 border-b border-gray-200">
+                  <h3 className="font-semibold text-lg text-gray-800 mb-4">Stock Status</h3>
+                  <div className="space-y-3">
+                    {stockOptions.map((option) => {
+                      const isSelected = stockStatus === option.value;
+                      const isDisabled = option.disabled;
+
+                      return (
+                        <label
+                          key={option.value}
+                          className={`flex items-center justify-between text-sm ${
+                            isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                          } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
+                          onClick={() => {
+                            if (isDisabled) return;
+                            setStockStatus(isSelected ? "" : option.value);
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                isSelected ? "border-[#5C4977]" : "border-gray-300"
+                              }`}
+                            >
+                              {isSelected && <span className="w-2 h-2 rounded-full bg-[#5C4977]" />}
+                            </span>
+                            <span>{option.label}</span>
+                          </span>
+                          <span className="text-xs text-gray-500">{option.count}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Specs Section - İKİNCİ BURADA */}
+                {specOptions.length > 0 && (
+                  <div className="pb-6 border-b border-gray-200">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-4">Xüsusiyyətlər</h3>
+                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                      {specOptions.map((spec) => {
+                        const isSelected = selectedSpecs.includes(spec.id);
+                        const isDisabled = spec.disabled;
+
+                        return (
+                          <label
+                            key={spec.id || spec.name}
+                            className={`flex items-center justify-between text-sm ${
+                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              setSelectedSpecs((prev) =>
+                                prev.includes(spec.id)
+                                  ? prev.filter((s) => s !== spec.id)
+                                  : [...prev, spec.id]
+                              );
+                            }}
+                          >
+                            <span className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                readOnly
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
+                              />
+                              <span>{spec.name}</span>
+                            </span>
+                            <span className="text-xs text-gray-500">{spec.count}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Brand Section - ÜÇÜNCÜ BURADA */}
                 {brandOptions.length > 0 && (
                   <div className="pb-6 border-b border-gray-200">
                     <h3 className="font-semibold text-lg text-gray-800 mb-4">Brend</h3>
@@ -884,9 +1390,9 @@ const Filter = () => {
                         return (
                           <label
                             key={brand.id || brand.name}
-                            className={`flex items-center justify-between text-sm text-gray-800 ${
+                            className={`flex items-center justify-between text-sm ${
                               isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                            }`}
+                            } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
                             onClick={() => {
                               if (isDisabled) return;
                               setSelectedBrands((prev) =>
@@ -915,48 +1421,6 @@ const Filter = () => {
                   </div>
                 )}
 
-                {/* Specs Section – artıq kliklənir */}
-                {specOptions.length > 0 && (
-                  <div className="pb-6 border-b border-gray-200">
-                    <h3 className="font-semibold text-lg text-gray-800 mb-4">Xüsusiyyətlər</h3>
-                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                      {specOptions.map((spec) => {
-                        const isSelected = selectedSpecs.includes(spec.id);
-                        const isDisabled = spec.disabled;
-
-                        return (
-                          <label
-                            key={spec.id || spec.name}
-                            className={`flex items-center justify-between text-sm text-gray-800 ${
-                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                            }`}
-                            onClick={() => {
-                              if (isDisabled) return;
-                              setSelectedSpecs((prev) =>
-                                prev.includes(spec.id)
-                                  ? prev.filter((s) => s !== spec.id)
-                                  : [...prev, spec.id]
-                              );
-                            }}
-                          >
-                            <span className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                readOnly
-                                checked={isSelected}
-                                disabled={isDisabled}
-                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
-                              />
-                              <span>{spec.name}</span>
-                            </span>
-                            <span className="text-xs text-gray-500">{spec.count}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 {/* Size Section */}
                 {sizeOptions.length > 0 && (
                   <div className="pb-2">
@@ -969,9 +1433,9 @@ const Filter = () => {
                         return (
                           <label
                             key={size.name}
-                            className={`flex items-center justify-between text-sm text-gray-800 ${
+                            className={`flex items-center justify-between text-sm ${
                               isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                            }`}
+                            } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
                             onClick={() => {
                               if (isDisabled) return;
                               setSelectedSizes((prev) =>
@@ -1008,6 +1472,11 @@ const Filter = () => {
                 <Button variant="outline" onClick={() => setIsFilterOpen(!isFilterOpen)}>
                   <FilterIcon className="h-4 w-4 mr-1" />
                   {isFilterOpen ? "Filtrləri Gizlət" : "Filtrləri Göstər"}
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-2 bg-[#5C4977] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {activeFiltersCount}
+                    </span>
+                  )}
                 </Button>
               </div>
 
@@ -1054,6 +1523,13 @@ const Filter = () => {
                         </span>
                       )}
 
+                      {/* Stock Status badge */}
+                      {product.stock === 0 && (
+                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+                          Stokda yoxdur
+                        </span>
+                      )}
+
                       <ProductCard mehsul={product} />
                     </div>
                   ))}
@@ -1067,18 +1543,7 @@ const Filter = () => {
                   </div>
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      setSelectedCategory("");
-                      setSelectedSubcategory("");
-                      setSelectedBrand("");
-                      setSelectedBrands([]);
-                      setSelectedSizes([]);
-                      setPriceMin(0);
-                      setPriceMax(3000);
-                      setSearchTerm("");
-                      setSort("newest");
-                      setSelectedSpecs([]);
-                    }}
+                    onClick={clearAllFilters}
                   >
                     Filtrləri Təmizlə
                   </Button>

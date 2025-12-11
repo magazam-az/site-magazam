@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   useGetProductDetailsQuery, 
   useAddToCartMutation, 
@@ -33,8 +33,43 @@ const StarRating = ({ rating = 0 }) => {
   );
 };
 
+/*---------------------- Custom Breadcrumb Component ----------------------*/
+const CustomBreadcrumb = ({ items }) => {
+  return (
+    <nav className="mb-4 sm:mb-6" aria-label="Breadcrumb">
+      <ol className="flex items-center flex-wrap space-x-2 text-sm">
+        {items.map((item, index) => (
+          <li key={index} className="flex items-center">
+            {index > 0 && (
+              <span className="mx-1 sm:mx-2 text-gray-400">/</span>
+            )}
+            {index === items.length - 1 ? (
+              // Sonuncu item - qara rəng və böyük font
+              <span className="text-black font-semibold text-base sm:text-lg">
+                {item.label}
+              </span>
+            ) : item.path ? (
+              <Link
+                to={item.path}
+                className="text-gray-500 hover:text-[#5C4977] transition-colors text-sm sm:text-base"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-gray-500 text-sm sm:text-base">
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+};
+
 const ProductDetail = () => {
   const params = useParams();
+  const navigate = useNavigate();
   const { data, isLoading, error, isError } = useGetProductDetailsQuery(params?.id);
   const product = data?.product;
 
@@ -189,8 +224,8 @@ const ProductDetail = () => {
   // Build breadcrumb dynamically
   const breadcrumbs = useMemo(() => {
     const items = [
-      { label: 'Ana sehife', path: '/' },
-      { label: 'catalog', path: '/catalog' }
+      { label: 'Ana səhifə', path: '/' },
+      { label: 'Kataloq', path: '/catalog' }  // Değiştirildi: 'catalog' -> 'Kataloq'
     ];
 
     if (product?.category) {
@@ -226,12 +261,37 @@ const ProductDetail = () => {
     }
 
     items.push({
-      label: product?.name || 'Product' ,
+      label: product?.name || 'Product',
       path: null
     });
 
     return items;
   }, [product, categories]);
+
+  // "Go back" button üçün dinamik mətn
+  const getGoBackText = () => {
+    if (product?.subcategory && product?.category) {
+      const category = categories.find(cat => cat.name === product.category);
+      if (category) {
+        return `go back to ${category.name}`;
+      }
+    } else if (product?.category) {
+      return "go back to all categories";
+    }
+    return "";
+  };
+
+  const goBackPath = () => {
+    if (product?.subcategory && product?.category) {
+      const category = categories.find(cat => cat.name === product.category);
+      if (category && category.slug) {
+        return `/catalog/${category.slug}`;
+      }
+    } else if (product?.category) {
+      return "/catalog";
+    }
+    return "/catalog";
+  };
 
   if (isLoading) {
     return (
@@ -256,8 +316,23 @@ const ProductDetail = () => {
       <Navbar />
       <section className="py-4 sm:py-6 md:py-8" style={{ backgroundColor: '#F3F4F6' }}>
         <div className="max-w-screen-xl px-3 sm:px-4 md:px-6 mx-auto 2xl:px-0">
-          {/* Breadcrumbs */}
-          <Breadcrumb items={breadcrumbs} />
+          {/* Custom Breadcrumbs */}
+          <CustomBreadcrumb items={breadcrumbs} />
+
+          {/* Go Back Button */}
+          {getGoBackText() && (
+            <div className="mb-4 sm:mb-6">
+              <button
+                onClick={() => {
+                  navigate(goBackPath());
+                }}
+                className="text-sm text-[#5C4977] hover:underline flex items-center gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                {getGoBackText()}
+              </button>
+            </div>
+          )}
 
           <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 md:p-8">
             <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-12">
@@ -526,7 +601,7 @@ const ProductDetail = () => {
                     <a href="#" className="text-gray-500 hover:text-black transition-colors" aria-label="X (Twitter)">
                       <FaTwitter className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
-                    <a href="#" className="text-gray-500 hover:text-red-600 transition-colors" aria-label="Pinterest">
+                    <a href="#" className="text-gray500 hover:text-red-600 transition-colors" aria-label="Pinterest">
                       <FaPinterest className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                     <a href="#" className="text-gray-500 hover:text-blue-700 transition-colors" aria-label="LinkedIn">
