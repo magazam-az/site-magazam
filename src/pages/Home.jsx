@@ -229,7 +229,7 @@ const Home = () => {
       />
       <Accessory />
       {/* <FAQPage /> */}
-      <Blogs/>
+      <Blogs />
       <About/>
     
      

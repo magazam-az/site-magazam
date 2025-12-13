@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css'
 
 // Pages
 import Home from './pages/Home'
+import BlogDetail from './pages/BlogDetail'
 import RegisterForm from './components/Register'
 import LoginForm from './components/Login'
 
@@ -15,6 +16,9 @@ import EditProduct from './components/admin/EditProduct'
 import AdminBlog from './components/admin/AdminBlog'
 import AddBlogs from './components/admin/AddBlogs'
 import EditBlog from './components/admin/EditBlog'
+import AdminUsers from './components/admin/AdminUsers'
+import EditUser from './components/admin/EditUser'
+import AdminSettings from './components/admin/AdminSettings'
 import CategoryManagement from './components/admin/CategoryManagement'
 import CreateCategory from './components/admin/CreateCategory'
 import EditCategory from './components/admin/EditCategory'
@@ -59,6 +63,9 @@ function App() {
 
           {/* Product Detail */}
           <Route path="/product/:id" element={<ProductDetail />} />
+
+          {/* Blog Detail */}
+          <Route path="/blogs/:slug" element={<BlogDetail />} />
 
           {/* Profile & User Routes */}
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
@@ -117,6 +124,18 @@ function App() {
           <Route path='/admin/edit-blog/:id' element={
             <AdminRoute>
               <EditBlog />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/users' element={
+            <AdminRoute>
+              <AdminUsers />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/edit-user/:id' element={
+            <AdminRoute>
+              <EditUser />
             </AdminRoute>
           } />
 
@@ -183,6 +202,12 @@ function App() {
           <Route path='/admin/specs/edit/:id' element={
             <AdminRoute>
               <EditSpec />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/settings' element={
+            <AdminRoute>
+              <AdminSettings />
             </AdminRoute>
           } />
         </Routes>

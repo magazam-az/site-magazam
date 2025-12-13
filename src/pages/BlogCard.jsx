@@ -11,7 +11,7 @@ const BlogCard = ({ blog }) => {
         <span className="text-sm">{blog?.createdAt ? new Date(blog.createdAt).toLocaleDateString() : "Date"}</span>
       </div>
       <h2 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-        <Link to={`/blog/${blog._id}`}>{blog?.title || "Blog Başlığı"}</Link>
+        <Link to={`/blogs/${blog?.slug || blog._id}`}>{blog?.title || "Blog Başlığı"}</Link>
       </h2>
       <p className="mb-5 font-light text-gray-500 dark:text-gray-400">
         {blog?.description || "Qısa açıqlama burada olacaq."}
@@ -21,8 +21,8 @@ const BlogCard = ({ blog }) => {
           <img className="w-7 h-7 rounded-full" src={blog?.author?.avatar || 'https://via.placeholder.com/150'} alt={blog?.author?.name || "Yazar"} />
           <span className="font-medium dark:text-white">{blog?.author?.name || "Yazar"}</span>
         </div>
-        <Link to={`/blog/${blog._id}`} className="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
-          Read more →
+        <Link to={`/blogs/${blog?.slug || blog._id}`} className="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+          Daha çox oxu →
         </Link>
       </div>
     </article>
