@@ -7,10 +7,18 @@ const Button = ({
   className = "",
   disabled = false,
 }) => {
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick && !disabled) {
+      onClick(e);
+    }
+  };
+
   return (
     <button
       type={type}
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       className={`
         w-full 

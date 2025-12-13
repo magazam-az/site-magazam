@@ -2,7 +2,10 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const productApi = createApi({
   reducerPath: "productApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "/api/v1" }),
+  baseQuery: fetchBaseQuery({ 
+    baseUrl: "/api/v1",
+    credentials: "include",
+  }),
   endpoints: (builder) => ({
     getProducts: builder.query({
       query: () => "/products",
@@ -61,7 +64,10 @@ export const productApi = createApi({
       invalidatesTags: ["Cart"],
     }),
     getFavorites: builder.query({
-      query: () => "/products/favorites",
+      query: () => ({
+        url: "/products/favorites",
+        credentials: "include",
+      }),
       providesTags: ["Favorites"],
       transformResponse: (response) => ({
         favorites: response?.favorites || [],

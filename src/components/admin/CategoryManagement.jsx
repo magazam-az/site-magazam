@@ -1,183 +1,25 @@
 import React, { useState } from "react";
-import { useGetCategoriesQuery, useCreateCategoryMutation, useAddSubcategoryMutation, useDeleteCategoryMutation, useDeleteSubcategoryMutation } from "../../redux/api/categoryApi";
-import Swal from "sweetalert2";
-import { FaPlus, FaTrash, FaImage, FaTag, FaTimes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useGetCategoriesQuery, useDeleteCategoryMutation, useDeleteSubcategoryMutation } from "../../redux/api/categoryApi";
+import Swal from "sweetalert2";
+import { FaPlus, FaTrash, FaEdit, FaChevronDown, FaChevronUp, FaImage } from "react-icons/fa";
+import AdminLayout from "./AdminLayout";
 
 const CategoryManagement = () => {
   const navigate = useNavigate();
   const { data, isLoading, refetch } = useGetCategoriesQuery();
-  const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
-  const [addSubcategory, { isLoading: isAddingSub }] = useAddSubcategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
   const [deleteSubcategory] = useDeleteSubcategoryMutation();
 
-  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-  const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-  
-  const [categoryForm, setCategoryForm] = useState({
-    name: "",
-    slug: "",
-    image: null,
-    imagePreview: null,
-  });
-
-  const [subcategoryForm, setSubcategoryForm] = useState({
-    name: "",
-    slug: "",
-    image: null,
-    imagePreview: null,
-  });
+  const [expandedCategories, setExpandedCategories] = useState({});
 
   const categories = data?.categories || [];
 
-  const handleCategoryInputChange = (e) => {
-    const { name, value } = e.target;
-    setCategoryForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleCategoryImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        Swal.fire({
-          title: "Xəta!",
-          text: "Şəkil ölçüsü maksimum 5MB olmalıdır",
-          icon: "warning",
-          confirmButtonColor: "#5C4977",
-        });
-        return;
-      }
-      setCategoryForm((prev) => ({
-        ...prev,
-        image: file,
-        imagePreview: URL.createObjectURL(file),
-      }));
-    }
-  };
-
-  const handleCategorySubmit = async (e) => {
-    e.preventDefault();
-
-    if (!categoryForm.name.trim()) {
-      Swal.fire({
-        title: "Xəta!",
-        text: "Kateqoriya adı tələb olunur",
-        icon: "error",
-        confirmButtonColor: "#5C4977",
-      });
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("name", categoryForm.name.trim());
-      if (categoryForm.slug.trim()) {
-        formData.append("slug", categoryForm.slug.trim());
-      }
-      if (categoryForm.image) {
-        formData.append("image", categoryForm.image);
-      }
-
-      await createCategory(formData).unwrap();
-
-      Swal.fire({
-        title: "Uğur!",
-        text: "Kateqoriya uğurla əlavə edildi",
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-        confirmButtonColor: "#5C4977",
-      });
-
-      setCategoryForm({ name: "", slug: "", image: null, imagePreview: null });
-      setShowAddCategoryModal(false);
-      refetch();
-    } catch (error) {
-      console.error("Xəta:", error);
-      Swal.fire({
-        title: "Xəta!",
-        text: error?.data?.error || "Kateqoriya əlavə edilərkən xəta baş verdi",
-        icon: "error",
-        confirmButtonColor: "#5C4977",
-      });
-    }
-  };
-
-  const handleSubcategoryImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        Swal.fire({
-          title: "Xəta!",
-          text: "Şəkil ölçüsü maksimum 5MB olmalıdır",
-          icon: "warning",
-          confirmButtonColor: "#5C4977",
-        });
-        return;
-      }
-      setSubcategoryForm((prev) => ({
-        ...prev,
-        image: file,
-        imagePreview: URL.createObjectURL(file),
-      }));
-    }
-  };
-
-  const handleSubcategorySubmit = async (e) => {
-    e.preventDefault();
-
-    if (!subcategoryForm.name.trim()) {
-      Swal.fire({
-        title: "Xəta!",
-        text: "Alt kateqoriya adı tələb olunur",
-        icon: "error",
-        confirmButtonColor: "#5C4977",
-      });
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("name", subcategoryForm.name.trim());
-      if (subcategoryForm.slug.trim()) {
-        formData.append("slug", subcategoryForm.slug.trim());
-      }
-      if (subcategoryForm.image) {
-        formData.append("image", subcategoryForm.image);
-      }
-
-      await addSubcategory({
-        categoryId: selectedCategoryId,
-        formData,
-      }).unwrap();
-
-      Swal.fire({
-        title: "Uğur!",
-        text: "Alt kateqoriya uğurla əlavə edildi",
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-        confirmButtonColor: "#5C4977",
-      });
-
-      if (subcategoryForm.imagePreview) {
-        URL.revokeObjectURL(subcategoryForm.imagePreview);
-      }
-      setSubcategoryForm({ name: "", slug: "", image: null, imagePreview: null });
-      setShowAddSubcategoryModal(false);
-      setSelectedCategoryId(null);
-      refetch();
-    } catch (error) {
-      console.error("Xəta:", error);
-      Swal.fire({
-        title: "Xəta!",
-        text: error?.data?.error || "Alt kateqoriya əlavə edilərkən xəta baş verdi",
-        icon: "error",
-        confirmButtonColor: "#5C4977",
-      });
-    }
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
   };
 
   const handleDeleteCategory = async (categoryId) => {
@@ -249,401 +91,216 @@ const CategoryManagement = () => {
     }
   };
 
-  const openAddSubcategoryModal = (categoryId) => {
-    setSelectedCategoryId(categoryId);
-    setShowAddSubcategoryModal(true);
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
-      </div>
+      <AdminLayout pageTitle="Kateqoriyalar">
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 px-4 pb-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Kateqoriya İdarəetməsi</h1>
-              <p className="text-gray-600">Ana kateqoriyalar və alt kateqoriyaları idarə edin</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => navigate("/admin/admin-dashboard")}
-                className="text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl"
-              >
-                Geri qayıt
-              </button>
-              <button
-                onClick={() => setShowAddCategoryModal(true)}
-                className="bg-[#5C4977] text-white hover:bg-[#5C4977]/90 font-medium transition-colors px-4 py-2 rounded-xl flex items-center gap-2"
-              >
-                <FaPlus className="h-4 w-4" />
-                Yeni Kateqoriya
-              </button>
+    <AdminLayout pageTitle="Kateqoriyalar">
+      <div className="bg-gray-50 min-h-full p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Kateqoriya İdarəetməsi</h1>
+                <p className="text-gray-600">Ana kateqoriyalar və alt kateqoriyaları idarə edin</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => navigate("/admin/categories/create")}
+                  className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20 cursor-pointer"
+                >
+                  <FaPlus className="h-5 w-5" />
+                  Yeni Kateqoriya
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Categories List */}
-        <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6 md:p-8">
-          {categories.length === 0 ? (
-            <div className="text-center py-12">
-              <FaTag className="h-16 w-16 text-[#5C4977]/30 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">Heç bir kateqoriya yoxdur</p>
-              <p className="text-gray-500 text-sm mt-2">İlk kateqoriyanı əlavə edin</p>
+          {/* Categories Table */}
+          <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-[#5C4977]">Kateqoriyalar Siyahısı</h2>
+              <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
+                {categories.length || 0} kateqoriya
+              </span>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {categories.map((category) => (
-                <div
-                  key={category._id}
-                  className="border border-[#5C4977]/20 rounded-xl p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4 flex-1">
-                      {category.image?.url ? (
-                        <img
-                          src={category.image.url}
-                          alt={category.name}
-                          className="w-20 h-20 object-cover rounded-lg border-2 border-[#5C4977]/20"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 bg-[#5C4977]/10 rounded-lg flex items-center justify-center">
-                          <FaImage className="h-8 w-8 text-[#5C4977]/40" />
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="text-xl font-bold text-[#5C4977]">{category.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          Slug: {category.slug || "N/A"}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {category.subcategories?.length || 0} alt kateqoriya
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openAddSubcategoryModal(category._id)}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                      >
-                        <FaPlus className="h-3 w-3" />
-                        Alt Kateqoriya
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCategory(category._id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                      >
-                        <FaTrash className="h-3 w-3" />
-                        Sil
-                      </button>
-                    </div>
-                  </div>
 
-                  {/* Subcategories */}
-                  {category.subcategories && category.subcategories.length > 0 && (
-                    <div className="mt-4 pl-24">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {category.subcategories.map((subcategory) => (
-                          <div
-                            key={subcategory._id}
-                            className="bg-[#5C4977]/5 border border-[#5C4977]/20 rounded-lg p-3 flex items-center gap-3"
-                          >
-                            {subcategory.image?.url ? (
-                              <img
-                                src={subcategory.image.url}
-                                alt={subcategory.name}
-                                className="w-12 h-12 object-cover rounded-lg"
-                              />
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#5C4977]/10">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Ad</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Slug</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Şəkil</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Alt Kateqoriya</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map((category) => (
+                    <React.Fragment key={category._id}>
+                      <tr
+                        className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors cursor-pointer"
+                        onClick={() => toggleCategory(category._id)}
+                      >
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            {expandedCategories[category._id] ? (
+                              <FaChevronUp className="h-4 w-4 text-[#5C4977]" />
                             ) : (
-                              <div className="w-12 h-12 bg-[#5C4977]/10 rounded-lg flex items-center justify-center">
-                                <FaImage className="h-6 w-6 text-[#5C4977]/40" />
-                              </div>
+                              <FaChevronDown className="h-4 w-4 text-[#5C4977]" />
                             )}
-                            <div className="flex-1">
-                              <span className="text-[#5C4977] font-medium block">{subcategory.name}</span>
-                              <span className="text-xs text-gray-500">Slug: {subcategory.slug || "N/A"}</span>
+                            <div className="font-medium text-gray-800">{category.name}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-gray-600 font-mono text-sm">{category.slug || "N/A"}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          {category.image?.url ? (
+                            <img
+                              src={category.image.url}
+                              alt={category.name}
+                              className="w-12 h-12 object-cover rounded-lg border border-[#5C4977]/20"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-[#5C4977]/10 rounded-lg flex items-center justify-center">
+                              <FaImage className="h-5 w-5 text-[#5C4977]/40" />
                             </div>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
+                            {category.subcategories?.length || 0}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
                             <button
-                              onClick={() =>
-                                handleDeleteSubcategory(category._id, subcategory._id)
-                              }
-                              className="text-red-500 hover:text-red-700 transition-colors"
+                              onClick={() => navigate(`/admin/categories/edit/${category._id}`)}
+                              className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
+                              title="Redaktə et"
+                            >
+                              <FaEdit className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(category._id)}
+                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                               title="Sil"
                             >
-                              <FaTrash className="h-4 w-4" />
+                              <FaTrash className="h-5 w-5" />
                             </button>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                        </td>
+                      </tr>
+                      {expandedCategories[category._id] && (
+                        <tr>
+                          <td colSpan="5" className="px-4 py-4 bg-gray-50">
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-[#5C4977]">Alt Kateqoriyalar</h3>
+                                <button
+                                  onClick={() => navigate(`/admin/categories/${category._id}/subcategories/create`)}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
+                                >
+                                  <FaPlus className="h-4 w-4" />
+                                  Alt Kateqoriya Əlavə Et
+                                </button>
+                              </div>
+
+                              {category.subcategories && category.subcategories.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                  <table className="w-full">
+                                    <thead>
+                                      <tr className="border-b border-[#5C4977]/10">
+                                        <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Ad</th>
+                                        <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Slug</th>
+                                        <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Şəkil</th>
+                                        <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {category.subcategories.map((subcategory) => (
+                                        <tr
+                                          key={subcategory._id}
+                                          className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
+                                        >
+                                          <td className="py-4 px-4">
+                                            <div className="font-medium text-gray-800">{subcategory.name}</div>
+                                          </td>
+                                          <td className="py-4 px-4">
+                                            <span className="text-gray-600 font-mono text-sm">{subcategory.slug || "N/A"}</span>
+                                          </td>
+                                          <td className="py-4 px-4">
+                                            {subcategory.image?.url ? (
+                                              <img
+                                                src={subcategory.image.url}
+                                                alt={subcategory.name}
+                                                className="w-12 h-12 object-cover rounded-lg border border-[#5C4977]/20"
+                                              />
+                                            ) : (
+                                              <div className="w-12 h-12 bg-[#5C4977]/10 rounded-lg flex items-center justify-center">
+                                                <FaImage className="h-5 w-5 text-[#5C4977]/40" />
+                                              </div>
+                                            )}
+                                          </td>
+                                          <td className="py-4 px-4">
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                onClick={() => navigate(`/admin/categories/${category._id}/subcategories/edit/${subcategory._id}`)}
+                                                className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
+                                                title="Redaktə et"
+                                              >
+                                                <FaEdit className="h-5 w-5" />
+                                              </button>
+                                              <button
+                                                onClick={() => handleDeleteSubcategory(category._id, subcategory._id)}
+                                                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                                title="Sil"
+                                              >
+                                                <FaTrash className="h-5 w-5" />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              ) : (
+                                <div className="text-center py-4 text-gray-500 text-sm">
+                                  Alt kateqoriya yoxdur
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+
+            {categories.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                Heç bir kateqoriya tapılmadı
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Add Category Modal */}
-        {showAddCategoryModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-[#5C4977]">Yeni Kateqoriya</h2>
-                <button
-                  onClick={() => {
-                    setShowAddCategoryModal(false);
-                    setCategoryForm({ name: "", slug: "", image: null, imagePreview: null });
-                  }}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <FaTimes className="h-5 w-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleCategorySubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Yeni bir ana kateqoriya adı daxil edin
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={categoryForm.name}
-                    onChange={handleCategoryInputChange}
-                    placeholder="Məs. Sırğalar"
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Slug (URL üçün) <span className="text-gray-500 text-xs">(İstəyə bağlı - avtomatik yaradılacaq)</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="slug"
-                    value={categoryForm.slug}
-                    onChange={handleCategoryInputChange}
-                    placeholder="Məs. sirgalar"
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Boş buraxılsa, ad əsasında avtomatik yaradılacaq</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Şəkil 1
-                  </label>
-                  <div className="border-2 border-dashed border-[#5C4977]/30 rounded-xl p-6 text-center">
-                    {categoryForm.imagePreview ? (
-                      <div className="space-y-4">
-                        <img
-                          src={categoryForm.imagePreview}
-                          alt="Preview"
-                          className="w-full h-48 object-cover rounded-lg mx-auto"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCategoryForm((prev) => ({
-                              ...prev,
-                              image: null,
-                              imagePreview: null,
-                            }));
-                          }}
-                          className="text-red-500 hover:text-red-700 text-sm font-medium"
-                        >
-                          Şəkli sil
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <FaImage className="h-12 w-12 text-[#5C4977]/40 mx-auto mb-4" />
-                        <p className="text-gray-600 mb-2">*Файл не выбран</p>
-                        <label className="inline-block cursor-pointer">
-                          <span className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-colors">
-                            Şəkil Seç
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleCategoryImageChange}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddCategoryModal(false);
-                      setCategoryForm({ name: "", slug: "", image: null, imagePreview: null });
-                    }}
-                    className="flex-1 border border-[#5C4977]/20 text-[#5C4977] hover:bg-[#5C4977]/5 font-medium py-3 px-4 rounded-xl transition-colors"
-                  >
-                    Ləğv et
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isCreating}
-                    className="flex-1 bg-[#5C4977] text-white hover:bg-[#5C4977]/90 font-medium py-3 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isCreating ? "Yadda saxlanır..." : "Yadda saxla"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Add Subcategory Modal */}
-        {showAddSubcategoryModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-[#5C4977]">Alt Kateqoriya Əlavə Et</h2>
-                <button
-                  onClick={() => {
-                    if (subcategoryForm.imagePreview) {
-                      URL.revokeObjectURL(subcategoryForm.imagePreview);
-                    }
-                    setShowAddSubcategoryModal(false);
-                    setSubcategoryForm({ name: "", slug: "", image: null, imagePreview: null });
-                    setSelectedCategoryId(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <FaTimes className="h-5 w-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubcategorySubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Alt kateqoriya adı
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={subcategoryForm.name}
-                    onChange={(e) =>
-                      setSubcategoryForm((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    placeholder="Alt kateqoriya adını daxil edin"
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Slug (URL üçün) <span className="text-gray-500 text-xs">(İstəyə bağlı - avtomatik yaradılacaq)</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="slug"
-                    value={subcategoryForm.slug}
-                    onChange={(e) =>
-                      setSubcategoryForm((prev) => ({ ...prev, slug: e.target.value }))
-                    }
-                    placeholder="Məs. sirgalar-qizlar-ucun"
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Boş buraxılsa, ad əsasında avtomatik yaradılacaq</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Şəkil (İstəyə bağlı)
-                  </label>
-                  <div className="border-2 border-dashed border-[#5C4977]/30 rounded-xl p-6 text-center">
-                    {subcategoryForm.imagePreview ? (
-                      <div className="space-y-4">
-                        <img
-                          src={subcategoryForm.imagePreview}
-                          alt="Preview"
-                          className="w-full h-48 object-cover rounded-lg mx-auto"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (subcategoryForm.imagePreview) {
-                              URL.revokeObjectURL(subcategoryForm.imagePreview);
-                            }
-                            setSubcategoryForm((prev) => ({
-                              ...prev,
-                              image: null,
-                              imagePreview: null,
-                            }));
-                          }}
-                          className="text-red-500 hover:text-red-700 text-sm font-medium"
-                        >
-                          Şəkli sil
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <FaImage className="h-12 w-12 text-[#5C4977]/40 mx-auto mb-4" />
-                        <p className="text-gray-600 mb-2">*Файл не выбран</p>
-                        <label className="inline-block cursor-pointer">
-                          <span className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-colors">
-                            Şəkil Seç
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleSubcategoryImageChange}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (subcategoryForm.imagePreview) {
-                        URL.revokeObjectURL(subcategoryForm.imagePreview);
-                      }
-                      setShowAddSubcategoryModal(false);
-                      setSubcategoryForm({ name: "", slug: "", image: null, imagePreview: null });
-                      setSelectedCategoryId(null);
-                    }}
-                    className="flex-1 border border-[#5C4977]/20 text-[#5C4977] hover:bg-[#5C4977]/5 font-medium py-3 px-4 rounded-xl transition-colors"
-                  >
-                    Ləğv et
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isAddingSub}
-                    className="flex-1 bg-[#5C4977] text-white hover:bg-[#5C4977]/90 font-medium py-3 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isAddingSub ? "Əlavə edilir..." : "Əlavə et"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
 export default CategoryManagement;
-

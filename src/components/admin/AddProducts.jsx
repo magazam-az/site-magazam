@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { FaImage, FaTag, FaInfoCircle, FaUpload, FaStar, FaTrash, FaBoxOpen } from "react-icons/fa";
 import { HiOutlinePhotograph } from "react-icons/hi";
+import AdminLayout from "./AdminLayout";
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -229,7 +230,7 @@ const AddProduct = () => {
         showConfirmButton: false,
         confirmButtonColor: "#5C4977",
       }).then(() => {
-        navigate("/admin/adminproducts");
+        navigate("/admin/products");
       });
     } catch (error) {
       console.error("❌ Xəta baş verdi:", error);
@@ -257,8 +258,9 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 px-4 pb-8">
-      <div className="max-w-4xl mx-auto">
+    <AdminLayout pageTitle="Yeni Məhsul Əlavə Et">
+    <div className="bg-gray-50 min-h-full p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -267,8 +269,8 @@ const AddProduct = () => {
               <p className="text-gray-600">Yeni məhsulun məlumatlarını daxil edin</p>
             </div>
             <button
-              onClick={() => navigate("/admin/adminproducts")}
-              className="text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl"
+              onClick={() => navigate("/admin/products")}
+              className="text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl cursor-pointer"
             >
               Geri qayıt
             </button>
@@ -446,7 +448,7 @@ const AddProduct = () => {
                       key={spec._id}
                       type="button"
                       onClick={() => handleSpecChange(spec._id, spec.name)}
-                      className={`p-3 border rounded-xl text-left transition-all duration-200 ${
+                      className={`p-3 border rounded-xl text-left transition-all duration-200 cursor-pointer ${
                         selectedSpecs[spec._id]
                           ? 'bg-[#5C4977] text-white border-[#5C4977]'
                           : 'border-[#5C4977]/20 hover:border-[#5C4977] hover:bg-[#5C4977]/5'
@@ -483,7 +485,7 @@ const AddProduct = () => {
                           <button
                             type="button"
                             onClick={() => handleSpecChange(specId, specName)}
-                            className="ml-1 hover:text-red-200"
+                            className="ml-1 hover:text-red-200 cursor-pointer"
                           >
                             ×
                           </button>
@@ -567,7 +569,7 @@ const AddProduct = () => {
                           <button
                             type="button"
                             onClick={() => setAsMainImage(index)}
-                            className="bg-[#5C4977] hover:bg-[#5C4977]/90 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md"
+                            className="bg-[#5C4977] hover:bg-[#5C4977]/90 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md cursor-pointer"
                             title="Əsas şəkil et"
                           >
                             <FaStar className="h-3 w-3" />
@@ -576,7 +578,7 @@ const AddProduct = () => {
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md"
+                          className="bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md cursor-pointer"
                           title="Sil"
                         >
                           <FaTrash className="h-3 w-3" />
@@ -602,7 +604,7 @@ const AddProduct = () => {
                   type="button"
                   onClick={() => document.querySelector('input[type="file"]').click()}
                   disabled={images.length >= 6}
-                  className="text-sm text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors disabled:opacity-50"
+                  className="text-sm text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                 >
                   <FaUpload className="inline mr-1 h-4 w-4" />
                   Şəkil əlavə et
@@ -628,14 +630,9 @@ const AddProduct = () => {
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-500">
-            © 2024 META SHOP Admin Panel. Bütün hüquqlar qorunur.
-          </p>
-        </div>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

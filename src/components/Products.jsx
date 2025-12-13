@@ -252,7 +252,7 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
         )}
 
         {/* Custom Styles */}
-        <style jsx="true">{`
+        <style>{`
           /* Horizontal scrollbar styling */
           .products-scroll {
             margin-top: 12px;

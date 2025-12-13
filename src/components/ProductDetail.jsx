@@ -3,11 +3,14 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   useGetProductDetailsQuery, 
   useAddToCartMutation, 
-  useAddToFavoritesMutation
+  useAddToFavoritesMutation,
+  useGetFavoritesQuery,
+  useRemoveFromFavoritesMutation
 } from '../redux/api/productsApi';
 import { useGetCategoriesQuery } from '../redux/api/categoryApi';
+import { useSelector } from 'react-redux';
 import { toast } from "react-hot-toast";
-import { Heart, Share2, GitCompare, Eye, ShoppingBag, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { Heart, Share2, GitCompare, Eye, ShoppingBag, ChevronLeft, ChevronRight, ZoomIn, X } from 'lucide-react';
 import { FaFacebook, FaTwitter, FaPinterest, FaLinkedin } from 'react-icons/fa';
 import { SiVisa, SiMastercard } from 'react-icons/si';
 import { FaApplePay, FaGooglePay } from 'react-icons/fa';
@@ -73,19 +76,35 @@ const ProductDetail = () => {
   const { data, isLoading, error, isError } = useGetProductDetailsQuery(params?.id);
   const product = data?.product;
 
+  // User authentication check
+  const { isAuthenticated } = useSelector((state) => state.user || {});
+
   // Get categories to find slugs
   const { data: categoriesData } = useGetCategoriesQuery();
   const categories = categoriesData?.categories || [];
 
+  // Favorileri getir
+  const { data: favoritesData } = useGetFavoritesQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
   // RTK Query mutations
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
   const [addToFavorites, { isLoading: isAddingToFavorites }] = useAddToFavoritesMutation();
+  const [removeFromFavorites, { isLoading: isRemovingFromFavorites }] = useRemoveFromFavoritesMutation();
+
+  // Ürünün favorilerde olup olmadığını kontrol et
+  const productId = product?._id;
+  const isFavorite = productId && favoritesData?.favorites?.some(
+    (fav) => fav._id === productId || fav._id?.toString() === productId?.toString()
+  ) || false;
 
   const [activeImg, setActiveImg] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [thumbnailsIndex, setThumbnailsIndex] = useState(0);
+  const [isFullScreenImageOpen, setIsFullScreenImageOpen] = useState(false);
 
   // Refs for carousel
   const mainSwiperRef = useRef(null);
@@ -101,6 +120,25 @@ const ProductDetail = () => {
       setActiveImg("https://flowbite.s3.amazonaws.com/blocks/e-commerce/imac-front-dark.svg");
     }
   }, [product]);
+
+  // ESC tuşu ile full screen modal'ı kapat
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isFullScreenImageOpen) {
+        setIsFullScreenImageOpen(false);
+      }
+    };
+
+    if (isFullScreenImageOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden'; // Scroll'u engelle
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFullScreenImageOpen]);
 
   const handleQuantityChange = (type) => {
     if (type === 'dec' && quantity > 1) {
@@ -157,9 +195,20 @@ const ProductDetail = () => {
     }
   };
 
-  // ✅ FAVORİTLƏRƏ ƏLAVƏ ET
-  const handleAddToFavorites = async () => {
+  // ✅ FAVORİTLƏRƏ ƏLAVƏ ET / FAVORİLƏRDƏN SİL
+  const handleAddToFavorites = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!product) return;
+
+    if (!isAuthenticated) {
+      toast.error("Favorilərə əlavə etmək üçün giriş yapmalısınız");
+      navigate('/login');
+      return;
+    }
 
     if (isOutOfStock) {
       toast.error("Məhsul stokda qalmayıb!");
@@ -167,11 +216,16 @@ const ProductDetail = () => {
     }
 
     try {
-      await addToFavorites(product._id).unwrap();
-      toast.success("Məhsul favorilərə əlavə edildi!");
+      if (isFavorite) {
+        await removeFromFavorites(product._id).unwrap();
+        toast.success("Məhsul favorilərdən silindi!");
+      } else {
+        await addToFavorites(product._id).unwrap();
+        toast.success("Məhsul favorilərə əlavə edildi!");
+      }
     } catch (err) {
       toast.error(
-        err?.data?.message || "Məhsulu favorilərə əlavə edərkən xəta baş verdi!"
+        err?.data?.message || (isFavorite ? "Məhsulu favorilərdən silərkən xəta baş verdi!" : "Məhsulu favorilərə əlavə edərkən xəta baş verdi!")
       );
     }
   };
@@ -181,17 +235,28 @@ const ProductDetail = () => {
     e.stopPropagation();
     if (!product) return;
 
+    if (!isAuthenticated) {
+      toast.error("Favorilərə əlavə etmək üçün giriş yapmalısınız");
+      navigate('/login');
+      return;
+    }
+
     if (isOutOfStock) {
       toast.error("Məhsul stokda qalmayıb!");
       return;
     }
 
     try {
-      await addToFavorites(product._id).unwrap();
-      toast.success("Məhsul favorilərə əlavə edildi!");
+      if (isFavorite) {
+        await removeFromFavorites(product._id).unwrap();
+        toast.success("Məhsul favorilərdən silindi!");
+      } else {
+        await addToFavorites(product._id).unwrap();
+        toast.success("Məhsul favorilərə əlavə edildi!");
+      }
     } catch (err) {
       toast.error(
-        err?.data?.message || "Məhsulu favorilərə əlavə edərkən xəta baş verdi!"
+        err?.data?.message || (isFavorite ? "Məhsulu favorilərdən silərkən xəta baş verdi!" : "Məhsulu favorilərə əlavə edərkən xəta baş verdi!")
       );
     }
   };
@@ -273,10 +338,10 @@ const ProductDetail = () => {
     if (product?.subcategory && product?.category) {
       const category = categories.find(cat => cat.name === product.category);
       if (category) {
-        return `go back to ${category.name}`;
+        return `${category.name} kateqoriyasına qayıt`;
       }
     } else if (product?.category) {
-      return "go back to all categories";
+      return "bütün kateqoriyalara qayıt";
     }
     return "";
   };
@@ -296,7 +361,7 @@ const ProductDetail = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100">
-        Loading...
+        Yüklənir...
       </div>
     );
   }
@@ -315,7 +380,7 @@ const ProductDetail = () => {
     <div className="bg-[#F3F4F6] min-h-screen">
       <Navbar />
       <section className="py-4 sm:py-6 md:py-8" style={{ backgroundColor: '#F3F4F6' }}>
-        <div className="max-w-screen-xl px-3 sm:px-4 md:px-6 mx-auto 2xl:px-0">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           {/* Custom Breadcrumbs */}
           <CustomBreadcrumb items={breadcrumbs} />
 
@@ -326,7 +391,7 @@ const ProductDetail = () => {
                 onClick={() => {
                   navigate(goBackPath());
                 }}
-                className="text-sm text-[#5C4977] hover:underline flex items-center gap-1"
+                className="text-sm text-[#5C4977] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
                 {getGoBackText()}
@@ -388,18 +453,30 @@ const ProductDetail = () => {
                     <button 
                       className="absolute top-3 right-3 z-10 cursor-pointer bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-md hover:bg-white transition-all duration-300 hover:scale-110"
                       onClick={handleFavoriteIconClick}
-                      disabled={isAddingToFavorites}
+                      disabled={isAddingToFavorites || isRemovingFromFavorites || !isAuthenticated}
                     >
-                      <Heart className={`w-5 h-5 sm:w-6 sm:h-6 ${isAddingToFavorites ? 'text-gray-300' : 'text-gray-400 hover:text-red-500'}`} />
+                      <Heart className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-300 ${
+                        isAddingToFavorites || isRemovingFromFavorites 
+                          ? 'text-gray-300' 
+                          : isFavorite 
+                            ? 'text-red-500 fill-red-500' 
+                            : 'text-gray-400 hover:text-red-500'
+                      } ${!isAuthenticated ? 'opacity-50' : ''}`} />
                     </button>
 
                     {/* Zoom Button */}
-                    <button className="absolute bottom-3 right-3 z-10 cursor-pointer bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-md hover:bg-white transition-all duration-300">
+                    <button 
+                      onClick={() => setIsFullScreenImageOpen(true)}
+                      className="absolute bottom-3 right-3 z-10 cursor-pointer bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-md hover:bg-white transition-all duration-300"
+                    >
                       <ZoomIn className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 hover:text-[#5C4977]" />
                     </button>
 
                     {/* Main Image */}
-                    <div className="aspect-square w-full flex items-center justify-center p-4 sm:p-6 md:p-8">
+                    <div 
+                      onClick={() => setIsFullScreenImageOpen(true)}
+                      className="aspect-square w-full flex items-center justify-center p-4 sm:p-6 md:p-8 cursor-pointer"
+                    >
                       <img
                         className="w-full h-full max-h-[400px] sm:max-h-[450px] md:max-h-[500px] object-contain transition-all duration-300"
                         src={activeImg}
@@ -416,7 +493,7 @@ const ProductDetail = () => {
                       <>
                         <button
                           onClick={handlePrevImage}
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                           disabled={mainImageIndex === 0}
                         >
                           <ChevronLeft className="w-5 h-5 text-gray-700" />
@@ -424,7 +501,7 @@ const ProductDetail = () => {
                         
                         <button
                           onClick={handleNextImage}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                           disabled={mainImageIndex === productImages.length - 1}
                         >
                           <ChevronRight className="w-5 h-5 text-gray-700" />
@@ -439,9 +516,12 @@ const ProductDetail = () => {
                       {mainImageIndex + 1} / {productImages.length}
                     </div>
                     
-                    <button className="flex items-center gap-1.5 text-sm text-[#5C4977] hover:text-[#4a3c62] transition-colors font-medium">
+                    <button 
+                      onClick={() => setIsFullScreenImageOpen(true)}
+                      className="flex items-center gap-1.5 text-sm text-[#5C4977] hover:text-[#4a3c62] transition-colors font-medium cursor-pointer"
+                    >
                       <ZoomIn className="w-4 h-4" />
-                      Click to enlarge
+                      Böyütmək üçün klikləyin
                     </button>
                   </div>
                 </div>
@@ -459,38 +539,24 @@ const ProductDetail = () => {
                 {/* Brand & Model */}
                 <div className="mt-2 flex items-center gap-3 text-sm text-gray-500">
                   {product?.brand && (
-                    <span className="bg-gray-100 px-2.5 py-0.5 rounded">Brand: {product.brand}</span>
+                    <span className="bg-gray-100 px-2.5 py-0.5 rounded">Brend: {product.brand}</span>
                   )}
                   {product?.model && (
                     <span className="bg-gray-100 px-2.5 py-0.5 rounded">Model: {product.model}</span>
                   )}
                 </div>
 
-                {/* Reviews & SKU */}
-                <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={product?.ratings || 5} />
-                    <span className="ml-1 text-xs sm:text-sm text-gray-500">
-                      ({product?.numOfReviews || 1} customer review)
-                    </span>
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-500">
-                    SKU: <span className="text-gray-900 font-medium">
-                      {product?._id?.substring(0,6) || "397707"}
-                    </span>
-                  </div>
-                </div>
 
                 {/* Promo Banner */}
                 <div className="mt-4 sm:mt-6 bg-blue-600 text-white rounded-lg p-3 sm:p-4 flex items-center justify-between gap-3 sm:gap-4">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
                     <div>
-                      <p className="text-xs sm:text-sm font-semibold">Apple Shopping Event</p>
-                      <p className="text-xs text-blue-100">Hurry and get discounts on all Apple devices up to 20%</p>
+                      <p className="text-xs sm:text-sm font-semibold">Alış-veriş Tədbiri</p>
+                      <p className="text-xs text-blue-100">Tələsin və bütün cihazlarda 20%-ə qədər endirim əldə et</p>
                     </div>
                   </div>
-                  <button className="bg-white text-blue-600 text-xs sm:text-sm font-bold px-3 py-1.5 rounded hover:bg-blue-50 transition-colors whitespace-nowrap">
+                  <button className="bg-white text-blue-600 text-xs sm:text-sm font-bold px-3 py-1.5 rounded hover:bg-blue-50 transition-colors whitespace-nowrap cursor-pointer">
                     Sale_coupon_15
                   </button>
                 </div>
@@ -502,11 +568,11 @@ const ProductDetail = () => {
                   </p>
                   {isOutOfStock ? (
                     <span className="px-3 py-1 text-xs sm:text-sm font-medium text-red-700 bg-red-100 rounded-full w-fit">
-                      Out of stock
+                      Stokda yoxdur
                     </span>
                   ) : (
                     <span className="px-3 py-1 text-xs sm:text-sm font-medium text-green-700 bg-green-100 rounded-full border border-green-200 flex items-center gap-1 w-fit">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div> In stock
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div> Stokda var
                     </span>
                   )}
                 </div>
@@ -524,7 +590,7 @@ const ProductDetail = () => {
                   <div className="flex items-center border border-gray-300 rounded-lg w-full sm:w-auto bg-white">
                     <button 
                       onClick={() => handleQuantityChange('dec')} 
-                      className="px-3 sm:px-4 py-2 sm:py-3 text-gray-600 hover:bg-gray-50 transition-colors rounded-l-lg"
+                      className="px-3 sm:px-4 py-2 sm:py-3 text-gray-600 hover:bg-gray-50 transition-colors rounded-l-lg cursor-pointer"
                     >
                       -
                     </button>
@@ -532,11 +598,11 @@ const ProductDetail = () => {
                       type="text" 
                       value={quantity} 
                       readOnly 
-                      className="w-10 sm:w-12 text-center border-none focus:ring-0 text-gray-900 font-medium bg-transparent" 
+                      className="w-10 sm:w-12 text-center border-none focus:ring-0 text-gray-900 font-medium bg-transparent cursor-default" 
                     />
                     <button 
                       onClick={() => handleQuantityChange('inc')} 
-                      className="px-3 sm:px-4 py-2 sm:py-3 text-gray-600 hover:bg-gray-50 transition-colors rounded-r-lg"
+                      className="px-3 sm:px-4 py-2 sm:py-3 text-gray-600 hover:bg-gray-50 transition-colors rounded-r-lg cursor-pointer"
                     >
                       +
                     </button>
@@ -554,10 +620,14 @@ const ProductDetail = () => {
                   {/* Favoritlər */}
                   <Button
                     onClick={handleAddToFavorites}
-                    disabled={isAddingToFavorites}
+                    disabled={isAddingToFavorites || isRemovingFromFavorites || !isAuthenticated}
                     className="flex-1 bg-pink-600 hover:bg-pink-700"
                   >
-                    {isAddingToFavorites ? "Əlavə edilir..." : "Favorilərə əlavə et"}
+                    {isAddingToFavorites || isRemovingFromFavorites 
+                      ? "İşlənir..." 
+                      : isFavorite 
+                        ? "Favorilərdən sil" 
+                        : "Favorilərə əlavə et"}
                   </Button>
 
                   {/* Buy Now */}
@@ -571,7 +641,7 @@ const ProductDetail = () => {
                 </div>
 
                 {/* Meta Actions */}
-                <div className="mt-4 flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-gray-500">
+                {/* <div className="mt-4 flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-gray-500">
                   <button className="flex items-center gap-1 hover:text-[#5C4977] transition-colors cursor-pointer">
                     <GitCompare className="w-4 h-4" />
                     Add to compare
@@ -583,16 +653,16 @@ const ProductDetail = () => {
                     <Heart className="w-4 h-4" />
                     Add to wishlist
                   </button>
-                </div>
+                </div> */}
 
                 {/* Watching Notification */}
-                <div className="mt-4 sm:mt-6 bg-gray-50 p-3 rounded-lg text-xs sm:text-sm text-gray-700 flex items-center gap-2">
+                {/* <div className="mt-4 sm:mt-6 bg-gray-50 p-3 rounded-lg text-xs sm:text-sm text-gray-700 flex items-center gap-2">
                   <Eye className="w-4 h-4" />
                   <strong>19</strong> People watching this product now!
-                </div>
+                </div> */}
 
                 {/* Social Sharing */}
-                <div className="mt-4 flex items-center gap-2 sm:gap-3">
+                {/* <div className="mt-4 flex items-center gap-2 sm:gap-3">
                   <span className="text-xs sm:text-sm text-gray-600 font-medium">Share:</span>
                   <div className="flex items-center gap-2 sm:gap-3">
                     <a href="#" className="text-gray-500 hover:text-blue-600 transition-colors" aria-label="Facebook">
@@ -611,10 +681,10 @@ const ProductDetail = () => {
                       <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Delivery Info */}
-                <div className="mt-4 sm:mt-6 border border-gray-200 rounded-lg divide-y divide-gray-200">
+                {/* <div className="mt-4 sm:mt-6 border border-gray-200 rounded-lg divide-y divide-gray-200">
                   <div className="p-3 sm:p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-100 rounded-full flex items-center justify-center">
@@ -659,10 +729,10 @@ const ProductDetail = () => {
                       <span className="text-xs sm:text-sm font-semibold text-green-600">Free</span>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Warranty & Returns */}
-                <div className="mt-4 sm:mt-6 border border-gray-200 rounded-lg p-3 sm:p-4 space-y-3">
+                {/* <div className="mt-4 sm:mt-6 border border-gray-200 rounded-lg p-3 sm:p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs sm:text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 rounded-full flex items-center justify-center">
@@ -682,10 +752,10 @@ const ProductDetail = () => {
                     </div>
                     <a href="#" className="text-[#5C4977] text-xs hover:underline font-medium">More details</a>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Payment Methods */}
-                <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
+                {/* <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
                   <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3">We accept:</p>
                   <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                     <div className="w-10 h-6 sm:w-12 sm:h-7 bg-blue-600 rounded flex items-center justify-center p-1">
@@ -704,12 +774,80 @@ const ProductDetail = () => {
                       <FaGooglePay className="w-full h-full text-gray-800" />
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
         </div>
       </section>
+      
+      {/* Full Screen Image Modal */}
+      {isFullScreenImageOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black bg-opacity-95 flex items-center justify-center p-4"
+          onClick={() => setIsFullScreenImageOpen(false)}
+        >
+          {/* Close Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsFullScreenImageOpen(false);
+            }}
+            className="absolute top-4 right-4 z-60 text-white hover:text-gray-300 transition-colors cursor-pointer bg-black/50 rounded-full p-2 hover:bg-black/70"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Full Screen Image */}
+          <div 
+            className="relative max-w-7xl max-h-full w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              className="max-w-full max-h-full object-contain"
+              src={activeImg}
+              alt={product?.name || "Full screen image"}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://flowbite.s3.amazonaws.com/blocks/e-commerce/imac-front-dark.svg";
+              }}
+            />
+
+            {/* Navigation Arrows in Full Screen */}
+            {productImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrevImage();
+                  }}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 shadow-lg hover:scale-110 transition-all duration-300 cursor-pointer text-white"
+                  disabled={mainImageIndex === 0}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNextImage();
+                  }}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 shadow-lg hover:scale-110 transition-all duration-300 cursor-pointer text-white"
+                  disabled={mainImageIndex === productImages.length - 1}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+
+                {/* Image Counter */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-4 py-2 rounded-full text-sm">
+                  {mainImageIndex + 1} / {productImages.length}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

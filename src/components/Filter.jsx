@@ -1,6 +1,6 @@
 // src/pages/Filter.jsx
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Check, Shuffle, Search, Heart, Filter as FilterIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Shuffle, Search, Heart, Filter as FilterIcon, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import {
   useFilterProductsQuery,
   useGetProductsQuery,
@@ -12,7 +12,9 @@ import { toast } from "react-hot-toast";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Breadcrumb from "./ui/Breadcrumb";
 import Footer from "./Footer";
-import MetaShopHeader from "./Navbar";
+import Navbar from "./Navbar";
+import Product from "./Product";
+import { CategoryCard } from "./Categories";
 
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -184,37 +186,69 @@ const Button = ({
 
 /*---------------------- Range Slider Component ----------------------*/
 const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax }) => {
-  const minPercentage = ((valueMin - min) / (max - min)) * 100;
-  const maxPercentage = ((valueMax - min) / (max - min)) * 100;
+  const sliderRef = useRef(null);
+  const handleWidth = 20; // Handle genişliği (w-5 = 20px)
+  
+  // Clamp values to ensure valid range
+  const clampedValueMin = Math.max(min, Math.min(valueMax, valueMin));
+  const clampedValueMax = Math.max(valueMin, Math.min(max, valueMax));
+  
+  const minPercentage = ((clampedValueMin - min) / (max - min)) * 100;
+  const maxPercentage = ((clampedValueMax - min) / (max - min)) * 100;
+  
+  // Calculate minimum gap (1% of range)
+  const minGap = (max - min) * 0.01;
+
+  const getSliderWidth = () => {
+    if (sliderRef.current) {
+      const rect = sliderRef.current.getBoundingClientRect();
+      return rect.width - 25; // Subtract padding (10px left + 15px right)
+    }
+    return 300; // Fallback width
+  };
+
+  const getValueFromX = (clientX) => {
+    if (!sliderRef.current) return min;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const sliderLeft = rect.left + 10; // Account for left padding
+    const sliderWidth = rect.width - 25; // Account for padding
+    const percentage = Math.max(0, Math.min(1, (clientX - sliderLeft) / sliderWidth));
+    return min + (percentage * (max - min));
+  };
 
   return (
     <div className="relative pt-4">
-      <div className="relative w-full h-5">
+      <div 
+        ref={sliderRef}
+        className="relative w-full h-5" 
+        style={{ paddingLeft: '10px', paddingRight: '15px' }}
+      >
         <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 rounded-full -translate-y-1/2">
           <div
             className="absolute top-0 h-full bg-[#5C4977] rounded-full"
             style={{
               left: `${minPercentage}%`,
-              width: `${maxPercentage - minPercentage}%`,
+              width: `${Math.max(0, maxPercentage - minPercentage)}%`,
             }}
           />
         </div>
         
         {/* Min handle */}
         <div
-          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer"
-          style={{ left: `${minPercentage}%` }}
+          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer z-10"
+          style={{ left: `calc(${minPercentage}% - 10px)` }}
           onMouseDown={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             const startX = e.clientX;
-            const startValue = valueMin;
-            const rangeWidth = max - min;
+            const startValue = clampedValueMin;
 
             const handleMouseMove = (moveEvent) => {
-              const deltaX = moveEvent.clientX - startX;
-              const deltaValue = (deltaX / 300) * rangeWidth;
-              const newValue = Math.max(min, Math.min(valueMax - 100, startValue + deltaValue));
-              onChangeMin(Math.round(newValue));
+              const newValue = getValueFromX(moveEvent.clientX);
+              // Ensure min doesn't exceed max - minGap
+              const maxAllowedValue = clampedValueMax - minGap;
+              const constrainedValue = Math.max(min, Math.min(maxAllowedValue, newValue));
+              onChangeMin(Math.round(constrainedValue));
             };
 
             const handleMouseUp = () => {
@@ -229,19 +263,20 @@ const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax })
 
         {/* Max handle */}
         <div
-          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer"
-          style={{ left: `${maxPercentage}%` }}
+          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer z-10"
+          style={{ left: `calc(${maxPercentage}% - 10px)` }}
           onMouseDown={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             const startX = e.clientX;
-            const startValue = valueMax;
-            const rangeWidth = max - min;
+            const startValue = clampedValueMax;
 
             const handleMouseMove = (moveEvent) => {
-              const deltaX = moveEvent.clientX - startX;
-              const deltaValue = (deltaX / 300) * rangeWidth;
-              const newValue = Math.max(valueMin + 100, Math.min(max, startValue + deltaValue));
-              onChangeMax(Math.round(newValue));
+              const newValue = getValueFromX(moveEvent.clientX);
+              // Ensure max doesn't go below min + minGap
+              const minAllowedValue = clampedValueMin + minGap;
+              const constrainedValue = Math.max(minAllowedValue, Math.min(max, newValue));
+              onChangeMax(Math.round(constrainedValue));
             };
 
             const handleMouseUp = () => {
@@ -255,10 +290,16 @@ const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax })
         />
       </div>
 
-      {/* Labels */}
+      {/* Labels - show range bounds */}
       <div className="flex justify-between text-xs text-gray-500 mt-2">
         <span>{min.toLocaleString()} ₼</span>
         <span>{max.toLocaleString()} ₼</span>
+      </div>
+      
+      {/* Current values */}
+      <div className="flex justify-between text-sm font-semibold text-[#5C4977] mt-1">
+        <span>{clampedValueMin.toLocaleString()} ₼</span>
+        <span>{clampedValueMax.toLocaleString()} ₼</span>
       </div>
     </div>
   );
@@ -289,45 +330,24 @@ const normalizeProductSpecs = (specsField) => {
 /*---------------------- Responsive Subcategory Grid ----------------------*/
 const SubcategoryGrid = ({ subcategories, categorySlug }) => {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 md:gap-5 lg:gap-6">
       {subcategories.map((sub) => {
-        const subSlug = sub.slug || encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, "-"));
         return (
-          <Link
+          <div
             key={sub._id || sub.name}
-            to={`/catalog/${categorySlug}/${subSlug}`}
-            className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-[#5C4977]/10 hover:border-[#5C4977]/30"
+            className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-15px)] lg:w-[calc(20%-24px)] xl:w-[calc(16.666%-20px)]"
+            style={{ minWidth: "140px", maxWidth: "200px" }}
           >
-            <div className="w-full aspect-square flex justify-center items-center bg-[#f8f7fa] rounded-lg mb-3 overflow-hidden">
-              {sub.imageUrl ? (
-                <img
-                  src={sub.imageUrl}
-                  alt={sub.name}
-                  className="object-contain w-32 h-32 transform hover:scale-105 transition-transform duration-300"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "https://placehold.co/150x150/6B7280/ffffff?text=No+Image";
-                  }}
-                />
-              ) : (
-                <div className="w-32 h-32 flex items-center justify-center text-[#5C4977]/60">
-                  <span className="text-sm text-center px-2">Şəkil yoxdur</span>
-                </div>
-              )}
-            </div>
-            <h3 className="font-bold text-[#5C4977] text-center mb-1 line-clamp-1" style={{ fontSize: "17px" }}>
-              {sub.name}
-            </h3>
-            <p className="text-sm text-gray-600 text-center">
-              {sub.productCount} məhsul
-              {sub.productCount !== 1 ? "" : ""}
-            </p>
-            <div className="mt-2 flex justify-center">
-              <span className="text-xs text-[#5C4977] bg-[#5C4977]/10 px-2 py-1 rounded-full">
-                Bax →
-              </span>
-            </div>
-          </Link>
+            <CategoryCard
+              name={sub.name}
+              slug={sub.slug}
+              productCount={sub.productCount}
+              imageUrl={sub.imageUrl || "https://placehold.co/150x150/6B7280/ffffff?text=No+Image"}
+              imageAlt={`${sub.name} alt kateqoriyası`}
+              categorySlug={categorySlug}
+              productText="məhsul"
+            />
+          </div>
         );
       })}
     </div>
@@ -458,43 +478,19 @@ const SubcategorySlider = ({ subcategories, categorySlug }) => {
         }}
       >
         {subcategories.map((sub) => {
-          const subSlug = sub.slug || encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, "-"));
           return (
             <SwiperSlide key={sub._id || sub.name}>
-              <Link
-                to={`/catalog/${categorySlug}/${subSlug}`}
-                className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-[#5C4977]/10 hover:border-[#5C4977]/30 h-full"
-              >
-                <div className="w-full aspect-square flex justify-center items-center bg-[#f8f7fa] rounded-lg mb-3 overflow-hidden">
-                  {sub.imageUrl ? (
-                    <img
-                      src={sub.imageUrl}
-                      alt={sub.name}
-                      className="object-contain w-32 h-32 transform hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://placehold.co/150x150/6B7280/ffffff?text=No+Image";
-                      }}
-                    />
-                  ) : (
-                    <div className="w-32 h-32 flex items-center justify-center text-[#5C4977]/60">
-                      <span className="text-sm text-center px-2">Şəkil yoxdur</span>
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-bold text-[#5C4977] text-center mb-1 line-clamp-1" style={{ fontSize: "17px" }}>
-                  {sub.name}
-                </h3>
-                <p className="text-sm text-gray-600 text-center">
-                  {sub.productCount} məhsul
-                  {sub.productCount !== 1 ? "" : ""}
-                </p>
-                <div className="mt-2 flex justify-center">
-                  <span className="text-xs text-[#5C4977] bg-[#5C4977]/10 px-2 py-1 rounded-full">
-                    Bax →
-                  </span>
-                </div>
-              </Link>
+              <div className="flex-shrink-0 w-full h-full" style={{ minWidth: "140px", maxWidth: "200px" }}>
+                <CategoryCard
+                  name={sub.name}
+                  slug={sub.slug}
+                  productCount={sub.productCount}
+                  imageUrl={sub.imageUrl || "https://placehold.co/150x150/6B7280/ffffff?text=No+Image"}
+                  imageAlt={`${sub.name} alt kateqoriyası`}
+                  categorySlug={categorySlug}
+                  productText="məhsul"
+                />
+              </div>
             </SwiperSlide>
           );
         })}
@@ -581,6 +577,7 @@ const Filter = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState("newest");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
 
   // Yeni: Stock status filteri
   const [stockStatus, setStockStatus] = useState(""); // "in_stock", "out_of_stock" və ya ""
@@ -621,6 +618,36 @@ const Filter = () => {
   const { data: allProductsData } = useGetProductsQuery();
   const allProducts = allProductsData?.products || [];
 
+  // Dinamik maksimum fiyat hesabla - tüm mehsullardan en yüksek fiyat
+  const dynamicMaxPrice = useMemo(() => {
+    if (allProducts.length === 0) return 3000; // Varsayılan değer
+    
+    const prices = allProducts
+      .map((p) => p.price)
+      .filter((p) => p && typeof p === "number" && p > 0);
+    
+    if (prices.length === 0) return 3000;
+    
+    const maxPrice = Math.max(...prices);
+    // Yuvarlaqlaşdır (yuvarlaqlama 100-ə)
+    return Math.ceil(maxPrice / 100) * 100;
+  }, [allProducts]);
+
+  // Dinamik max fiyat değiştiğinde priceMax'i güncelle (sadece varsayılan değerde ise)
+  useEffect(() => {
+    if (dynamicMaxPrice > 0) {
+      // Sadece priceMax varsayılan değerde (3000) veya daha büyükse güncelle
+      // Kullanıcı manuel olarak değiştirmişse dokunma
+      setPriceMax((prevMax) => {
+        // Eğer önceki değer 3000 ise (varsayılan) veya dynamicMaxPrice'tan büyükse güncelle
+        if (prevMax >= 3000 || prevMax > dynamicMaxPrice) {
+          return dynamicMaxPrice;
+        }
+        return prevMax;
+      });
+    }
+  }, [dynamicMaxPrice]);
+
   // Backend filter query
   const filterQuery = useMemo(() => {
     const query = {};
@@ -636,7 +663,7 @@ const Filter = () => {
     }
 
     if (priceMin > 0) query.minPrice = priceMin;
-    if (priceMax < 3000) query.maxPrice = priceMax;
+    if (priceMax < dynamicMaxPrice) query.maxPrice = priceMax;
     if (searchTerm) query.search = searchTerm;
     if (sort) query.sort = sort;
 
@@ -663,6 +690,7 @@ const Filter = () => {
     stockStatus,
     selectedSpecs,
     selectedSizes,
+    dynamicMaxPrice,
   ]);
 
   const { data, error, isError, isLoading } = useFilterProductsQuery(filterQuery);
@@ -683,9 +711,9 @@ const Filter = () => {
     if (selectedSpecs.length > 0) count++;
     if (selectedBrands.length > 0) count++;
     if (selectedSizes.length > 0) count++;
-    if (priceMin > 0 || priceMax < 3000) count++;
+    if (priceMin > 0 || priceMax < dynamicMaxPrice) count++;
     return count;
-  }, [stockStatus, selectedSpecs, selectedBrands, selectedSizes, priceMin, priceMax]);
+  }, [stockStatus, selectedSpecs, selectedBrands, selectedSizes, priceMin, priceMax, dynamicMaxPrice]);
 
   // Stock status options (dinamik)
   const stockOptions = useMemo(() => {
@@ -701,13 +729,13 @@ const Filter = () => {
     return [
       {
         value: "in_stock",
-        label: "In Stock",
+        label: "Stokda var",
         count: inStockCount,
         disabled: inStockCount === 0,
       },
       {
         value: "out_of_stock",
-        label: "Out of Stock",
+        label: "Stokda yoxdur",
         count: outOfStockCount,
         disabled: outOfStockCount === 0,
       },
@@ -943,7 +971,7 @@ const Filter = () => {
     setSelectedBrands([]);
     setSelectedSizes([]);
     setPriceMin(0);
-    setPriceMax(3000);
+    setPriceMax(dynamicMaxPrice);
     setSelectedPricePreset("");
     setSearchTerm("");
     setSort("newest");
@@ -953,10 +981,10 @@ const Filter = () => {
   const getGoBackText = () => {
     if (subcategorySlugParam && currentCategory) {
       // Alt kategoriyada olduqda -> ana kategoriyaya qayıt
-      return `go back to ${currentCategory.name}`;
+      return `${currentCategory.name} kateqoriyasına qayıt`;
     } else if (categorySlugParam) {
       // Ana kategoriyada olduqda -> bütün kateqoriyalara qayıt
-      return "go back to all categories";
+      return "bütün kateqoriyalara qayıt";
     } else {
       // Heç bir kategoriyada deyil -> hər hansı bir şeyə qayıtmaq lazım deyil
       return "";
@@ -977,36 +1005,46 @@ const Filter = () => {
 
   if (isLoading) {
     return (
-      <>
-        <MetaShopHeader />
-        <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977] mb-4"></div>
             <div className="text-lg text-[#5C4977]">Məhsullar yüklənir...</div>
           </div>
         </div>
         <Footer />
-      </>
+      </div>
     );
   }
 
+  // Product component'inin beklediği formata dönüştür
+  const formattedProducts = products.map((product) => ({
+    _id: product._id,
+    name: product.name,
+    brand: product.brand || "",
+    model: product.model || "",
+    price: `${product.price?.toFixed(2) || '0.00'} ₼`,
+    inStock: product.stock > 0,
+    imageUrl: product.images?.[0]?.url || product.image || "",
+    imageAlt: product.name || "Məhsul Şəkli",
+    isHot: product.specs?.OnSale || product.specs?.onSale || product.specs?.sale || false,
+    rating: product.ratings || 5,
+  }));
+
   return (
-    <>
-      <MetaShopHeader />
-      <div className="min-h-screen bg-white pt-10 px-4 pb-8">
-        <div className="max-w-[1400px] mx-auto">
-          {/* Custom Breadcrumb */}
-          <CustomBreadcrumb items={breadcrumbs} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <div className="flex-1">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          {/* Breadcrumb */}
+          <div className="py-6 pb-0">
+            <Breadcrumb items={breadcrumbs} />
+          </div>
 
           {/* Popular Categories Section */}
           {categorySlugParam && !subcategorySlugParam && subcategoriesWithData.length > 0 && (
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-gray-500 bg-[#5C4977]/10 px-3 py-1 rounded-full">
-                  {subcategoriesWithData.length} kategoriya
-                </span>
-              </div>
-              
               {/* Küçük ekranlarda (mobil/tablet) veya fazla kategori varsa slider kullan */}
               <div className="hidden md:block">
                 <SubcategorySlider 
@@ -1025,7 +1063,7 @@ const Filter = () => {
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-6 pb-6">
             {/* Filter Panel */}
             <div
               className={`bg-white p-6 rounded-2xl shadow-md border border-gray-200/60 ${
@@ -1033,79 +1071,9 @@ const Filter = () => {
               } lg:block w-full lg:w-80`}
             >
               <div className="space-y-8">
-                {/* Active Filters */}
-                {activeFiltersCount > 0 && (
-                  <div className="pb-6 border-b border-gray-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-lg text-gray-800">Aktiv Filtrlər</h3>
-                      <button
-                        onClick={clearAllFilters}
-                        className="text-sm text-[#5C4977] hover:text-[#5C4977]/80 flex items-center gap-1"
-                      >
-                        <X className="w-4 h-4" />
-                        Hamısını təmizlə
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {stockStatus && (
-                        <span className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
-                          {stockStatus === "in_stock" ? "In Stock" : "Out of Stock"}
-                          <button
-                            onClick={() => setStockStatus("")}
-                            className="hover:text-[#5C4977]/70"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      )}
-                      {selectedSpecs.map((specId) => {
-                        const spec = specs.find((s) => s._id === specId);
-                        if (!spec) return null;
-                        return (
-                          <span key={specId} className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
-                            {spec.name}
-                            <button
-                              onClick={() => setSelectedSpecs(prev => prev.filter(id => id !== specId))}
-                              className="hover:text-[#5C4977]/70"
-                            >
-                              <X className="w-3 h-3" />
-                          </button>
-                          </span>
-                        );
-                      })}
-                      {selectedBrands.map((brandName) => (
-                        <span key={brandName} className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
-                          {brandName}
-                          <button
-                            onClick={() => setSelectedBrands(prev => prev.filter(b => b !== brandName))}
-                            className="hover:text-[#5C4977]/70"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                      {(priceMin > 0 || priceMax < 3000) && (
-                        <span className="inline-flex items-center gap-1 bg-[#5C4977]/10 text-[#5C4977] text-sm px-3 py-1.5 rounded-full">
-                          {priceMin.toLocaleString()}₼ - {priceMax.toLocaleString()}₼
-                          <button
-                            onClick={() => {
-                              setPriceMin(0);
-                              setPriceMax(3000);
-                              setSelectedPricePreset("");
-                            }}
-                            className="hover:text-[#5C4977]/70"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Category Section */}
                 <div className="pb-6 border-b border-gray-200">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Subcategory</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Kateqoriya</p>
                   <h3 className="text-xl font-semibold text-gray-800">
                     {currentCategory?.name || "Bütün məhsullar"}
                   </h3>
@@ -1116,7 +1084,7 @@ const Filter = () => {
                       onClick={() => {
                         navigate(goBackPath());
                       }}
-                      className="text-sm text-[#5C4977] hover:underline mt-1"
+                      className="text-sm text-[#5C4977] hover:underline mt-1 cursor-pointer"
                     >
                       {getGoBackText()}
                     </button>
@@ -1138,10 +1106,8 @@ const Filter = () => {
                           return (
                             <button
                               key={category._id}
-                              className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border border-transparent transition-colors ${
-                                selectedCategory === category.name
-                                  ? "bg-[#5C4977]/5 border-[#5C4977]/30"
-                                  : "hover:border-gray-200"
+                              className={`w-full flex items-center justify-between text-base text-gray-800 hover:text-[#5C4977] hover:font-bold py-2 cursor-pointer transition-all duration-200 ${
+                                selectedCategory === category.name ? "text-[#5C4977] font-bold" : ""
                               }`}
                               onClick={() => {
                                 setSelectedCategory(category.name);
@@ -1149,15 +1115,8 @@ const Filter = () => {
                                 navigate(`/catalog/${category.slug}`);
                               }}
                             >
-                              <span className="flex items-center gap-2 text-sm text-gray-800">
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    selectedCategory === category.name ? "bg-[#5C4977]" : "bg-gray-300"
-                                  }`}
-                                />
-                                {category.name}
-                              </span>
-                              <span className="text-xs text-gray-500">{categoryCount}</span>
+                              <span>{category.name}</span>
+                              <span className="text-m text-gray-500">{categoryCount}</span>
                             </button>
                           );
                         })
@@ -1184,10 +1143,8 @@ const Filter = () => {
                           return (
                             <button
                               key={sub._id || sub.name}
-                              className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border border-transparent transition-colors ${
-                                selectedSubcategory === sub.name
-                                  ? "bg-[#5C4977]/5 border-[#5C4977]/30"
-                                  : "hover:border-gray-200"
+                              className={`w-full flex items-center justify-between text-base text-gray-800 hover:text-[#5C4977] hover:font-bold py-2 cursor-pointer transition-all duration-200 ${
+                                selectedSubcategory === sub.name ? "text-[#5C4977] font-bold" : ""
                               }`}
                               onClick={() => {
                                 const subSlug =
@@ -1195,15 +1152,8 @@ const Filter = () => {
                                 navigate(`/catalog/${currentCategory.slug}/${subSlug}`);
                               }}
                             >
-                              <span className="flex items-center gap-2 text-sm text-gray-800">
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    selectedSubcategory === sub.name ? "bg-[#5C4977]" : "bg-gray-300"
-                                  }`}
-                                />
-                                {sub.name}
-                              </span>
-                              <span className="text-xs text-gray-500">{subCount}</span>
+                              <span>{sub.name}</span>
+                              <span className="text-m text-gray-500">{subCount}</span>
                             </button>
                           );
                         })}
@@ -1214,41 +1164,101 @@ const Filter = () => {
 
                 {/* Price Section */}
                 <div className="pb-6 border-b border-gray-200">
-                  <h3 className="font-semibold text-lg text-gray-800 mb-4">Price</h3>
+                  <h3 className="font-semibold text-lg text-gray-800 mb-4">Qiymət</h3>
 
                   <div className="mb-4">
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">min.</label>
+                        <label className="block text-xs text-gray-500 mb-1">Min.</label>
                         <input
                           type="number"
                           value={priceMin}
                           onChange={(e) => {
                             setSelectedPricePreset("");
-                            setPriceMin(Number(e.target.value) || 0);
+                            const inputValue = e.target.value;
+                            if (inputValue === "") {
+                              setPriceMin(0);
+                              return;
+                            }
+                            const numValue = Number(inputValue);
+                            if (!isNaN(numValue) && numValue >= 0) {
+                              // Ensure min doesn't exceed dynamicMaxPrice
+                              if (numValue > dynamicMaxPrice) {
+                                setPriceMin(dynamicMaxPrice);
+                                return;
+                              }
+                              // Ensure min doesn't exceed max
+                              if (numValue <= priceMax) {
+                                setPriceMin(numValue);
+                              } else {
+                                // If min > max, set both to the same value
+                                setPriceMin(priceMax);
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Ensure min is at least 0 on blur
+                            if (priceMin < 0) {
+                              setPriceMin(0);
+                            }
+                            // Ensure min doesn't exceed dynamicMaxPrice
+                            if (priceMin > dynamicMaxPrice) {
+                              setPriceMin(dynamicMaxPrice);
+                            }
                           }}
                           className="w-full p-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
                           min="0"
+                          max={priceMax}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">max.</label>
+                        <label className="block text-xs text-gray-500 mb-1">Maks.</label>
                         <input
                           type="number"
                           value={priceMax}
                           onChange={(e) => {
                             setSelectedPricePreset("");
-                            setPriceMax(Number(e.target.value) || 0);
+                            const inputValue = e.target.value;
+                            if (inputValue === "") {
+                              setPriceMax(dynamicMaxPrice);
+                              return;
+                            }
+                            const numValue = Number(inputValue);
+                            if (!isNaN(numValue) && numValue >= 0) {
+                              // Ensure max doesn't exceed dynamicMaxPrice
+                              if (numValue > dynamicMaxPrice) {
+                                setPriceMax(dynamicMaxPrice);
+                                return;
+                              }
+                              // Ensure max is not less than min
+                              if (numValue >= priceMin) {
+                                setPriceMax(numValue);
+                              } else {
+                                // If max < min, set both to the same value
+                                setPriceMax(priceMin);
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Ensure max is at least min on blur
+                            if (priceMax < priceMin) {
+                              setPriceMax(priceMin);
+                            }
+                            // Ensure max doesn't exceed dynamicMaxPrice
+                            if (priceMax > dynamicMaxPrice) {
+                              setPriceMax(dynamicMaxPrice);
+                            }
                           }}
                           className="w-full p-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                          min="0"
+                          min={priceMin}
+                          max={dynamicMaxPrice}
                         />
                       </div>
                     </div>
 
                     <RangeSlider
                       min={0}
-                      max={3000}
+                      max={dynamicMaxPrice}
                       valueMin={priceMin}
                       valueMax={priceMax}
                       onChangeMin={(val) => {
@@ -1260,17 +1270,13 @@ const Filter = () => {
                         setPriceMax(val);
                       }}
                     />
-                    <div className="flex justify-between text-xs text-gray-500 mt-2">
-                      <span>min.</span>
-                      <span>max.</span>
-                    </div>
                   </div>
 
                   {pricePresets.length > 0 && (
                     <div className="space-y-3">
                       {pricePresets.slice(0, 3).map((preset, index) => {
                         const isActive = selectedPricePreset === preset.label;
-                        const maxValue = preset.max === Infinity ? 3000 : preset.max;
+                        const maxValue = preset.max === Infinity ? dynamicMaxPrice : preset.max;
 
                         return (
                           <label
@@ -1302,7 +1308,7 @@ const Filter = () => {
 
                  {/* Stock Status Section - İLK BURADA */}
                 <div className="pb-6 border-b border-gray-200">
-                  <h3 className="font-semibold text-lg text-gray-800 mb-4">Stock Status</h3>
+                  <h3 className="font-semibold text-lg text-gray-800 mb-4">Stok statusu</h3>
                   <div className="space-y-3">
                     {stockOptions.map((option) => {
                       const isSelected = stockStatus === option.value;
@@ -1424,7 +1430,7 @@ const Filter = () => {
                 {/* Size Section */}
                 {sizeOptions.length > 0 && (
                   <div className="pb-2">
-                    <h3 className="font-semibold text-lg text-gray-800 mb-4">Size</h3>
+                    <h3 className="font-semibold text-lg text-gray-800 mb-4">Ölçü</h3>
                     <div className="space-y-3">
                       {sizeOptions.map((size) => {
                         const isSelected = selectedSizes.includes(size.name);
@@ -1469,7 +1475,7 @@ const Filter = () => {
             <div className="flex-1">
               {/* Mobil Filter Toggle */}
               <div className="lg:hidden mb-4 flex justify-end">
-                <Button variant="outline" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                <Button variant="outline" onClick={() => setIsFilterOpen(!isFilterOpen)} className="cursor-pointer">
                   <FilterIcon className="h-4 w-4 mr-1" />
                   {isFilterOpen ? "Filtrləri Gizlət" : "Filtrləri Göstər"}
                   {activeFiltersCount > 0 && (
@@ -1480,58 +1486,138 @@ const Filter = () => {
                 </Button>
               </div>
 
-              {/* Page header & sorting */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-                <div>
-                  <h2 className="text-2xl font-semibold text-gray-800">
-                    {currentCategory?.name || "Apple MacBook"}
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-1">Showing all {products.length || 0} results</p>
-                </div>
-                <div className="w-full sm:w-64">
-                  <select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+              {/* Sorting - Custom Dropdown */}
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+                  {breadcrumbs[breadcrumbs.length - 1]?.label || "Kataloq"}
+                </h2>
+                <div className="relative w-full sm:w-64 cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                    className="w-full p-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-[#5C4977] transition-all cursor-pointer shadow-sm hover:border-gray-400 text-gray-800 font-medium flex items-center justify-between"
+                    style={{ cursor: 'pointer' }}
                   >
-                    <option value="">Default sorting</option>
-                    <option value="price_asc">Price: low to high</option>
-                    <option value="price_desc">Price: high to low</option>
-                    <option value="newest">Newest</option>
-                    <option value="oldest">Oldest</option>
-                    <option value="top_rated">Top rated</option>
-                  </select>
+                    <span style={{ cursor: 'pointer' }}>
+                      {sort === "" && "Varsayılan sıralama"}
+                      {sort === "price_asc" && "Qiymət: aşağıdan yuxarı"}
+                      {sort === "price_desc" && "Qiymət: yuxarıdan aşağı"}
+                      {sort === "newest" && "Ən yenilər"}
+                      {sort === "oldest" && "Ən köhnələr"}
+                      {sort === "top_rated" && "Ən yüksək reytinqli"}
+                    </span>
+                    <ChevronDown 
+                      className={`w-4 h-4 text-[#5C4977] transition-transform duration-200 cursor-pointer ${
+                        isSortDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </button>
+                  
+                  {isSortDropdownOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setIsSortDropdownOpen(false)}
+                      />
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-20 overflow-hidden">
+                        <div className="pt-3 pb-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSort("");
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3.5 transition-colors cursor-pointer ${
+                              sort === "" 
+                                ? "bg-[#5C4977] text-white" 
+                                : "text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            Varsayılan sıralama
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSort("price_asc");
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 transition-colors cursor-pointer ${
+                              sort === "price_asc" 
+                                ? "bg-[#5C4977] text-white" 
+                                : "text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            Qiymət: aşağıdan yuxarı
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSort("price_desc");
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 transition-colors cursor-pointer ${
+                              sort === "price_desc" 
+                                ? "bg-[#5C4977] text-white" 
+                                : "text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            Qiymət: yuxarıdan aşağı
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSort("newest");
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 transition-colors cursor-pointer ${
+                              sort === "newest" 
+                                ? "bg-[#5C4977] text-white" 
+                                : "text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            Ən yenilər
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSort("oldest");
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 transition-colors cursor-pointer ${
+                              sort === "oldest" 
+                                ? "bg-[#5C4977] text-white" 
+                                : "text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            Ən köhnələr
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSort("top_rated");
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 transition-colors cursor-pointer ${
+                              sort === "top_rated" 
+                                ? "bg-[#5C4977] text-white" 
+                                : "text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            Ən yüksək reytinqli
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Məhsul Kartları */}
-              {products.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {products.map((product) => (
-                    <div key={product._id} className="relative flex justify-center">
-                      {/* On Sale badge */}
-                      {(product.specs?.OnSale || product.specs?.onSale || product.specs?.sale) && (
-                        <span className="absolute top-2 left-2 bg-[#fe9034] text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
-                          Endirimdə
-                        </span>
-                      )}
-
-                      {/* Featured badge */}
-                      {(product.specs?.Featured || product.specs?.featured) && (
-                        <span className="absolute top-2 left-20 bg-[#5C4977] text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
-                          Seçilmiş
-                        </span>
-                      )}
-
-                      {/* Stock Status badge */}
-                      {product.stock === 0 && (
-                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
-                          Stokda yoxdur
-                        </span>
-                      )}
-
-                      <ProductCard mehsul={product} />
-                    </div>
+              {/* Məhsul Kartları - Product component kullan */}
+              {formattedProducts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {formattedProducts.map((product) => (
+                    <Product key={product._id} product={product} />
                   ))}
                 </div>
               ) : (
@@ -1544,6 +1630,7 @@ const Filter = () => {
                   <Button
                     variant="outline"
                     onClick={clearAllFilters}
+                    className="cursor-pointer"
                   >
                     Filtrləri Təmizlə
                   </Button>
@@ -1554,7 +1641,7 @@ const Filter = () => {
         </div>
       </div>
       <Footer />
-    </>
+    </div>
   );
 };
 

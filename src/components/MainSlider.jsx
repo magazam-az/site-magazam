@@ -243,7 +243,7 @@ export default function ProductBanners() {
       </div>
 
       {/* Custom CSS for pagination bullets */}
-      <style jsx>{`
+      <style>{`
         .custom-pagination {
           display: flex !important;
           justify-content: center;

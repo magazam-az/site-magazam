@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   Info
 } from 'lucide-react';
+import AdminLayout from './AdminLayout';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -333,7 +334,7 @@ const EditProduct = () => {
         timer: 2000,
         showConfirmButton: false
       }).then(() => {
-        navigate("/admin/adminproducts");
+        navigate("/admin/products");
         refetch();
       });
 
@@ -384,8 +385,8 @@ const EditProduct = () => {
           <h3 className="text-xl font-bold mb-2 text-[#5C4977]">Xəta baş verdi</h3>
           <p className="text-gray-600 mb-4">{error.message}</p>
           <button
-            onClick={() => navigate("/admin/adminproducts")}
-            className="mt-4 w-full bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 transition-colors"
+              onClick={() => navigate("/admin/products")}
+            className="mt-4 w-full bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 transition-colors cursor-pointer"
           >
             Admin məhsullarına qayıt
           </button>
@@ -395,8 +396,9 @@ const EditProduct = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 px-4 pb-8">
-      <div className="max-w-6xl mx-auto">
+    <AdminLayout pageTitle="Məhsulu Redaktə Et">
+    <div className="bg-gray-50 min-h-full p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -405,8 +407,8 @@ const EditProduct = () => {
               <p className="text-gray-600">"{formData.name}" məhsulunun məlumatlarını yeniləyin</p>
             </div>
             <button
-              onClick={() => navigate("/admin/adminproducts")}
-              className="flex items-center gap-2 text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl"
+              onClick={() => navigate("/admin/products")}
+              className="flex items-center gap-2 text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
               Geri qayıt
@@ -656,7 +658,7 @@ const EditProduct = () => {
                       key={spec._id}
                       type="button"
                       onClick={() => handleSpecChange(spec._id, spec.name)}
-                      className={`p-3 border rounded-xl text-left transition-all duration-200 ${
+                      className={`p-3 border rounded-xl text-left transition-all duration-200 cursor-pointer ${
                         selectedSpecs[spec._id]
                           ? 'bg-[#5C4977] text-white border-[#5C4977]'
                           : 'border-[#5C4977]/20 hover:border-[#5C4977] hover:bg-[#5C4977]/5'
@@ -692,7 +694,7 @@ const EditProduct = () => {
                           <button
                             type="button"
                             onClick={() => handleSpecChange(specId, specName)}
-                            className="ml-1 hover:text-red-200"
+                            className="ml-1 hover:text-red-200 cursor-pointer"
                             disabled={isUpdating}
                           >
                             ×
@@ -786,7 +788,7 @@ const EditProduct = () => {
                             <button
                               type="button"
                               onClick={() => setAsMainImage(index)}
-                              className="bg-green-500 hover:bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md"
+                              className="bg-green-500 hover:bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md cursor-pointer"
                               title="Əsas şəkil et"
                               disabled={isUpdating}
                             >
@@ -796,7 +798,7 @@ const EditProduct = () => {
                           <button
                             type="button"
                             onClick={() => removeImage(index, isExistingImage, existingImage?.public_id)}
-                            className="bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md"
+                            className="bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md cursor-pointer"
                             title="Sil"
                             disabled={isUpdating}
                           >
@@ -824,7 +826,7 @@ const EditProduct = () => {
                   type="button"
                   onClick={() => document.querySelector('input[type="file"]').click()}
                   disabled={previews.length - removedImages.length + images.length >= 6 || isUpdating}
-                  className="text-sm text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors disabled:opacity-50"
+                  className="text-sm text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Upload className="inline mr-1 h-4 w-4" />
                   Şəkil əlavə et
@@ -853,14 +855,9 @@ const EditProduct = () => {
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-500">
-            © 2024 META SHOP Admin Panel. Bütün hüquqlar qorunur.
-          </p>
-        </div>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

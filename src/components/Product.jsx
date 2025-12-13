@@ -1,34 +1,117 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
 import Rating from './Rating';
+import { useGetFavoritesQuery, useAddToFavoritesMutation, useRemoveFromFavoritesMutation } from '../redux/api/productsApi';
+import { useSelector } from 'react-redux';
+import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 // Product Card Component
-const Product = ({ product }) => (
-  <div 
-    className="bg-white rounded-xl transition-all duration-300 flex flex-col p-3 sm:p-4 cursor-pointer w-full border border-gray-100 focus:outline-none relative product-card group"
-    style={{ 
-      minWidth: '100%',
-      maxWidth: '100%'
-    }}
-  >
-    {/* HOT badge */}
-    {product.isHot && (
-      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
-        HOT
-      </div>
-    )}
+const Product = ({ product }) => {
+  const { isAuthenticated } = useSelector((state) => state.user || {});
+  const navigate = useNavigate();
+  
+  // Favorileri getir
+  const { data: favoritesData } = useGetFavoritesQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+  
+  const [addToFavorites] = useAddToFavoritesMutation();
+  const [removeFromFavorites] = useRemoveFromFavoritesMutation();
+  
+  // Product ID'yi bul - sadece _id veya id kabul et (sku kabul etme çünkü backend'de çalışmaz)
+  const productId = product._id || product.id;
+  const hasValidId = !!productId;
+  
+  // Ürünün favorilerde olup olmadığını kontrol et
+  const isFavorite = productId && favoritesData?.favorites?.some(
+    (fav) => fav._id === productId || fav._id?.toString() === productId?.toString()
+  ) || false;
+  
+  // Heart icon click handler
+  const handleHeartClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    {/* Heart icon */}
-    <button className="absolute top-2 right-2 z-10 cursor-pointer">
-      <Heart className="w-6 h-6 text-gray-400 hover:text-[#5C4977] transition-all duration-300 cursor-pointer" />
-    </button>
+    if (!hasValidId) {
+      toast.error('Bu ürün favorilere eklenemez');
+      return;
+    }
+    
+    if (!isAuthenticated) {
+      toast.error('Favorilere eklemek üçün giriş yapmalısınız');
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      if (isFavorite) {
+        await removeFromFavorites(productId).unwrap();
+        toast.success('Favorilerden kaldırıldı');
+      } else {
+        await addToFavorites(productId).unwrap();
+        toast.success('Favorilere eklendi');
+      }
+    } catch (error) {
+      const errorMessage = error?.data?.message || error?.message || 'Bir hata oluştu';
+      toast.error(errorMessage);
+      console.error('Favorites error:', error);
+    }
+  };
+
+  // Product card click handler - navigate to product detail page
+  const handleProductClick = (e) => {
+    // Heart button'a tıklanırsa navigate etme
+    if (e.target.closest('button')) {
+      return;
+    }
+    
+    if (hasValidId) {
+      navigate(`/product/${productId}`);
+    }
+  };
+  
+  return (
+    <div 
+      onClick={handleProductClick}
+      className="bg-white rounded-xl transition-all duration-300 flex flex-col p-3 sm:p-4 cursor-pointer w-full border border-gray-100 focus:outline-none relative product-card group"
+      style={{ 
+        minWidth: '100%',
+        maxWidth: '100%'
+      }}
+    >
+      {/* HOT badge */}
+      {product.isHot && (
+        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+          HOT
+        </div>
+      )}
+      
+      {/* Heart icon - sadece geçerli ID varsa göster */}
+      {hasValidId && (
+        <button 
+          onClick={handleHeartClick}
+          className="absolute top-2 right-2 z-10 cursor-pointer focus:outline-none focus:ring-0 outline-none border-0 bg-transparent p-0 m-0"
+          style={{ border: 'none', boxShadow: 'none' }}
+          disabled={!isAuthenticated}
+        >
+          <Heart 
+            className={`w-7 h-7 transition-all duration-300 cursor-pointer hover:scale-110 ${
+              isFavorite 
+                ? 'text-red-500 fill-red-500' 
+                : 'text-gray-400 hover:text-red-400'
+            } ${!isAuthenticated ? 'opacity-50' : ''}`} 
+            style={{ outline: 'none' }}
+          />
+        </button>
+      )}
     
     {/* Məhsul Şəkili sahəsi - sabit ölçü */}
-    <div className="w-full flex justify-center items-center mb-3 sm:mb-4" style={{ height: '200px' }}>
+    <div className="w-full flex justify-center items-center mb-3 sm:mb-4 overflow-hidden" style={{ height: '200px' }}>
       <img 
         src={product.imageUrl} 
         alt={product.imageAlt} 
-        className="object-contain w-full h-full max-w-[180px] max-h-[180px] sm:max-w-[234px] sm:max-h-[234px] transition-transform duration-300 ease-out group-hover:scale-110"
+        className="object-contain w-full h-full max-w-[180px] max-h-[180px] sm:max-w-[234px] sm:max-h-[234px] transition-transform duration-300 ease-out hover:scale-110"
         onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/234x234/6B7280/ffffff?text=Product+Image"; }}
       />
     </div>
@@ -62,12 +145,20 @@ const Product = ({ product }) => (
         </div>
         
         {/* Add to Cart button */}
-        <button className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 cursor-pointer">
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Add to cart logic here
+          }}
+          className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 cursor-pointer"
+        >
           Add To Cart
         </button>
       </div>
     </div>
-  </div>
-);
+    </div>
+  );
+};
 
 export default Product;

@@ -5,6 +5,7 @@ import {
 } from "../../redux/api/blogApi";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import AdminLayout from "./AdminLayout";
 
 const AddBlogs = () => {
   const [formData, setFormData] = useState({
@@ -84,13 +85,9 @@ const AddBlogs = () => {
   };
 
   return (
-    <div
-      className="
-        max-w-4xl mx-auto mt-10 p-6 rounded-md 
-        shadow-lg bg-gradient-to-br from-white to-[#fe9034]/5
-        flex flex-col gap-8
-      "
-    >
+    <AdminLayout pageTitle="Bloq Yazısı Əlavə Et">
+    <div className="bg-gray-50 min-h-full p-6">
+    <div className="max-w-7xl mx-auto p-6 rounded-md shadow-lg bg-white">
       <div className="bg-white p-4 rounded-md shadow-sm w-full">
         {/* Başlıq - Mərkəzləşdirilmiş */}
         <h2 className="text-center text-3xl font-extrabold text-[#fe9034] mb-6">
@@ -167,7 +164,7 @@ const AddBlogs = () => {
             type="submit"
             className="
               w-full py-2 bg-[#fe9034] text-white rounded-md 
-              hover:bg-[#fe9034]/90 transition-colors
+              hover:bg-[#fe9034]/90 transition-colors cursor-pointer
             "
           >
             Əlavə Et
@@ -175,6 +172,8 @@ const AddBlogs = () => {
         </form>
       </div>
     </div>
+    </div>
+    </AdminLayout>
   );
 };
 

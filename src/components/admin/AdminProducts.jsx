@@ -7,6 +7,7 @@ import { MdDeleteSweep } from "react-icons/md";
 import { FiTrendingUp } from "react-icons/fi";
 import { HiOutlineRefresh } from "react-icons/hi";
 import Swal from "sweetalert2";
+import AdminLayout from "./AdminLayout";
 
 const AdminProducts = () => {
     const { data, error, isLoading, refetch } = useGetProductsQuery();
@@ -18,7 +19,7 @@ const AdminProducts = () => {
     };
 
     const handleCreate = () => {
-        navigate("/admin/create-product");
+        navigate("/admin/add-products");
     };
 
     const handleDelete = async (id) => {
@@ -56,55 +57,6 @@ const AdminProducts = () => {
         }
     };
 
-    // ✅ BÜTÜN MƏHSULLARI SİL DÜYMƏSİ
-    const handleDeleteAll = async () => {
-        if (!data?.products || data.products.length === 0) {
-            Swal.fire({
-                title: "Xəbərdarlıq",
-                text: "Silinəcək məhsul yoxdur.",
-                icon: "warning",
-                confirmButtonColor: "#5C4977",
-            });
-            return;
-        }
-
-        const result = await Swal.fire({
-            title: "Bütün məhsulları silmək istədiyinizdən əminsiniz?",
-            text: "Bu əməliyyat geri qaytarıla bilməz və bütün məhsullar silinəcək!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Bəli, hamısını sil",
-            cancelButtonText: "Xeyr, ləğv et",
-            reverseButtons: true,
-            confirmButtonColor: "#DC2626",
-            cancelButtonColor: "#6B7280",
-        });
-
-        if (result.isConfirmed) {
-            try {
-                for (const product of data.products) {
-                    await deleteProduct(product._id);
-                }
-                await refetch();
-
-                Swal.fire({
-                    title: "Uğurlu!",
-                    text: "Bütün məhsullar uğurla silindi.",
-                    icon: "success",
-                    confirmButtonColor: "#5C4977",
-                });
-            } catch (error) {
-                console.error("Bütün məhsullar silinərkən xəta baş verdi:", error);
-                Swal.fire({
-                    title: "Xəta!",
-                    text: "Məhsullar silinərkən xəta baş verdi.",
-                    icon: "error",
-                    confirmButtonColor: "#DC2626",
-                });
-            }
-        }
-    };
-
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 px-4">
@@ -126,7 +78,7 @@ const AdminProducts = () => {
                         <p>{error.message}</p>
                         <button
                             onClick={refetch}
-                            className="mt-3 bg-[#5C4977] text-white px-4 py-2 rounded-lg hover:bg-[#5C4977]/90 transition-colors"
+                            className="mt-3 bg-[#5C4977] text-white px-4 py-2 rounded-lg hover:bg-[#5C4977]/90 transition-colors cursor-pointer"
                         >
                             Yenidən yoxla
                         </button>
@@ -137,28 +89,21 @@ const AdminProducts = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 px-4 pb-8">
+        <AdminLayout pageTitle="Məhsullar">
+        <div className="bg-gray-50 min-h-full p-6">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Admin Panel</h1>
+                            <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Məhsulların İdarə Edilməsi</h1>
                             <p className="text-gray-600">Məhsulların idarə edilməsi</p>
                         </div>
 
-                        {/* ✅ Yuxarı sağ tərəfə 2 düymə: Bütün Məhsulları Sil + Yeni Məhsul */}
+                        {/* ✅ Yuxarı sağ tərəfə: Yeni Məhsul */}
                         <div className="flex flex-wrap items-center gap-3">
                             <button
-                                onClick={handleDeleteAll}
-                                className="bg-red-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-red-300/50"
-                            >
-                                <MdDeleteSweep className="h-5 w-5" />
-                                Bütün Məhsulları Sil
-                            </button>
-
-                            <button
                                 onClick={handleCreate}
-                                className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20"
+                                className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20 cursor-pointer"
                             >
                                 <FaPlus className="h-5 w-5" />
                                 Yeni Məhsul
@@ -208,14 +153,14 @@ const AdminProducts = () => {
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleEdit(product._id)}
-                                                    className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors"
+                                                    className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
                                                     title="Redaktə et"
                                                 >
                                                     <FaRegEdit className="h-5 w-5" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(product._id)}
-                                                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                                                     title="Sil"
                                                 >
                                                     <MdDeleteSweep className="h-5 w-5" />
@@ -234,14 +179,9 @@ const AdminProducts = () => {
                         </div>
                     )}
                 </div>
-
-                <div className="mt-8 text-center">
-                    <p className="text-sm text-gray-500">
-                        © 2024 META SHOP Admin Panel. Bütün hüquqlar qorunur.
-                    </p>
-                </div>
             </div>
         </div>
+        </AdminLayout>
     );
 };
 

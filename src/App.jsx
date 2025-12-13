@@ -15,8 +15,16 @@ import EditProduct from './components/admin/EditProduct'
 import AdminBlog from './components/admin/AdminBlog'
 import AddBlogs from './components/admin/AddBlogs'
 import CategoryManagement from './components/admin/CategoryManagement'
+import CreateCategory from './components/admin/CreateCategory'
+import EditCategory from './components/admin/EditCategory'
+import CreateSubcategory from './components/admin/CreateSubcategory'
+import EditSubcategory from './components/admin/EditSubcategory'
 import BrandManagement from './components/admin/BrandManagement'
+import CreateBrand from './components/admin/CreateBrand'
+import EditBrand from './components/admin/EditBrand'
 import SpecsManagement from './components/admin/SpecsManagement'
+import CreateSpec from './components/admin/CreateSpec'
+import EditSpec from './components/admin/EditSpec'
 
 import PrivateRoute from './components/PrivateRoute'
 import AdminRoute from './components/AdminRoues'
@@ -32,9 +40,13 @@ import Filter from './components/Filter'
 
 import AdminDashboard from './components/admin/AdminDashboard'
 
+// ScrollToTop Component
+import ScrollToTop from './components/ui/ScrollToTop'
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <div className="App">
         <ToastContainer position="top-right" autoClose={3000} theme="light" />
 
@@ -51,7 +63,7 @@ function App() {
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="/favourites" element={<PrivateRoute><FavoriteButton /></PrivateRoute>} />
           <Route path="/update" element={<PrivateRoute><UpdateName /></PrivateRoute>} />
-          <Route path="/shoppingcard" element={<PrivateRoute><SebetCart /></PrivateRoute>} />
+          <Route path="/shopping-cart" element={<PrivateRoute><SebetCart /></PrivateRoute>} />
 
           {/* ====================== FILTER ROUTES (YENİ) ====================== */}
           {/* No category → bütün məhsullar */}
@@ -65,21 +77,21 @@ function App() {
 
 
           {/* ====================== ADMIN ROUTES ====================== */}
+          <Route path='/admin' element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } />
+
           <Route path='/admin/add-products' element={
             <AdminRoute>
               <AddProducts />
             </AdminRoute>
           } />
 
-          <Route path='/admin/adminproducts' element={
+          <Route path='/admin/products' element={
             <AdminRoute>
               <AdminProducts />
-            </AdminRoute>
-          } />
-
-          <Route path='/admin/admin-dashboard' element={
-            <AdminRoute>
-              <AdminDashboard />
             </AdminRoute>
           } />
 
@@ -107,15 +119,63 @@ function App() {
             </AdminRoute>
           } />
 
+          <Route path='/admin/categories/create' element={
+            <AdminRoute>
+              <CreateCategory />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/categories/edit/:id' element={
+            <AdminRoute>
+              <EditCategory />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/categories/:categoryId/subcategories/create' element={
+            <AdminRoute>
+              <CreateSubcategory />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/categories/:categoryId/subcategories/edit/:subcategoryId' element={
+            <AdminRoute>
+              <EditSubcategory />
+            </AdminRoute>
+          } />
+
           <Route path='/admin/brands' element={
             <AdminRoute>
               <BrandManagement />
             </AdminRoute>
           } />
 
+          <Route path='/admin/brands/create' element={
+            <AdminRoute>
+              <CreateBrand />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/brands/edit/:id' element={
+            <AdminRoute>
+              <EditBrand />
+            </AdminRoute>
+          } />
+
           <Route path='/admin/specs' element={
             <AdminRoute>
               <SpecsManagement />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/specs/create' element={
+            <AdminRoute>
+              <CreateSpec />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/specs/edit/:id' element={
+            <AdminRoute>
+              <EditSpec />
             </AdminRoute>
           } />
         </Routes>

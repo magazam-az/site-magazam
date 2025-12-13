@@ -9,6 +9,7 @@ import {
   useGetFavoritesQuery,
   useSearchProductsQuery,
 } from "../redux/api/productsApi"
+import { useGetCategoriesQuery } from "../redux/api/categoryApi"
 import SebetCart from "./ShoppingCard"
 
 // Desktop üçün İstifadəçi Menyusu
@@ -59,7 +60,7 @@ const UserMenu = ({ name, email, imageUrl, role, onLogout }) => {
           {role === "admin" && (
             <div className="mt-2">
               <Link
-                to="/admin/admin-dashboard"
+                to="/admin"
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-[#5C4977] hover:bg-[#f5f2fa] cursor-pointer"
                 onClick={() => setIsOpen(false)}
               >
@@ -113,6 +114,9 @@ export default function MetaShopHeader() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
 
+  // Ref for categories dropdown
+  const categoriesDropdownRef = useRef(null)
+
   // Fərqli store strukturları üçün useSelector
   const userState = useSelector(state => state.user || state.userSlice || state.auth)
   const { user, isAuthenticated } = userState || {}
@@ -128,6 +132,22 @@ export default function MetaShopHeader() {
     }, 500)
     return () => clearTimeout(timer)
   }, [searchQuery])
+
+  // Close categories dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isCategoriesOpen && categoriesDropdownRef.current && !categoriesDropdownRef.current.contains(event.target)) {
+        setIsCategoriesOpen(false)
+        setExpandedCategory(null)
+      }
+    }
+    if (isCategoriesOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isCategoriesOpen])
 
   // RTK Query ilə dinamik axtarış
   const {
@@ -153,6 +173,10 @@ export default function MetaShopHeader() {
     isLoading: favoriteLoading,
     error: favoriteError,
   } = useGetFavoritesQuery()
+
+  // Kategorileri API'den al
+  const { data: categoriesData } = useGetCategoriesQuery()
+  const categories = categoriesData?.categories || []
 
   // Səbət məhsul sayını hesabla - DÜZƏLDİ (YENİ HƏLL)
   const getCartItemCount = () => {
@@ -278,75 +302,15 @@ export default function MetaShopHeader() {
     )
   }
 
-  const categories = [
-    {
-      name: "Smartfonlar, Planşet və Qadjetlər",
-      subcategories: [
-        "Smartfonlar",
-        "Planşetlər",
-        "Aksesuarlar",
-        "Smart saatlar və fitnes-breloklar",
-        "Qulaqlıqlar",
-        "Powerbank-lər",
-        "Telefon üçün ehtiyat hissələr",
-      ],
-    },
-    {
-      name: "Noutbuklar, Kompüterlər, Ofis",
-      subcategories: [
-        "Noutbuklar",
-        "Kompüter toplamaq üçün komponentlər",
-        "Monobloklar",
-        "Monitorlar",
-        "Aksesuarlar",
-        "Printerlər və MFP-lər",
-        "Proyektorlar",
-        "Ofis avadanlıqları",
-      ],
-    },
-    {
-      name: "TV, Audio, Video, Foto",
-      subcategories: [
-        "Televizorlar",
-        "Audio sistemlər",
-        "Fotoaparatlar",
-        "Video kameralar",
-        "Objektivlər",
-        "Foto aksesuarlar",
-        "TV və audio aksesuarlar",
-      ],
-    },
-    {
-      name: "Məişət texnikası",
-      subcategories: [
-        "Soyuducular",
-        "Paltaryuyan maşınlar",
-        "Kondisionerlər",
-        "Qaz plitələr",
-        "Elektrik sobalar",
-        "Mikrodalğalı sobalar",
-        "Tozsoranlar",
-        "Ütülər",
-      ],
-    },
-    {
-      name: "Oyun və Əyləncə",
-      subcategories: [
-        "Oyun konsolları",
-        "Oyunlar",
-        "Geyming aksesuarlar",
-        "Virtual reallıq başlıqları",
-        "Geyming stolları və kreslolar",
-      ],
-    },
-    {
-      name: "Şəbəkə avadanlıqları",
-      subcategories: ["Routerlər", "Modemlər", "Wi-Fi adapterlər", "Şəbəkə saxlayıcıları", "İnternet kabeli"],
-    },
-  ]
+  const handleSubcategoryClick = (categorySlug, subcategorySlug) => {
+    navigate(`/catalog/${categorySlug}/${subcategorySlug}`)
+    setIsCategoriesOpen(false)
+    setExpandedCategory(null)
+    setIsMobileMenuOpen(false)
+  }
 
-  const handleSubcategoryClick = (subcategoryName) => {
-    console.log("Seçildi:", subcategoryName)
+  const handleCategoryClick = (categorySlug) => {
+    navigate(`/catalog/${categorySlug}`)
     setIsCategoriesOpen(false)
     setExpandedCategory(null)
     setIsMobileMenuOpen(false)
@@ -483,12 +447,18 @@ export default function MetaShopHeader() {
               {/* Left Navigation */}
               <div className="flex items-center gap-6">
                 {/* Categories Dropdown */}
-                <div className="relative">
+                <div className="relative" ref={categoriesDropdownRef}>
                   <div
                     className="flex items-center gap-3 px-4 py-2 transition-all duration-300 cursor-pointer select-none"
-                    onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsCategoriesOpen(!isCategoriesOpen)
+                    }}
                   >
-                    <button className="flex items-center justify-center w-11 h-11 rounded-full bg-[#5C4977] text-white hover:bg-[#5C4977]/90 transition-all duration-300 shadow-md shadow-[#5C4977]/30 hover:shadow-[#5C4977]/50 border border-[#5C4977] cursor-pointer">
+                    <button 
+                      className="flex items-center justify-center w-11 h-11 rounded-full bg-[#5C4977] text-white hover:bg-[#5C4977]/90 transition-all duration-300 shadow-md shadow-[#5C4977]/30 hover:shadow-[#5C4977]/50 border border-[#5C4977] cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Menu className="w-5 h-5 cursor-pointer" />
                     </button>
                     <div className="flex items-center gap-2">
@@ -505,32 +475,38 @@ export default function MetaShopHeader() {
                     <div className="absolute top-full left-0 w-80 bg-white shadow-2xl border border-[#5C4977]/20 rounded-2xl mt-2 z-50 overflow-hidden transition-all duration-300">
                       <div className="p-4 max-h-96 overflow-y-auto">
                         {categories.map((category, index) => (
-                          <div key={index} className="mb-2 last:mb-0">
+                          <div key={category._id || index} className="mb-2 last:mb-0">
                             <button
-                              onClick={() =>
-                                setExpandedCategory(expandedCategory === index ? null : index)
-                              }
+                              onClick={() => {
+                                if (category.subcategories && category.subcategories.length > 0) {
+                                  setExpandedCategory(expandedCategory === index ? null : index)
+                                } else {
+                                  handleCategoryClick(category.slug || category.name)
+                                }
+                              }}
                               className="flex items-center justify-between w-full p-3 hover:bg-[#f5f2fa] rounded-xl cursor-pointer group transition-all select-none"
                             >
                               <span className="font-medium text-[#5C4977] text-left flex-1 select-none">
                                 {category.name}
                               </span>
-                              <ChevronDown
-                                className={`w-4 h-4 text-[#5C4977]/60 transition-transform duration-300 ${
-                                  expandedCategory === index ? "rotate-180" : ""
-                                }`}
-                              />
+                              {category.subcategories && category.subcategories.length > 0 && (
+                                <ChevronDown
+                                  className={`w-4 h-4 text-[#5C4977]/60 transition-transform duration-300 ${
+                                    expandedCategory === index ? "rotate-180" : ""
+                                  }`}
+                                />
+                              )}
                             </button>
 
-                            {expandedCategory === index && (
+                            {expandedCategory === index && category.subcategories && category.subcategories.length > 0 && (
                               <div className="ml-4 mt-2 space-y-1">
                                 {category.subcategories.map((subcategory, subIndex) => (
                                   <button
-                                    key={subIndex}
-                                    onClick={() => handleSubcategoryClick(subcategory)}
-                                    className="block w-full text-left px-3 py-2 text-sm text-[#5C4977]/80 hover:text-[#5C4977] hover:bg-[#f3effa] rounded-lg transition-all select-none"
+                                    key={subcategory._id || subIndex}
+                                    onClick={() => handleSubcategoryClick(category.slug || category.name, subcategory.slug || subcategory.name)}
+                                    className="block w-full text-left px-3 py-2 text-sm text-[#5C4977]/80 hover:text-[#5C4977] hover:bg-[#f3effa] rounded-lg transition-all select-none cursor-pointer"
                                   >
-                                    {subcategory}
+                                    {subcategory.name}
                                   </button>
                                 ))}
                               </div>
@@ -599,7 +575,7 @@ export default function MetaShopHeader() {
 
                 {/* Favorites */}
                 <button 
-                  className="relative flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer"
+                  className="relative flex items-center justify-center text-black hover:text-[#5C4977] transition-colors duration-200 p-2 rounded-lg cursor-pointer -ml-1"
                   onClick={handleFavoritesClick}
                 >
                   <Heart className="w-6 h-6" />
@@ -778,7 +754,7 @@ export default function MetaShopHeader() {
             {safeIsAuthenticated && getUserRole() === "admin" && (
               <div className="border-b border-gray-200">
                 <Link
-                  to="/admin/admin-dashboard"
+                  to="/admin"
                   className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-[#5C4977] hover:bg-[#f5f2fa] border-b border-gray-100 cursor-pointer"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -806,26 +782,34 @@ export default function MetaShopHeader() {
               {isCategoriesOpen && (
                 <div className="bg-gray-50 border-t border-gray-200">
                   {categories.map((category, index) => (
-                    <div key={index}>
+                    <div key={category._id || index}>
                       <button
-                        onClick={() => setExpandedCategory(expandedCategory === index ? null : index)}
+                        onClick={() => {
+                          if (category.subcategories && category.subcategories.length > 0) {
+                            setExpandedCategory(expandedCategory === index ? null : index)
+                          } else {
+                            handleCategoryClick(category.slug || category.name)
+                          }
+                        }}
                         className="flex items-center justify-between w-full px-6 py-3 text-left text-sm font-medium text-gray-900 hover:bg-white border-b border-gray-200 cursor-pointer"
                       >
                         <span>{category.name}</span>
-                        <ChevronDown
-                          className={`w-4 h-4 text-gray-400 transition-transform duration-300 cursor-pointer ${expandedCategory === index ? "rotate-180" : ""}`}
-                        />
+                        {category.subcategories && category.subcategories.length > 0 && (
+                          <ChevronDown
+                            className={`w-4 h-4 text-gray-400 transition-transform duration-300 cursor-pointer ${expandedCategory === index ? "rotate-180" : ""}`}
+                          />
+                        )}
                       </button>
 
-                      {expandedCategory === index && (
+                      {expandedCategory === index && category.subcategories && category.subcategories.length > 0 && (
                         <div className="bg-white border-b border-gray-200">
                           {category.subcategories.map((subcategory, subIndex) => (
                             <button
-                              key={subIndex}
-                              onClick={() => handleSubcategoryClick(subcategory)}
+                              key={subcategory._id || subIndex}
+                              onClick={() => handleSubcategoryClick(category.slug || category.name, subcategory.slug || subcategory.name)}
                               className="block w-full text-left px-8 py-3 text-sm text-gray-700 hover:text-purple-900 hover:bg-purple-50 border-b border-gray-100 cursor-pointer"
                             >
-                              {subcategory}
+                              {subcategory.name}
                             </button>
                           ))}
                         </div>

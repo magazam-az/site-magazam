@@ -6,18 +6,22 @@ import { useGetCategoriesQuery } from "../redux/api/categoryApi"; // 🔥 Catego
 import { Link } from "react-router-dom";
 
 // Tək bir kategoriya elementinin komponenti
-const CategoryCard = ({ name, slug, productCount, imageUrl, imageAlt, subcategories = [] }) => {
+export const CategoryCard = ({ name, slug, productCount, imageUrl, imageAlt, subcategories = [], categorySlug, customPath, productText = "product" }) => {
   // Use slug if available, otherwise fallback to encoded name
-  const categorySlug = slug || encodeURIComponent(name);
+  const itemSlug = slug || encodeURIComponent(name);
+  
+  // Alt kategori ise: /catalog/category-slug/subcategory-slug
+  // Ana kategori ise: /catalog/category-slug
+  const linkPath = customPath || (categorySlug ? `/catalog/${categorySlug}/${itemSlug}` : `/catalog/${itemSlug}`);
 
   return (
     <div
       className="bg-transparent rounded-xl transition-all duration-300 flex flex-col items-center justify-between p-0 cursor-pointer w-full max-w-[200px] mx-auto group focus:outline-none"
       style={{ minHeight: "200px" }}
     >
-      {/* 🔗 BÜTÜN kart (şəkil + başlıq) → yalnız CATEGORY: /catalog/:category */}
+      {/* 🔗 BÜTÜN kart (şəkil + başlıq) → CATEGORY veya SUBCATEGORY */}
       <Link
-        to={`/catalog/${categorySlug}`}
+        to={linkPath}
         className="w-full flex flex-col items-center"
       >
         {/* Məhsul Şəkili sahəsi */}
@@ -47,36 +51,10 @@ const CategoryCard = ({ name, slug, productCount, imageUrl, imageAlt, subcategor
               productCount > 0 ? "text-gray-600" : "text-gray-400"
             }`}
           >
-            {productCount} product{productCount !== 1 ? "s" : ""}
+            {productCount} {productText}
           </p>
         </div>
       </Link>
-
-      {/* 🔻 Alt kateqoriyalar (CLICKABLE) → /catalog/:category/:subcategory */}
-      {subcategories.length > 0 && (
-        <div className="mt-2 flex flex-wrap justify-center gap-1 px-1 pb-2">
-          {subcategories.slice(0, 3).map((sub) => {
-            // Use slug if available, otherwise fallback to encoded name
-            const subSlug = sub.slug || encodeURIComponent(sub.name);
-            return (
-              <Link
-                key={sub._id || sub.name}
-                to={`/catalog/${categorySlug}/${subSlug}`}
-                className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
-                onClick={(e) => e.stopPropagation()} // parent link-i trigger eləməsin
-              >
-                {sub.name} ({sub.productCount})
-              </Link>
-            );
-          })}
-
-          {subcategories.length > 3 && (
-            <span className="text-xs text-gray-400">
-              +{subcategories.length - 3} more
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 };

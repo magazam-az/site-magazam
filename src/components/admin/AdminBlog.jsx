@@ -7,6 +7,7 @@ import {
 } from "../../redux/api/blogApi";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import AdminLayout from "./AdminLayout";
 
 const AdminBlogs = () => {
   // Seçilmiş blogun id-sini saxlamaq üçün state
@@ -159,11 +160,13 @@ const AdminBlogs = () => {
   };
 
   return (
+    <AdminLayout pageTitle="Bloq">
+    <div className="bg-gray-50 min-h-full p-6">
     <div
       className="
-        max-w-4xl mx-auto mt-10 p-6 rounded-md 
-        shadow-lg bg-gradient-to-br from-white to-[#fe9034]/5
-        flex flex-col gap-8 mt-20
+        max-w-7xl mx-auto p-6 rounded-md 
+        shadow-lg bg-white
+        flex flex-col gap-8
       "
     >
       {/* Başlıq - Mərkəzləşdirilmiş */}
@@ -202,7 +205,7 @@ const AdminBlogs = () => {
                     onClick={() => handleEditClick(blog._id)}
                     className="
                       px-3 py-1 bg-[#fe9034] text-white rounded-md 
-                      hover:bg-[#fe9034]/90 transition-colors
+                      hover:bg-[#fe9034]/90 transition-colors cursor-pointer
                     "
                   >
                     Düzənlə
@@ -211,7 +214,7 @@ const AdminBlogs = () => {
                     onClick={() => handleDelete(blog._id)}
                     className="
                       px-3 py-1 bg-red-500 text-white rounded-md 
-                      hover:bg-red-600 transition-colors
+                      hover:bg-red-600 transition-colors cursor-pointer disabled:cursor-not-allowed
                     "
                     disabled={isDeleting}
                   >
@@ -311,7 +314,7 @@ const AdminBlogs = () => {
                           }
                           className="
                             absolute top-1 right-1 bg-red-500 text-white 
-                            px-1 rounded-md text-xs hover:bg-red-600
+                            px-1 rounded-md text-xs hover:bg-red-600 cursor-pointer
                           "
                         >
                           {removedImages.includes(img.public_id || img.id)
@@ -340,7 +343,7 @@ const AdminBlogs = () => {
                   disabled={isUpdating}
                   className="
                     px-4 py-2 bg-[#fe9034] text-white rounded-md 
-                    hover:bg-[#fe9034]/90 transition-colors
+                    hover:bg-[#fe9034]/90 transition-colors cursor-pointer disabled:cursor-not-allowed
                   "
                 >
                   {isUpdating ? "Yenilənir..." : "Yenilə"}
@@ -350,7 +353,7 @@ const AdminBlogs = () => {
                   onClick={() => setSelectedBlogId(null)}
                   className="
                     px-4 py-2 bg-gray-400 text-white rounded-md 
-                    hover:bg-gray-500 transition-colors
+                    hover:bg-gray-500 transition-colors cursor-pointer
                   "
                 >
                   İmtina
@@ -361,6 +364,8 @@ const AdminBlogs = () => {
         </div>
       )}
     </div>
+    </div>
+    </AdminLayout>
   );
 };
 

@@ -48,6 +48,14 @@ export const categoryApi = createApi({
       }),
       invalidatesTags: ["Categories"],
     }),
+    updateSubcategory: builder.mutation({
+      query: ({ categoryId, subcategoryId, formData }) => ({
+        url: `/admin/categories/${categoryId}/subcategories/${subcategoryId}`,
+        method: "PUT",
+        body: formData,
+      }),
+      invalidatesTags: ["Categories"],
+    }),
     deleteSubcategory: builder.mutation({
       query: ({ categoryId, subcategoryId }) => ({
         url: `/admin/categories/${categoryId}/subcategories/${subcategoryId}`,
@@ -66,6 +74,7 @@ export const {
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
   useAddSubcategoryMutation,
+  useUpdateSubcategoryMutation,
   useDeleteSubcategoryMutation,
 } = categoryApi;
 
