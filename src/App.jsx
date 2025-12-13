@@ -14,6 +14,7 @@ import AdminProducts from './components/admin/AdminProducts'
 import EditProduct from './components/admin/EditProduct'
 import AdminBlog from './components/admin/AdminBlog'
 import AddBlogs from './components/admin/AddBlogs'
+import EditBlog from './components/admin/EditBlog'
 import CategoryManagement from './components/admin/CategoryManagement'
 import CreateCategory from './components/admin/CreateCategory'
 import EditCategory from './components/admin/EditCategory'
@@ -110,6 +111,12 @@ function App() {
           <Route path='/admin/add-blog' element={
             <AdminRoute>
               <AddBlogs />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/edit-blog/:id' element={
+            <AdminRoute>
+              <EditBlog />
             </AdminRoute>
           } />
 

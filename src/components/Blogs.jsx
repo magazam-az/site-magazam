@@ -1,14 +1,11 @@
 import React from "react";
-import { useGetBlogsQuery } from "../redux/api/blogApi"; // Blog API hook
+import { useGetBlogsQuery } from "../redux/api/blogApi";
 
 const Blogs = () => {
-  // Fetch all blogs from backend using RTK Query
   const { data, error, isLoading } = useGetBlogsQuery();
 
-  // Loading state
   if (isLoading) return <div>Yüklənir...</div>;
 
-  // Error state
   if (error) return <div>Xəta baş verdi: {error.message}</div>;
 
   return (
@@ -41,7 +38,7 @@ const Blogs = () => {
                   </p>
                 )}
                 <a
-                  href={`/blog/${blog._id}`} // Navigates to the blog details page
+                  href={`/blog/${blog._id}`}
                   className="text-[#fe9034] hover:underline mt-4 inline-block"
                 >
                   Daha çox oxu

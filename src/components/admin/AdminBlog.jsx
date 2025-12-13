@@ -1,372 +1,170 @@
-import React, { useEffect, useState } from "react";
-import {
-  useGetBlogsQuery,
-  useGetBlogDetailsQuery,
-  useUpdateBlogMutation,
-  useDeleteBlogMutation,
-} from "../../redux/api/blogApi";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useGetBlogsQuery, useDeleteBlogMutation } from "../../redux/api/blogApi";
 import Swal from "sweetalert2";
+import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import AdminLayout from "./AdminLayout";
 
-const AdminBlogs = () => {
-  // Seçilmiş blogun id-sini saxlamaq üçün state
-  const [selectedBlogId, setSelectedBlogId] = useState(null);
-
-  // Bütün blogları gətir
-  const {
-    data: blogsData,
-    error: blogsError,
-    isLoading: blogsLoading,
-    refetch: refetchBlogs,
-  } = useGetBlogsQuery();
-
-  // Seçilmiş blogun detallarını gətir (əgər seçim edilməyibsə, sorğu göndərilmir)
-  const {
-    data: blogDetailData,
-    error: blogDetailError,
-    isLoading: blogDetailLoading,
-  } = useGetBlogDetailsQuery(selectedBlogId, { skip: !selectedBlogId });
-
-  // Blog yeniləmə və silmə mutasiyaları
-  const [updateBlog, { isLoading: isUpdating }] = useUpdateBlogMutation();
-  const [deleteBlog, { isLoading: isDeleting }] = useDeleteBlogMutation();
-
-  // Redaktə formu üçün state (description əlavə olundu)
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    content: "",
-  });
-
-  // Yeni yüklənən şəkillər
-  const [newImages, setNewImages] = useState([]);
-  // Mövcud şəkillərdən silinənləri saxlamaq üçün state
-  const [removedImages, setRemovedImages] = useState([]);
-
+const AdminBlog = () => {
   const navigate = useNavigate();
+  const { data, isLoading, refetch } = useGetBlogsQuery();
+  const [deleteBlog] = useDeleteBlogMutation();
 
-  // Seçilmiş blogun detalları gəldikcə formu yenilə
-  useEffect(() => {
-    if (blogDetailData && blogDetailData.blog) {
-      const blog = blogDetailData.blog;
-      setFormData({
-        title: blog.title || "",
-        shortContent: blog.shortContent || "",
-        content: blog.content || "",
-        date: blog.date ? new Date(blog.date).toISOString().split('T')[0] : "",
-      });
-      // Yeni şəkillər və silinən şəkilləri sıfırla
-      setNewImages([]);
-      setRemovedImages([]);
-    }
-  }, [blogDetailData]);
+  const blogs = data?.blogs || [];
 
-  // Form input dəyişikliyi
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Yeni şəkilləri state-ə əlavə et
-  const handleNewImagesChange = (e) => {
-    setNewImages([...e.target.files]);
-  };
-
-  // Mövcud şəkillər üçün silmə/geri alma əməliyyatı
-  const handleRemoveExistingImage = (imageId) => {
-    if (removedImages.includes(imageId)) {
-      setRemovedImages(removedImages.filter((id) => id !== imageId));
-    } else {
-      setRemovedImages([...removedImages, imageId]);
-    }
-  };
-
-  // Blog Yeniləmə
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedBlogId) return;
-
-    const updatedData = new FormData();
-    // Form məlumatlarını əlavə et
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key === "date") {
-        // Date-i ISO formatına çevir
-        updatedData.append(key, new Date(value).toISOString());
-      } else {
-        updatedData.append(key, value);
-      }
-    });
-    // Yeni şəkilləri əlavə et
-    newImages.forEach((image) => {
-      updatedData.append("images", image);
-    });
-    // Silinən şəkilləri əlavə et
-    removedImages.forEach((imageId) => {
-      updatedData.append("removedImages", imageId);
-    });
-
-    try {
-      await updateBlog({ id: selectedBlogId, blogData: updatedData }).unwrap();
-      Swal.fire({
-        title: "Uğurlu!",
-        text: "Blog uğurla yeniləndi.",
-        icon: "success",
-        confirmButtonText: "OK",
-      }).then(() => {
-        setSelectedBlogId(null); // Redaktə rejimindən çıx
-        refetchBlogs(); // Siyahını yenilə
-      });
-    } catch (err) {
-      console.error("Xəta:", err);
-      Swal.fire({
-        title: "Xəta!",
-        text: "Blog yenilənərkən xəta baş verdi.",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
-    }
-  };
-
-  // Blog Silmə
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Əminsiniz?",
-      text: "Bu blog silinəcək!",
+      text: "Bu blog yazısını silmək istədiyinizə əminsiniz?",
       icon: "warning",
       showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
       confirmButtonText: "Bəli, sil!",
-      cancelButtonText: "İmtina",
+      cancelButtonText: "Ləğv et",
     });
 
     if (result.isConfirmed) {
       try {
         await deleteBlog(id).unwrap();
-        Swal.fire("Silindi!", "Blog uğurla silindi.", "success");
-        refetchBlogs();
-        // Əgər silinən blog redaktə edilirdisə, redaktə rejimindən çıx
-        if (selectedBlogId === id) {
-          setSelectedBlogId(null);
-        }
-      } catch (err) {
-        Swal.fire("Xəta!", "Blog silinərkən xəta baş verdi.", "error");
+        Swal.fire({
+          title: "Silindi!",
+          text: "Blog yazısı uğurla silindi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+        refetch();
+      } catch (error) {
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || "Blog yazısı silinərkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
       }
     }
   };
 
-  // Redaktə üçün müvafiq blogu seçir
-  const handleEditClick = (id) => {
-    setSelectedBlogId(id);
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout pageTitle="Bloq">
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout pageTitle="Bloq">
-    <div className="bg-gray-50 min-h-full p-6">
-    <div
-      className="
-        max-w-7xl mx-auto p-6 rounded-md 
-        shadow-lg bg-white
-        flex flex-col gap-8
-      "
-    >
-      {/* Başlıq - Mərkəzləşdirilmiş */}
-      <h2 className="text-center text-3xl font-extrabold text-[#fe9034]">
-        Blog İdarəetməsi
-      </h2>
-
-      {/* Mövcud blogların siyahısı */}
-      <div className="bg-white p-4 rounded-md shadow-sm">
-        <h3 className="text-center text-xl font-semibold mb-4 text-gray-700">
-          Mövcud Blog Yazıları
-        </h3>
-        {blogsLoading ? (
-          <div className="text-center">Yüklənir...</div>
-        ) : blogsError ? (
-          <div className="text-center text-red-500">
-            Xəta: {blogsError.message}
-          </div>
-        ) : blogsData && blogsData.blogs && blogsData.blogs.length > 0 ? (
-          <div className="space-y-4">
-            {blogsData.blogs.map((blog) => (
-              <div
-                key={blog._id}
-                className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex justify-between items-center"
-              >
-                <div>
-                  <h4 className="text-lg font-semibold text-[#fe9034]">
-                    {blog.title}
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    {blog.content.substring(0, 100)}...
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEditClick(blog._id)}
-                    className="
-                      px-3 py-1 bg-[#fe9034] text-white rounded-md 
-                      hover:bg-[#fe9034]/90 transition-colors cursor-pointer
-                    "
-                  >
-                    Düzənlə
-                  </button>
-                  <button
-                    onClick={() => handleDelete(blog._id)}
-                    className="
-                      px-3 py-1 bg-red-500 text-white rounded-md 
-                      hover:bg-red-600 transition-colors cursor-pointer disabled:cursor-not-allowed
-                    "
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? "Silinir..." : "Sil"}
-                  </button>
-                </div>
+      <div className="bg-gray-50 min-h-full p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Bloq İdarəetməsi</h1>
+                <p className="text-gray-600">Blog yazılarını idarə edin</p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center text-gray-600">Blog tapılmadı.</div>
-        )}
-      </div>
 
-      {/* Redaktə formu (yalnız bir blog seçildikdə görünür) */}
-      {selectedBlogId && (
-        <div className="bg-white p-4 rounded-md shadow-sm">
-          <h3 className="text-center text-xl font-semibold mb-4 text-gray-700">
-            Blogu Düzənlə
-          </h3>
-          {blogDetailLoading ? (
-            <div className="text-center">Yüklənir...</div>
-          ) : blogDetailError ? (
-            <div className="text-center text-red-500">
-              Xəta: {blogDetailError.message}
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => navigate("/admin/add-blog")}
+                  className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20 cursor-pointer"
+                >
+                  <FaPlus className="h-5 w-5" />
+                  Yeni Bloq
+                </button>
+              </div>
             </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-              encType="multipart/form-data"
-            >
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Başlıq"
-                className="
-                  w-full p-2 border border-gray-300 rounded-md 
-                  focus:outline-none focus:ring focus:ring-[#fe9034]/50
-                "
-              />
-              <textarea
-                name="shortContent"
-                value={formData.shortContent}
-                onChange={handleInputChange}
-                placeholder="Kiçik məzmun"
-                rows="3"
-                className="
-                  w-full p-2 border border-gray-300 rounded-md 
-                  focus:outline-none focus:ring focus:ring-[#fe9034]/50
-                "
-                required
-              ></textarea>
-              <textarea
-                name="content"
-                value={formData.content}
-                onChange={handleInputChange}
-                placeholder="Böyük məzmun"
-                rows="8"
-                className="
-                  w-full p-2 border border-gray-300 rounded-md 
-                  focus:outline-none focus:ring focus:ring-[#fe9034]/50
-                "
-                required
-              ></textarea>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleInputChange}
-                className="
-                  w-full p-2 border border-gray-300 rounded-md 
-                  focus:outline-none focus:ring focus:ring-[#fe9034]/50
-                "
-                required
-              />
+          </div>
 
-              {/* Mövcud şəkillər varsa */}
-              {blogDetailData &&
-                blogDetailData.blog &&
-                blogDetailData.blog.images &&
-                blogDetailData.blog.images.length > 0 && (
-                  <div className="flex flex-wrap gap-4">
-                    {blogDetailData.blog.images.map((img) => (
-                      <div key={img.public_id || img.id} className="relative">
-                        <img
-                          src={img.url}
-                          alt={formData.title}
-                          className="w-32 h-32 object-cover rounded-md"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleRemoveExistingImage(img.public_id || img.id)
-                          }
-                          className="
-                            absolute top-1 right-1 bg-red-500 text-white 
-                            px-1 rounded-md text-xs hover:bg-red-600 cursor-pointer
-                          "
-                        >
-                          {removedImages.includes(img.public_id || img.id)
-                            ? "Geri Al"
-                            : "Sil"}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {/* Blogs Table */}
+          <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-[#5C4977]">Bloq Yazıları Siyahısı</h2>
+              <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
+                {blogs.length || 0} bloq
+              </span>
+            </div>
 
-              <input
-                type="file"
-                name="newImages"
-                multiple
-                onChange={handleNewImagesChange}
-                className="
-                  w-full p-2 border border-gray-300 rounded-md 
-                  focus:outline-none focus:ring focus:ring-[#fe9034]/50
-                "
-              />
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#5C4977]/10">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Başlıq</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Qısa Məzmun</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Tarix</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Şəkil</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {blogs.map((blog) => (
+                    <tr
+                      key={blog._id}
+                      className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
+                    >
+                      <td className="py-4 px-4">
+                        <div className="font-medium text-gray-800">{blog.title}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <p className="text-gray-600 text-sm line-clamp-2 max-w-xs">
+                          {blog.shortContent || blog.content?.substring(0, 100) || "Məzmun yoxdur"}
+                        </p>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="text-gray-600 text-sm">
+                          {blog.date ? new Date(blog.date).toLocaleDateString('az-AZ') : "Tarix yoxdur"}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        {blog.images?.[0]?.url ? (
+                          <img
+                            src={blog.images[0].url}
+                            alt={blog.title}
+                            className="w-16 h-16 object-cover rounded-lg border border-[#5C4977]/20"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-[#5C4977]/10 rounded-lg flex items-center justify-center">
+                            <span className="text-[#5C4977]/40 text-xs">Şəkil yoxdur</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigate(`/admin/edit-blog/${blog._id}`)}
+                            className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
+                            title="Redaktə et"
+                          >
+                            <FaEdit className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(blog._id)}
+                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Sil"
+                          >
+                            <FaTrash className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-              <div className="flex space-x-2 justify-center">
-                <button
-                  type="submit"
-                  disabled={isUpdating}
-                  className="
-                    px-4 py-2 bg-[#fe9034] text-white rounded-md 
-                    hover:bg-[#fe9034]/90 transition-colors cursor-pointer disabled:cursor-not-allowed
-                  "
-                >
-                  {isUpdating ? "Yenilənir..." : "Yenilə"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedBlogId(null)}
-                  className="
-                    px-4 py-2 bg-gray-400 text-white rounded-md 
-                    hover:bg-gray-500 transition-colors cursor-pointer
-                  "
-                >
-                  İmtina
-                </button>
+            {blogs.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                Heç bir bloq yazısı tapılmadı
               </div>
-            </form>
-          )}
+            )}
+          </div>
         </div>
-      )}
-    </div>
-    </div>
+      </div>
     </AdminLayout>
   );
 };
 
-export default AdminBlogs;
+export default AdminBlog;

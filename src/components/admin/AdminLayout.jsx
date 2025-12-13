@@ -9,7 +9,9 @@ import {
   Settings, 
   LogOut,
   Home,
-  Tag
+  Tag,
+  Award,
+  Sliders
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/features/userSlice';
@@ -78,32 +80,6 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
             <p className="text-sm text-gray-500 mt-1">İdarəetmə Paneli</p>
           </div>
 
-          {/* User info */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              {getUserAvatar() ? (
-                <img
-                  src={getUserAvatar()}
-                  alt="Profile"
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 object-cover rounded-full border-2 border-[#5C4977]"
-                />
-              ) : (
-                <div className="w-12 h-12 bg-gradient-to-r from-[#5C4977] to-[#8B699B] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                  {getUserName().charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div>
-                <h3 className="font-semibold text-gray-800">{getUserName()}</h3>
-                <p className="text-sm text-gray-500 truncate max-w-[150px]">{getUserEmail()}</p>
-                <span className="inline-block mt-1 px-2 py-1 text-xs bg-[#5C4977]/10 text-[#5C4977] rounded-full font-medium">
-                  {getUserRole() === "admin" ? "Admin" : "İstifadəçi"}
-                </span>
-              </div>
-            </div>
-          </div>
-
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             <Link
@@ -150,7 +126,7 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
                   : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
               }`}
             >
-              <Tag size={20} />
+              <Award size={20} />
               <span className="font-medium">Brendlər</span>
             </Link>
 
@@ -162,7 +138,7 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
                   : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
               }`}
             >
-              <Tag size={20} />
+              <Sliders size={20} />
               <span className="font-medium">Xüsusiyyətlər</span>
             </Link>
 

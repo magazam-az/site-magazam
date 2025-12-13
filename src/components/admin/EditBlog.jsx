@@ -1,107 +1,148 @@
-import React, { useState } from "react";
-import {
-  useCreateBlogMutation,
-  useGetBlogsQuery,
-} from "../../redux/api/blogApi";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useGetBlogDetailsQuery, useUpdateBlogMutation } from "../../redux/api/blogApi";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
 import { FaImage } from "react-icons/fa";
 import { ArrowLeft } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
-const AddBlogs = () => {
+const EditBlog = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { data, isLoading } = useGetBlogDetailsQuery(id);
+  const [updateBlog] = useUpdateBlogMutation();
+
   const [formData, setFormData] = useState({
     title: "",
     shortContent: "",
     content: "",
     date: "",
   });
-  const [images, setImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [createBlog, { isLoading: isCreating }] = useCreateBlogMutation();
-  const { refetch } = useGetBlogsQuery(); // Blog siyahısını yeniləmək üçün
-  const navigate = useNavigate();
 
-  // Form input dəyişikliklərini state-ə ötür
+  const [newImages, setNewImages] = useState([]);
+  const [removedImages, setRemovedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+
+  useEffect(() => {
+    if (data?.blog) {
+      const blog = data.blog;
+      setFormData({
+        title: blog.title || "",
+        shortContent: blog.shortContent || "",
+        content: blog.content || "",
+        date: blog.date ? new Date(blog.date).toISOString().split('T')[0] : "",
+      });
+      setImagePreviews(blog.images || []);
+      setNewImages([]);
+      setRemovedImages([]);
+    }
+  }, [data]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Şəkil seçimi dəyişikliklərini tut
-  const handleFileChange = (e) => {
-    const newFiles = Array.from(e.target.files || []);
-    setImages((prev) => [...prev, ...newFiles]);
+  const handleNewImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setNewImages((prev) => [...prev, ...files]);
 
-    newFiles.forEach((file) => {
+    files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreviews((prev) => [...prev, reader.result]);
+        setImagePreviews((prev) => [
+          ...prev,
+          { url: reader.result, isNew: true, file },
+        ]);
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const handleRemoveImage = (index) => {
+  const handleRemoveImage = (index, imageId) => {
+    if (imageId && !imagePreviews[index]?.isNew) {
+      setRemovedImages((prev) => [...prev, imageId]);
+    }
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    const newImages = Array.from(images).filter((_, i) => i !== index);
     setImagePreviews(newPreviews);
-    setImages(newImages);
+    
+    if (imagePreviews[index]?.isNew) {
+      setNewImages((prev) => prev.filter((_, i) => i !== index));
+    }
   };
 
-  // Form göndərmə
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const form = new FormData();
-    // Formdakı məlumatları FormData-ya əlavə et
-    for (let key in formData) {
-      if (key === "date") {
-        // Date-i ISO formatına çevir
-        form.append(key, new Date(formData[key]).toISOString());
-      } else {
-        form.append(key, formData[key]);
-      }
-    }
-    // Seçilən şəkilləri əlavə et
-    for (let i = 0; i < images.length; i++) {
-      form.append("images", images[i]);
+    if (!formData.title.trim()) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Başlıq tələb olunur",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
     }
 
     try {
-      await createBlog(form).unwrap();
+      const updatedData = new FormData();
+      
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "date") {
+          updatedData.append(key, new Date(value).toISOString());
+        } else if (value) {
+          updatedData.append(key, value);
+        }
+      });
+
+      newImages.forEach((image) => {
+        updatedData.append("images", image);
+      });
+
+      removedImages.forEach((imageId) => {
+        updatedData.append("removedImages", imageId);
+      });
+
+      await updateBlog({ id, blogData: updatedData }).unwrap();
 
       Swal.fire({
-        title: "Uğur!",
-        text: "Blog yazısı uğurla əlavə edildi",
+        title: "Uğurlu!",
+        text: "Blog yazısı uğurla yeniləndi",
         icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
         confirmButtonColor: "#5C4977",
       });
 
       navigate("/admin/admin-blogs");
     } catch (error) {
-      console.log(error);
       Swal.fire({
         title: "Xəta!",
-        text: "Blog əlavə edilərkən xəta baş verdi.",
+        text: error?.data?.error || "Blog yazısı yenilənərkən xəta baş verdi",
         icon: "error",
-        confirmButtonText: "OK",
+        confirmButtonColor: "#5C4977",
       });
     }
   };
 
+  if (isLoading) {
+    return (
+      <AdminLayout pageTitle="Bloq Yazısını Redaktə Et">
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
-    <AdminLayout pageTitle="Yeni Bloq">
+    <AdminLayout pageTitle="Bloq Yazısını Redaktə Et">
       <div className="bg-gray-50 min-h-full p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Yeni Bloq Yazısı Əlavə Et</h1>
-                <p className="text-gray-600">Yeni blog yazısının məlumatlarını daxil edin</p>
+                <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Bloq Yazısını Redaktə Et</h1>
+                <p className="text-gray-600">Blog yazısının məlumatlarını yeniləyin</p>
               </div>
               <button
                 onClick={() => navigate("/admin/admin-blogs")}
@@ -115,7 +156,7 @@ const AddBlogs = () => {
 
           {/* Form Container */}
           <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6 md:p-8">
-            <form onSubmit={handleSubmit} className="space-y-8" encType="multipart/form-data">
+            <form onSubmit={handleSubmit} className="space-y-8">
               {/* Əsas məlumatlar */}
               <div className="border-b border-[#5C4977]/10 pb-6">
                 <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
@@ -193,14 +234,14 @@ const AddBlogs = () => {
                 
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-[#5C4977] mb-3">
-                    Şəkillər seçin (Maksimum 5MB hər biri)
+                    Yeni şəkillər əlavə edin (Maksimum 5MB hər biri)
                   </label>
                   <div className="relative">
                     <input
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={handleFileChange}
+                      onChange={handleNewImagesChange}
                       className="w-full p-3 border-2 border-dashed border-[#5C4977]/30 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5C4977]/10 file:text-[#5C4977] hover:file:bg-[#5C4977]/20 cursor-pointer"
                     />
                   </div>
@@ -209,18 +250,18 @@ const AddBlogs = () => {
                 {/* Şəkil Previews */}
                 {imagePreviews.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {imagePreviews.map((preview, index) => (
+                    {imagePreviews.map((img, index) => (
                       <div key={index} className="relative group">
                         <div className="aspect-square overflow-hidden rounded-lg border-2 border-[#5C4977]/20 group-hover:border-[#5C4977]/40 transition-colors">
                           <img
-                            src={preview}
+                            src={img.url}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleRemoveImage(index)}
+                          onClick={() => handleRemoveImage(index, img.public_id || img.id)}
                           className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                           title="Sil"
                         >
@@ -242,17 +283,11 @@ const AddBlogs = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isCreating}
-                className="w-full bg-[#5C4977] text-white py-4 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5C4977]/20"
+                className="w-full bg-[#5C4977] text-white py-4 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 shadow-lg shadow-[#5C4977]/20"
               >
-                {isCreating ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                    Bloq yazısı əlavə edilir...
-                  </div>
-                ) : (
-                  'Bloq Yazısını Əlavə Et'
-                )}
+                <div className="flex items-center justify-center gap-2">
+                  Yadda Saxla
+                </div>
               </button>
             </form>
           </div>
@@ -262,4 +297,4 @@ const AddBlogs = () => {
   );
 };
 
-export default AddBlogs;
+export default EditBlog;
