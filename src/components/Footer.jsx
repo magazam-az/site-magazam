@@ -1,25 +1,32 @@
 import { Facebook, Twitter, Linkedin } from "lucide-react"
 import { FaWhatsapp } from "react-icons/fa"
+import { Link } from "react-router-dom"
+import { useGetCategoriesQuery } from "../redux/api/categoryApi"
 
 export default function Footer() {
+  // Kategorileri API'den al
+  const { data: categoriesData } = useGetCategoriesQuery()
+  const categories = categoriesData?.categories || []
   return (
     <footer className="bg-white text-gray-800 font-sans">
       
       {/* 🖥️ Əsas Footer Məzmunu */}
       <div className="border-b border-gray-200 py-8 sm:py-10 lg:py-12">
-        {/* Responsive Grid: Kiçik ekranlarda 1 sütun, orta ekranlarda 2, böyük ekranlarda 5 */}
+        {/* Responsive Grid: Kiçik ekranlarda 1 sütun, orta ekranlarda 2, böyük ekranlarda 4 */}
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
           
-          {/* 🌳 WoodMart Bölməsi */}
+          {/* 🌳 MetaShop Bölməsi */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl sm:text-2xl font-bold text-blue-600">{"{◀"}</span>
-              <span className="text-lg sm:text-xl font-bold text-gray-900">WoodMart.</span>
+            <div className="mb-4">
+              <Link to="/" className="inline-block cursor-pointer">
+                <img 
+                  src="/images/logo.svg" 
+                  alt="META SHOP Logo" 
+                  className="h-10 cursor-pointer"
+                />
+              </Link>
             </div>
-            <p className="text-gray-600 text-xs sm:text-sm mb-6">
-              Condimentum adipiscing vel neque dis nam parturient orci at scelerisque.
-            </p>
 
             {/* Abunə ol Bölməsi (Sosial Şəbəkələr) */}
             <div>
@@ -55,36 +62,23 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 text-base sm:text-lg mb-3 sm:mb-4">Kateqoriyalar</h4>
             <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Smartfonlar
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Noutbuklar
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Avadanlıq
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Kameralar
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Qulaqlıqlar
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Vanna Otağı
-                </a>
-              </li>
+              {categories.length > 0 ? (
+                categories.slice(0, 6).map((category) => {
+                  const categorySlug = category.slug || encodeURIComponent(category.name)
+                  return (
+                    <li key={category._id}>
+                      <Link 
+                        to={`/catalog/${categorySlug}`} 
+                        className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer"
+                      >
+                        {category.name}
+                      </Link>
+                    </li>
+                  )
+                })
+              ) : (
+                <li className="text-gray-500 text-xs sm:text-sm">Yüklənir...</li>
+              )}
             </ul>
           </div>
 
@@ -93,61 +87,19 @@ export default function Footer() {
             <h4 className="font-bold text-gray-900 text-base sm:text-lg mb-3 sm:mb-4">Faydalı Keçidlər</h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Endirimlər
-                </a>
+                <Link to="/promotions" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
+                  Aksiyalar
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Mağazalarımız
-                </a>
+                <Link to="/catalog" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
+                  Bütün Məhsullar
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Əlaqə
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Çatdırılma və Qaytarma
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Outlet
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* 📜 Footer Menyu Bölməsi */}
-          <div>
-            <h4 className="font-bold text-gray-900 text-base sm:text-lg mb-3 sm:mb-4">Əlavə Menyu</h4>
-            <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Əlaqə
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Endirimlər
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Mağazalarımız
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
-                  Çatdırılma və Qaytarma
-                </a>
+                <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition text-xs sm:text-sm cursor-pointer">
+                  Bizimlə Əlaqə
+                </Link>
               </li>
             </ul>
           </div>

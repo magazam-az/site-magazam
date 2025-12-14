@@ -69,11 +69,22 @@ export const authApi = createApi({
     }),
 
     updateProfile: builder.mutation({
-      query: (body) => ({
-        url: "/me/update",
-        method: "PUT",
-        body,
-      }),
+      query: (body) => {
+        // Eğer FormData ise (avatar yükleme durumunda)
+        if (body instanceof FormData) {
+          return {
+            url: "/me/update",
+            method: "PUT",
+            body,
+          };
+        }
+        // Normal JSON body
+        return {
+          url: "/me/update",
+          method: "PUT",
+          body,
+        };
+      },
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

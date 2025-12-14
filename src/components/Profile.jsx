@@ -16,6 +16,8 @@ export default function Profile() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [avatar, setAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   // RTK Query mutation for updating profile
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
@@ -26,8 +28,23 @@ export default function Profile() {
       // Artıq user birbaşa obyekt kimi gəlir: { name, email, ... }
       setName(user?.name || "");
       setEmail(user?.email || "");
+      // Avatar preview'i user'dan al, yoksa null
+      setAvatarPreview(user?.avatar?.url || user?.user?.avatar?.url || null);
     }
   }, [user]);
+
+  // Avatar seçimi
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatar(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -45,13 +62,22 @@ export default function Profile() {
     setMessage({ type: "", text: "" });
 
     try {
-      // Backend-ə yalnız name göndəririk
-      await updateProfile({ name }).unwrap();
+      const formData = new FormData();
+      formData.append("name", name);
+      
+      // Avatar varsa ekle
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
+
+      // Backend-ə FormData göndəririk
+      await updateProfile(formData).unwrap();
 
       // userSlice artıq authApi.onQueryStarted içində yenilənir
-      toast.success("Adınız uğurla dəyişdirildi!");
+      toast.success("Profil uğurla yeniləndi!");
       setMessage({ type: "success", text: "Profil uğurla yeniləndi" });
       setIsEditing(false);
+      setAvatar(null); // Reset avatar file
 
       // 3 saniyədən sonra mesajı sil
       setTimeout(() => {
@@ -68,6 +94,8 @@ export default function Profile() {
     // Formu redux-dakı user dəyərlərinə qaytarırıq
     setName(user?.name || "");
     setEmail(user?.email || "");
+    setAvatar(null);
+    setAvatarPreview(user?.avatar?.url || null);
     setIsEditing(false);
     setMessage({ type: "", text: "" });
   };
@@ -96,8 +124,29 @@ export default function Profile() {
                 {/* Profile Header */}
                 <div className="bg-gradient-to-r from-[#5C4977] to-[#7B6799] px-6 py-8">
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <User className="w-10 h-10 text-white" />
+                    <div className="relative">
+                      {avatarPreview ? (
+                        <img 
+                          src={avatarPreview}
+                          alt={user?.name}
+                          className="w-20 h-20 rounded-full object-cover border-2 border-white/30"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <User className="w-10 h-10 text-white" />
+                        </div>
+                      )}
+                      {isEditing && (
+                        <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 cursor-pointer hover:bg-gray-100 transition-colors shadow-lg">
+                          <Edit className="w-4 h-4 text-[#5C4977]" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
                     </div>
                     <div className="text-white">
                       <h2 className="text-2xl font-bold">{user?.name}</h2>
@@ -194,7 +243,7 @@ export default function Profile() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Sürətli Girişlər</h3>
                 <div className="space-y-3">
                   <button
-                    onClick={() => navigate("/orders")}
+                    onClick={() => navigate("/checkout")}
                     className="w-full flex items-center gap-3 p-4 text-left rounded-xl border border-gray-200 hover:border-[#5C4977] hover:bg-[#f5f2fa] transition-all group cursor-pointer"
                   >
                     <Package className="w-5 h-5 text-gray-400 group-hover:text-[#5C4977]" />
@@ -216,7 +265,7 @@ export default function Profile() {
                   </button>
 
                   <button
-                    onClick={() => navigate("/cart")}
+                    onClick={() => navigate("/shopping-cart")}
                     className="w-full flex items-center gap-3 p-4 text-left rounded-xl border border-gray-200 hover:border-[#5C4977] hover:bg-[#f5f2fa] transition-all group cursor-pointer"
                   >
                     <ShoppingCart className="w-5 h-5 text-gray-400 group-hover:text-[#5C4977]" />

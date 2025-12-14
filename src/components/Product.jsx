@@ -33,7 +33,7 @@ const Product = ({ product, mehsul }) => {
   const hasValidId = !!productId;
   
   // Stok kontrolü
-  const isOutOfStock = !productData.inStock || (productData.stock !== undefined && productData.stock <= 0);
+  const isOutOfStock = (productData.inStock !== undefined && !productData.inStock) || (productData.stock !== undefined && productData.stock <= 0);
   
   // Ürünün favorilerde olup olmadığını kontrol et
   const isFavorite = productId && favoritesData?.favorites?.some(
@@ -176,7 +176,7 @@ const Product = ({ product, mehsul }) => {
       <div className="mt-auto">
         {/* Stok statusu */}
         <div className="flex items-center mb-1 sm:mb-2">
-          {productData.inStock && !isOutOfStock ? (
+          {!isOutOfStock ? (
             <span className="text-green-600 text-xs sm:text-sm flex items-center">
               <span className="mr-1">✔</span> Stokda var
             </span>

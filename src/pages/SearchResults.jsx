@@ -5,6 +5,7 @@ import { useSearchProductsQuery } from "../redux/api/productsApi";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Product from "../components/Product";
+import Breadcrumb from "../components/ui/Breadcrumb";
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -32,10 +33,19 @@ const SearchResults = () => {
 
   if (!query || query.trim() === "") {
     return (
-      <>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
-        <div className="min-h-screen bg-gray-50 pt-24 pb-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="flex-1">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 w-full">
+            {/* Breadcrumb */}
+            <div className="py-6 pb-0">
+              <Breadcrumb 
+                items={[
+                  { label: "Ana səhifə", path: "/" },
+                  { label: "Axtarış Nəticələri" }
+                ]}
+              />
+            </div>
             <div className="text-center py-16">
               <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-[#5C4977] mb-2">
@@ -46,17 +56,27 @@ const SearchResults = () => {
               </p>
             </div>
           </div>
-        </div>
+        </section>
         <Footer />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <div className="min-h-screen bg-gray-50 pt-24 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="flex-1">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 w-full">
+          {/* Breadcrumb */}
+          <div className="py-6 pb-0">
+            <Breadcrumb 
+              items={[
+                { label: "Ana səhifə", path: "/" },
+                { label: "Axtarış Nəticələri" }
+              ]}
+            />
+          </div>
+
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#5C4977] mb-4">
@@ -148,9 +168,9 @@ const SearchResults = () => {
             </>
           )}
         </div>
-      </div>
+      </section>
       <Footer />
-    </>
+    </div>
   );
 };
 

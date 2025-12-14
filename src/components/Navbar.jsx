@@ -292,7 +292,7 @@ export default function MetaShopHeader() {
                   setIsSearchOpen(false)
                   setSearchQuery("")
                 }}
-                className="w-full text-center text-sm text-[#5C4977] font-medium hover:text-[#5C4977]/80 transition-colors"
+                className="w-full text-center text-sm text-[#5C4977] font-medium hover:text-[#5C4977]/80 transition-colors cursor-pointer"
               >
                 Bütün nəticələri göstər ({searchResults.products.length})
               </button>
@@ -467,7 +467,10 @@ export default function MetaShopHeader() {
                   >
                     <button 
                       className="flex items-center justify-center w-11 h-11 rounded-full bg-[#5C4977] text-white hover:bg-[#5C4977]/90 transition-all duration-300 shadow-md shadow-[#5C4977]/30 hover:shadow-[#5C4977]/50 border border-[#5C4977] cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setIsCategoriesOpen(!isCategoriesOpen)
+                      }}
                     >
                       <Menu className="w-5 h-5 cursor-pointer" />
                     </button>
