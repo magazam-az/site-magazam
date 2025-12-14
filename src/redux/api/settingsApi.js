@@ -29,3 +29,4 @@ export const {
   useGetSettingsQuery,
   useUpdateSettingsMutation,
 } = settingsApi;
+
