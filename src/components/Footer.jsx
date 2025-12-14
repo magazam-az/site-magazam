@@ -1,4 +1,5 @@
-import { Facebook, Twitter, Linkedin, MessageCircle } from "lucide-react"
+import { Facebook, Twitter, Linkedin } from "lucide-react"
+import { FaWhatsapp } from "react-icons/fa"
 
 export default function Footer() {
   return (
@@ -42,9 +43,9 @@ export default function Footer() {
                 <button className="w-9 h-9 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition cursor-pointer">
                   <Linkedin size={16} />
                 </button>
-                {/* Telegram (Qeyd: Telegram ikonu üçün MessageCircle-dan istifadə edildi) */}
-                <button className="w-9 h-9 bg-blue-400 text-white rounded-full flex items-center justify-center hover:bg-blue-500 transition cursor-pointer">
-                  <MessageCircle size={16} />
+                {/* WhatsApp */}
+                <button className="w-9 h-9 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition cursor-pointer">
+                  <FaWhatsapp size={16} />
                 </button>
               </div>
             </div>

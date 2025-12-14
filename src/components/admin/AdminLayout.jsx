@@ -11,7 +11,8 @@ import {
   Home,
   Tag,
   Award,
-  Sliders
+  Sliders,
+  Percent
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/features/userSlice';
@@ -143,6 +144,18 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
             </Link>
 
             <Link
+              to="/admin/promotions"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                isActive('/admin/promotions')
+                  ? 'bg-[#5C4977] text-white shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
+              }`}
+            >
+              <Percent size={20} />
+              <span className="font-medium">Promosiyalar</span>
+            </Link>
+
+            <Link
               to="/admin/orders"
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
                 isActive('/admin/orders')
@@ -268,4 +281,5 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
 };
 
 export default AdminLayout;
+
 

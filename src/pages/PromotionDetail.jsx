@@ -107,41 +107,41 @@ const PromotionDetail = () => {
           </div>
 
           {/* Promotion Banner */}
-          <div className="bg-[#1C61E7] rounded-lg shadow-lg overflow-hidden mb-8 p-6 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
+          <div className="bg-[#1C61E7] rounded-lg shadow-lg overflow-hidden mb-8 py-6 md:py-8 px-8 md:px-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-7 items-center">
               {/* Sol tərəf - Məzmun */}
-              <div className="text-white">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
-                  {promotion.title}
+              <div className="text-white pl-2 md:pl-4">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 pt-6">
+                  {promotion.bigTitle || promotion.title}
                 </h1>
-                <p className="text-white/90 text-sm md:text-base mb-6">
+                <p className="text-white/90 text-sm md:text-base mb-5 pt-0.5">
                   {formatDateRange(promotion.startDate, promotion.endDate)}
                 </p>
 
                 {/* Countdown Timer */}
-                <div className="flex gap-3 md:gap-4 mb-6">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 md:p-4 text-center min-w-[70px]">
-                    <div className="text-2xl md:text-3xl font-bold">{timeLeft.days}</div>
-                    <div className="text-xs md:text-sm text-white/80 mt-1">days</div>
+                <div className="flex gap-3 md:gap-4 mb-5">
+                  <div className="bg-[#FFFFFF] rounded-lg w-14 h-14 md:w-16 md:h-16 flex flex-col items-center justify-center shadow-sm">
+                    <div className="text-xl md:text-2xl font-bold text-black leading-tight">{timeLeft.days}</div>
+                    <div className="text-xs text-gray-500 -mt-0.5">days</div>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 md:p-4 text-center min-w-[70px]">
-                    <div className="text-2xl md:text-3xl font-bold">{timeLeft.hours}</div>
-                    <div className="text-xs md:text-sm text-white/80 mt-1">hr</div>
+                  <div className="bg-[#FFFFFF] rounded-lg w-14 h-14 md:w-16 md:h-16 flex flex-col items-center justify-center shadow-sm">
+                    <div className="text-xl md:text-2xl font-bold text-black leading-tight">{timeLeft.hours}</div>
+                    <div className="text-xs text-gray-500 -mt-0.5">hr</div>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 md:p-4 text-center min-w-[70px]">
-                    <div className="text-2xl md:text-3xl font-bold">{timeLeft.minutes}</div>
-                    <div className="text-xs md:text-sm text-white/80 mt-1">min</div>
+                  <div className="bg-[#FFFFFF] rounded-lg w-14 h-14 md:w-16 md:h-16 flex flex-col items-center justify-center shadow-sm">
+                    <div className="text-xl md:text-2xl font-bold text-black leading-tight">{timeLeft.minutes}</div>
+                    <div className="text-xs text-gray-500 -mt-0.5">min</div>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 md:p-4 text-center min-w-[70px]">
-                    <div className="text-2xl md:text-3xl font-bold">{timeLeft.seconds}</div>
-                    <div className="text-xs md:text-sm text-white/80 mt-1">sc</div>
+                  <div className="bg-[#FFFFFF] rounded-lg w-14 h-14 md:w-16 md:h-16 flex flex-col items-center justify-center shadow-sm">
+                    <div className="text-xl md:text-2xl font-bold text-black leading-tight">{timeLeft.seconds}</div>
+                    <div className="text-xs text-gray-500 -mt-0.5">sc</div>
                   </div>
                 </div>
               </div>
 
               {/* Sağ tərəf - Şəkil */}
               {promotion.detailImage?.url && (
-                <div className="w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg">
+                <div className="w-full h-60 md:h-72 lg:h-80 overflow-hidden rounded-lg pr-2 md:pr-4">
                   <img
                     src={promotion.detailImage.url}
                     alt={promotion.title}
@@ -154,11 +154,11 @@ const PromotionDetail = () => {
 
           {/* Məhsullar bölməsi */}
           {promotion.products && promotion.products.length > 0 && (
-            <div className="mb-8">
+            <div className="mb-8 mt-20">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                 {promotion.productTitle || "Special Offer from Mega electronics"}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {promotion.products.map((product) => (
                   <Product key={product._id} product={product} />
                 ))}
