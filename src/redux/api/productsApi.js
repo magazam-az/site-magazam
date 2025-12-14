@@ -18,6 +18,7 @@ export const productApi = createApi({
         url: "/admin/products",
         method: "POST",
         body: productData,
+        // ✅ RTK Query FormData-nı avtomatik olaraq tanıyır və Content-Type header-ını düzgün təyin edir
       }),
     }),
     deleteProduct: builder.mutation({
@@ -31,6 +32,7 @@ export const productApi = createApi({
         url: `/admin/products/${id}`,
         method: "PUT",
         body: formData,
+        // ✅ RTK Query FormData-nı avtomatik olaraq tanıyır və Content-Type header-ını düzgün təyin edir
       }),
     }),
     getCart: builder.query({
