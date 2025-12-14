@@ -100,7 +100,7 @@ const PromotionDetail = () => {
             <Breadcrumb 
               items={[
                 { label: "Ana səhifə", path: "/" },
-                { label: "Promotion-lar", path: "/promotions" },
+                { label: "Promosiyalar", path: "/promotions" },
                 { label: promotion.title }
               ]}
             />
