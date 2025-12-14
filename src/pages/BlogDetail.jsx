@@ -63,12 +63,12 @@ const BlogDetail = () => {
             />
           </div>
 
-          {/* Blog Image - Beyaz kart sadece resimde */}
-          {blog.images && blog.images.length > 0 && (
+          {/* Blog Image - CoverImage varsa onu, yoxdursa ilk şəkli göstər */}
+          {(blog.coverImage?.url || (blog.images && blog.images.length > 0)) && (
             <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
               <div className="w-full h-64 md:h-96 overflow-hidden">
                 <img
-                  src={blog.images[0].url}
+                  src={blog.coverImage?.url || blog.images[0].url}
                   alt={blog.title}
                   className="w-full h-full object-cover"
                 />

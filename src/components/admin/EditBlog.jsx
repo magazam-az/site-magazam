@@ -22,6 +22,9 @@ const EditBlog = () => {
   const [newImages, setNewImages] = useState([]);
   const [removedImages, setRemovedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [coverImage, setCoverImage] = useState(null);
+  const [coverImagePreview, setCoverImagePreview] = useState(null);
+  const [removeCoverImage, setRemoveCoverImage] = useState(false);
 
   useEffect(() => {
     if (data?.blog) {
@@ -36,6 +39,9 @@ const EditBlog = () => {
       setImagePreviews(blog.images || []);
       setNewImages([]);
       setRemovedImages([]);
+      setCoverImagePreview(blog.coverImage?.url || null);
+      setCoverImage(null);
+      setRemoveCoverImage(false);
     }
   }, [data]);
 
@@ -72,6 +78,26 @@ const EditBlog = () => {
     }
   };
 
+  // CoverImage seçimi dəyişikliklərini tut
+  const handleCoverImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverImage(file);
+      setRemoveCoverImage(false);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveCoverImage = () => {
+    setCoverImage(null);
+    setCoverImagePreview(null);
+    setRemoveCoverImage(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -103,6 +129,16 @@ const EditBlog = () => {
       removedImages.forEach((imageId) => {
         updatedData.append("removedImages", imageId);
       });
+
+      // CoverImage əlavə et
+      if (coverImage) {
+        updatedData.append("coverImage", coverImage);
+      }
+
+      // CoverImage silinməsi
+      if (removeCoverImage) {
+        updatedData.append("removeCoverImage", "true");
+      }
 
       await updateBlog({ id, blogData: updatedData }).unwrap();
 
@@ -244,16 +280,57 @@ const EditBlog = () => {
                 </div>
               </div>
 
-              {/* Şəkillər */}
+              {/* Cover Image */}
               <div>
                 <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
                   <FaImage className="h-5 w-5" />
-                  Bloq Şəkilləri
+                  Cover Şəkli (Bloq Detal Səhifəsi üçün)
                 </h2>
                 
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-[#5C4977] mb-3">
-                    Yeni şəkillər əlavə edin (Maksimum 5MB hər biri)
+                    Cover şəkil seçin (Maksimum 5MB) - Bu şəkil blog detal səhifəsində göstəriləcək
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverImageChange}
+                      className="w-full p-3 border-2 border-dashed border-[#5C4977]/30 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5C4977]/10 file:text-[#5C4977] hover:file:bg-[#5C4977]/20 cursor-pointer"
+                    />
+                  </div>
+                  {coverImagePreview && (
+                    <div className="mt-4 relative inline-block">
+                      <div className="w-64 h-48 overflow-hidden rounded-lg border-2 border-[#5C4977]/20">
+                        <img
+                          src={coverImagePreview}
+                          alt="Cover preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoverImage}
+                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md cursor-pointer"
+                        title="Sil"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Şəkillər */}
+              <div>
+                <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                  <FaImage className="h-5 w-5" />
+                  Bloq Şəkilləri (Ana Səhifə üçün)
+                </h2>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-[#5C4977] mb-3">
+                    Yeni şəkillər əlavə edin (Maksimum 5MB hər biri) - Bu şəkillər ana səhifədə göstəriləcək
                   </label>
                   <div className="relative">
                     <input
