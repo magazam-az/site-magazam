@@ -7,7 +7,15 @@ import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 // Product Card Component
-const Product = ({ product }) => {
+const Product = ({ product, mehsul }) => {
+  // mehsul və ya product prop-unu dəstəklə
+  const productData = product || mehsul;
+  
+  // Əgər productData yoxdursa, heç nə göstərmə
+  if (!productData) {
+    return null;
+  }
+  
   const { isAuthenticated } = useSelector((state) => state.user || {});
   const navigate = useNavigate();
   
@@ -21,11 +29,11 @@ const Product = ({ product }) => {
   const [addToCart] = useAddToCartMutation();
   
   // Product ID'yi bul - sadece _id veya id kabul et (sku kabul etme çünkü backend'de çalışmaz)
-  const productId = product._id || product.id;
+  const productId = productData._id || productData.id;
   const hasValidId = !!productId;
   
   // Stok kontrolü
-  const isOutOfStock = !product.inStock || (product.stock !== undefined && product.stock <= 0);
+  const isOutOfStock = !productData.inStock || (productData.stock !== undefined && productData.stock <= 0);
   
   // Ürünün favorilerde olup olmadığını kontrol et
   const isFavorite = productId && favoritesData?.favorites?.some(
@@ -119,7 +127,7 @@ const Product = ({ product }) => {
       }}
     >
       {/* HOT badge */}
-      {product.isHot && (
+      {productData.isHot && (
         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
           HOT
         </div>
@@ -147,8 +155,8 @@ const Product = ({ product }) => {
     {/* Məhsul Şəkili sahəsi - sabit ölçü */}
     <div className="w-full flex justify-center items-center mb-3 sm:mb-4 overflow-hidden" style={{ height: '200px' }}>
       <img 
-        src={product.imageUrl || product.images?.[0]?.url || "https://placehold.co/234x234/6B7280/ffffff?text=Product+Image"} 
-        alt={product.imageAlt || product.name} 
+        src={productData.imageUrl || productData.images?.[0]?.url || "https://placehold.co/234x234/6B7280/ffffff?text=Product+Image"} 
+        alt={productData.imageAlt || productData.name} 
         className="object-contain w-full h-full max-w-[180px] max-h-[180px] sm:max-w-[234px] sm:max-h-[234px] transition-transform duration-300 ease-out hover:scale-110"
         onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/234x234/6B7280/ffffff?text=Product+Image"; }}
       />
@@ -157,18 +165,18 @@ const Product = ({ product }) => {
     {/* Məhsul Məlumatı - sabit ölçü */}
     <div className="flex flex-col flex-grow text-left">
       <div className="mb-2 sm:mb-3 flex-grow">
-        <h3 className="text-sm sm:text-base font-semibold text-gray-800 line-clamp-2 mb-1 sm:mb-2">{product.name}</h3>
-        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-1 sm:mt-2">{product.brand}</p>
-        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-0.5 sm:mt-1">{product.model}</p>
+        <h3 className="text-sm sm:text-base font-semibold text-gray-800 line-clamp-2 mb-1 sm:mb-2">{productData.name}</h3>
+        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-1 sm:mt-2">{productData.brand}</p>
+        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-0.5 sm:mt-1">{productData.model}</p>
         <div className="mt-1 sm:mt-2">
-          <Rating rating={product.rating || 5} />
+          <Rating rating={productData.rating || productData.ratings || 5} />
         </div>
       </div>
       
       <div className="mt-auto">
         {/* Stok statusu */}
         <div className="flex items-center mb-1 sm:mb-2">
-          {product.inStock && !isOutOfStock ? (
+          {productData.inStock && !isOutOfStock ? (
             <span className="text-green-600 text-xs sm:text-sm flex items-center">
               <span className="mr-1">✔</span> Stokda var
             </span>
@@ -179,7 +187,9 @@ const Product = ({ product }) => {
         
         {/* Qiymət */}
         <div className="text-base sm:text-lg font-bold text-[#5C4977] mb-2 sm:mb-3">
-          {product.price}
+          {typeof productData.price === 'number' 
+            ? `${productData.price.toFixed(2)} ₼` 
+            : productData.price || '0.00 ₼'}
         </div>
         
         {/* Add to Cart button */}

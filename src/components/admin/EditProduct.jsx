@@ -51,7 +51,11 @@ const EditProduct = () => {
     category: '',
     subcategory: '',
     stock: '',
+    keywords: [], // ✅ ARRAY
   });
+
+  // ✅ keyword input (tag əlavə etmək üçün)
+  const [keywordInput, setKeywordInput] = useState("");
   
   // Seçilmiş xüsusiyyətlər
   const [selectedSpecs, setSelectedSpecs] = useState({});
@@ -78,6 +82,9 @@ const EditProduct = () => {
         category: product.category || '',
         subcategory: product.subcategory || '',
         stock: product.stock || '',
+        keywords: product.keywords && Array.isArray(product.keywords) 
+          ? [...product.keywords] 
+          : [],
       });
 
       // Xüsusiyyətləri yüklə
@@ -101,6 +108,42 @@ const EditProduct = () => {
       setMainImageIndex(0);
     }
   }, [data, specs]);
+
+  // ✅ KEYWORDS: + əlavə et
+  const addKeyword = () => {
+    const kw = (keywordInput || "").trim();
+    if (!kw) return;
+
+    // duplicate olmasın (case-insensitive)
+    const exists = (formData.keywords || []).some(
+      (x) => String(x).toLowerCase() === kw.toLowerCase()
+    );
+    if (exists) {
+      setKeywordInput("");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      keywords: [...(prev.keywords || []), kw],
+    }));
+    setKeywordInput("");
+  };
+
+  // ✅ KEYWORDS: sil
+  const removeKeyword = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      keywords: (prev.keywords || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const onKeywordKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addKeyword();
+    }
+  };
 
   // Xüsusiyyət seçimi üçün funksiya
   const handleSpecChange = (specId, specName) => {
@@ -206,23 +249,34 @@ const EditProduct = () => {
   const removeImage = (index, isExistingImage = false, imageId = null) => {
     const previewToRemove = previews[index];
     
+    if (!previewToRemove) return;
+    
+    // Blob URL-i təmizlə
     if (previewToRemove.startsWith('blob:')) {
       URL.revokeObjectURL(previewToRemove);
     }
     
+    // Preview-dan sil
     const newPreviews = previews.filter((_, i) => i !== index);
     setPreviews(newPreviews);
     
+    // Əgər mövcud şəkilidirsə, removedImages-ə əlavə et
     if (isExistingImage && imageId) {
       setRemovedImages(prev => [...prev, imageId]);
     } else {
-      const newImages = images.filter((_, i) => {
-        const fileUrl = URL.createObjectURL(images[i]);
-        return fileUrl !== previewToRemove;
-      });
-      setImages(newImages);
+      // Yeni əlavə edilən şəkilləri sil
+      // Mövcud şəkillərin sayını hesabla
+      const existingImagesCount = (data?.product?.images?.length || 0) - removedImages.length;
+      // Yeni şəkil index-i = index - existingImagesCount
+      const newImageIndex = index - existingImagesCount;
+      
+      if (newImageIndex >= 0 && newImageIndex < images.length) {
+        const newImages = images.filter((_, i) => i !== newImageIndex);
+        setImages(newImages);
+      }
     }
 
+    // Main image index-i yenilə
     if (index === mainImageIndex) {
       setMainImageIndex(0);
     } else if (index < mainImageIndex) {
@@ -287,16 +341,31 @@ const EditProduct = () => {
     try {
       const updatedData = new FormData();
       
+      // ✅ normal field-lər
       Object.entries(formData).forEach(([key, value]) => {
-        // subcategory-ni ayrıca idarə et
+        // keywords array-ı burda append ETMİRİK (aşağıda ayrıca edəcəyik)
+        if (key === "keywords") return;
+
         if (key === "subcategory") {
-          if (value && value.trim() !== "") {
+          if (value && value.toString().trim() !== "") {
             updatedData.append(key, value.toString().trim());
           }
-        } else if (value !== undefined && value !== null && value !== '') {
+          return;
+        }
+
+        if (value !== undefined && value !== null && value !== '') {
           updatedData.append(key, value.toString());
         }
       });
+
+      // ✅ keywords array kimi göndər (FormData-da eyni key bir neçə dəfə -> backenddə array olur)
+      if (Array.isArray(formData.keywords) && formData.keywords.length > 0) {
+        formData.keywords.forEach((kw) => {
+          if (kw && kw.toString().trim() !== "") {
+            updatedData.append("keywords", kw.toString().trim());
+          }
+        });
+      }
 
       updatedData.append("mainImageIndex", mainImageIndex.toString());
 
@@ -645,6 +714,64 @@ const EditProduct = () => {
               </div>
             </div>
 
+            {/* ✅ Açar Sözlər (TAG + / ×) */}
+            <div className="border-b border-[#5C4977]/10 pb-6">
+              <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                Açar Sözlər
+              </h2>
+
+              <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                Keyword əlavə et
+              </label>
+
+              <div className="flex gap-2">
+                <input
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
+                  onKeyDown={onKeywordKeyDown}
+                  placeholder="məs: telefon, android, 5G..."
+                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                  disabled={isUpdating}
+                />
+                <button
+                  type="button"
+                  onClick={addKeyword}
+                  disabled={isUpdating}
+                  className="px-5 rounded-xl border border-[#5C4977] text-[#5C4977] hover:bg-[#5C4977]/5 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Əlavə et"
+                >
+                  +
+                </button>
+              </div>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Enter basaraq da keyword əlavə edə bilərsiniz.
+              </p>
+
+              {Array.isArray(formData.keywords) && formData.keywords.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {formData.keywords.map((kw, idx) => (
+                    <span
+                      key={`${kw}-${idx}`}
+                      className="inline-flex items-center gap-2 bg-[#5C4977] text-white px-3 py-1 rounded-full text-sm"
+                    >
+                      {kw}
+                      <button
+                        type="button"
+                        onClick={() => removeKeyword(idx)}
+                        disabled={isUpdating}
+                        className="hover:text-red-200 cursor-pointer disabled:opacity-50"
+                        title="Sil"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Texniki Xüsusiyyətlər */}
             <div className="border-b border-[#5C4977]/10 pb-6">
               <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
@@ -759,9 +886,10 @@ const EditProduct = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {previews.length > 0 ? (
                   previews.map((preview, index) => {
+                    // Mövcud şəkilləri yoxla
                     const existingImage = data?.product?.images?.find(img => img.url === preview);
                     const isExistingImage = !!existingImage;
-                    const isRemoved = removedImages.includes(existingImage?.public_id);
+                    const isRemoved = isExistingImage && removedImages.includes(existingImage?.public_id);
 
                     if (isRemoved) return null;
 
@@ -774,6 +902,10 @@ const EditProduct = () => {
                             src={preview}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://placehold.co/300x300/6B7280/ffffff?text=Image+Error";
+                            }}
                           />
                         </div>
                         
@@ -788,7 +920,7 @@ const EditProduct = () => {
                             <button
                               type="button"
                               onClick={() => setAsMainImage(index)}
-                              className="bg-green-500 hover:bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md cursor-pointer"
+                              className="bg-[#5C4977] hover:bg-[#5C4977]/90 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md cursor-pointer"
                               title="Əsas şəkil et"
                               disabled={isUpdating}
                             >

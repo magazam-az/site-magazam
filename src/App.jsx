@@ -48,6 +48,7 @@ import Checkout from './pages/Checkout' // ✅ CHECKOUT IMPORT EDİN
 
 // ⭐ Filter Page (kategoriya + subcategory + dynamic breadcrumb)
 import Filter from './components/Filter'
+import SearchResults from './pages/SearchResults'
 
 import AdminDashboard from './components/admin/AdminDashboard'
 
@@ -70,6 +71,9 @@ function App() {
 
           {/* Product Detail */}
           <Route path="/product/:id" element={<ProductDetail />} />
+
+          {/* Search Results */}
+          <Route path="/search-results" element={<SearchResults />} />
 
           {/* Blog Detail */}
           <Route path="/blogs/:slug" element={<BlogDetail />} />
