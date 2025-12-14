@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css'
 // Pages
 import Home from './pages/Home'
 import BlogDetail from './pages/BlogDetail'
-import Checkout from './pages/Checkout'
+import PromotionDetail from './pages/PromotionDetail'
 import RegisterForm from './components/Register'
 import LoginForm from './components/Login'
 
@@ -17,6 +17,9 @@ import EditProduct from './components/admin/EditProduct'
 import AdminBlog from './components/admin/AdminBlog'
 import AddBlogs from './components/admin/AddBlogs'
 import EditBlog from './components/admin/EditBlog'
+import AdminPromotion from './components/admin/AdminPromotion'
+import AddPromotion from './components/admin/AddPromotion'
+import EditPromotion from './components/admin/EditPromotion'
 import AdminUsers from './components/admin/AdminUsers'
 import EditUser from './components/admin/EditUser'
 import AdminSettings from './components/admin/AdminSettings'
@@ -41,6 +44,7 @@ import Profile from './components/Profile'
 import SebetCart from './components/ShoppingCard'
 import FavoriteButton from './components/Favorites'
 import UpdateName from './components/Uptade'
+import Checkout from './pages/Checkout' // ✅ CHECKOUT IMPORT EDİN
 
 // ⭐ Filter Page (kategoriya + subcategory + dynamic breadcrumb)
 import Filter from './components/Filter'
@@ -69,6 +73,9 @@ function App() {
 
           {/* Blog Detail */}
           <Route path="/blogs/:slug" element={<BlogDetail />} />
+
+          {/* Promotion Detail */}
+          <Route path="/promotions/:slug" element={<PromotionDetail />} />
 
           {/* Profile & User Routes */}
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
@@ -130,6 +137,24 @@ function App() {
           <Route path='/admin/edit-blog/:id' element={
             <AdminRoute>
               <EditBlog />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/promotions' element={
+            <AdminRoute>
+              <AdminPromotion />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/add-promotion' element={
+            <AdminRoute>
+              <AddPromotion />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/edit-promotion/:id' element={
+            <AdminRoute>
+              <EditPromotion />
             </AdminRoute>
           } />
 
