@@ -6,11 +6,10 @@ import Navbar from "./Navbar"
 import Footer from "./Footer"
 import { useGetPromotionsQuery } from "../redux/api/promotionApi"
 
-// Breadcrumb komponentini əlavə edin (əgər varsa)
-// Əgər Breadcrumb komponentiniz yoxdursa, aşağıdakını əlavə edin:
+// Breadcrumb komponenti
 const Breadcrumb = ({ items }) => {
   return (
-      <nav className="flex items-center space-x-2 text-sm text-gray-600">
+    <nav className="flex items-center space-x-2 text-sm text-gray-600">
       {items.map((item, index) => (
         <div key={index} className="flex items-center">
           {index > 0 && <span className="mx-2">/</span>}
@@ -19,7 +18,7 @@ const Breadcrumb = ({ items }) => {
               {item.label}
             </Link>
           ) : (
-            <span className="text-gray-900 font-bold">Promosiyalar</span>
+            <span className="text-gray-900 font-bold">{item.label}</span>
           )}
         </div>
       ))}
@@ -27,17 +26,60 @@ const Breadcrumb = ({ items }) => {
   )
 }
 
-// About komponentini əlavə edin (əgər varsa)
-// Əgər About komponentiniz yoxdursa, bu hissəni silin və ya öz About komponentinizi əlavə edin
+// About komponenti
 const About = () => {
+  const [showMoreInfo, setShowMoreInfo] = useState(false);
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8 my-8">
-      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
-        About Our Promotions
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8 mb-8">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
+        Online store of household appliances and electronics
       </h2>
-      <p className="text-gray-600">
-        Discover our latest promotions and special offers on electronics and household appliances.
-      </p>
+      
+      <div className="text-gray-700 text-sm md:text-base space-y-4">
+        <p>
+          Then the question arises: where's the content? Not there yet? That's not so bad, there's dummy copy to the rescue. 
+          But worse, what if the fish doesn't fit in the can, the foot's to big for the boot? Or to small? To short sentences, 
+          to many headings, images too large for the proposed design, or too small, or they fit in but it looks iffy for reasons.
+        </p>
+        
+        <p>
+          A client that's unhappy for a reason is a problem, a client that's unhappy though he or her can't quite put a finger on 
+          it is worse. Chances are there wasn't collaboration, communication, and checkpoints, there wasn't a process agreed upon 
+          or specified with the granularity required. It's content strategy gone awry right from the start. If that's what you think 
+          how bout the other way around? How can you evaluate content without design? No typography, no colors, no layout, no styles, 
+          all those things that convey the important signals that go beyond the mere textual, hierarchies of information, weight, 
+          emphasis, oblique stresses, priorities, all those subtle cues that also have visual and emotional appeal to the reader.
+        </p>
+      </div>
+
+      {/* "Read More" düyməsi */}
+      <div className="text-center mt-6">
+        <button 
+          onClick={() => setShowMoreInfo(!showMoreInfo)}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors duration-300 text-sm"
+        >
+          <span className="font-medium">{showMoreInfo ? 'Show Less' : 'Read More'}</span>
+          <svg 
+            className={`w-4 h-4 ml-2 transform transition-transform ${showMoreInfo ? 'rotate-180' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+      </div>
+
+      {/* Əlavə məlumat (açılan bölmə) */}
+      {showMoreInfo && (
+        <div className="mt-6 pt-6 border-t border-gray-200 animate-fadeIn">
+          <p className="text-gray-700">
+            This is additional information that appears when you click the "Read More" button. 
+            You can add more details about your store, promotions, or any other relevant information here.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -85,7 +127,7 @@ const MetashopPromotions = () => {
               className="inline-flex items-center bg-white text-gray-800 px-3 py-1.5 rounded text-sm font-medium hover:bg-gray-100 transition-colors"
             >
               <span>Read More</span>
-              <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
               </svg>
             </Link>
@@ -120,16 +162,13 @@ const MetashopPromotions = () => {
           </div>
 
           {/* Başlıq */}
-          <div className="py-6 mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          <div className="py-6">
+            <h1 className="text-2xl md:text-2xl font-bold text-gray-900">
               Promosiyalar
             </h1>
-            <p className="text-gray-600 mt-2">
-              Ən son kampaniya və xüsusi təkliflərimizi kəşf edin
-            </p>
           </div>
 
-          {/* Promosiyalar grid - TƏKRARLANAN HİSSƏNİ SİLDİM */}
+          {/* Promosiyalar grid */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
