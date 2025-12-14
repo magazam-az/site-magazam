@@ -1,10 +1,11 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setIsAuthenticated, setUser, logout } from "../features/userSlice";
+import { CRUD_BASE_URL } from "../../config/api";
 
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "/crud/v1",
+    baseUrl: CRUD_BASE_URL,
     credentials: "include",
   }),
   endpoints: (builder) => ({

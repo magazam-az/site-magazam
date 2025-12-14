@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { CRUD_BASE_URL } from "../../config/api";
 
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: fetchBaseQuery({ 
-    baseUrl: "/crud/v1",
+    baseUrl: CRUD_BASE_URL,
     credentials: "include",
   }),
   tagTypes: ["Users"],
