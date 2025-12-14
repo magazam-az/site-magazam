@@ -10,8 +10,6 @@ const MetashopPromotions = () => {
   const { data, error, isLoading } = useGetPromotionsQuery();
   const promotions = data?.promotions || [];
 
-  // "Read More" bölməsi üçün durum
-  const [showMoreInfo, setShowMoreInfo] = useState(false)
 
   // Tarix formatla
   const formatDate = (dateString) => {
@@ -33,7 +31,7 @@ const MetashopPromotions = () => {
     
     return (
       <div className="relative group overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 h-full">
-        <div className="relative h-48 sm:h-56 md:h-64 w-full overflow-hidden">
+        <div className="relative h-56 sm:h-64 md:h-72 w-full overflow-hidden">
           <img
             src={promotion.image?.url || "/placeholder.svg"}
             alt={promotion.title}
@@ -69,24 +67,22 @@ const MetashopPromotions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Navbar komponenti */}
       <Navbar />
 
-      {/* Breadcrumb yolu */}
-   
-
       {/* Əsas məzmun */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-        {/* Başlıq bölməsi */}
-        <div className="mb-8 md:mb-10">
-          <div className="mb-4">
-            <p className="text-gray-500 text-xs uppercase tracking-wider font-light">CLOTHES THAT YOU LIKE</p>
+      <section className="flex-1">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          {/* Breadcrumb */}
+          <div className="py-6 pb-0">
+            <Breadcrumb 
+              items={[
+                { label: "Ana səhifə", path: "/" },
+                { label: "Promosiyalar" }
+              ]}
+            />
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Promotions</h1>
-          </div>
-        </div>
 
         {/* Promosiyalar grid - RESPONSİV: 1 sütun mobil, 2 sütun tablet, 3 sütun desktop */}
         {isLoading ? (
@@ -115,55 +111,17 @@ const MetashopPromotions = () => {
             Online store of household appliances and electronics
           </h2>
 
-          <div className="text-gray-700 text-sm md:text-base space-y-4">
-            <p>
-              Then the question arises: where's the content? Not there yet? That's not so bad, there's dummy copy to the
-              rescue. But worse, what if the fish doesn't fit in the can, the foot's to big for the boot? Or to small?
-              To short sentences, to many headings, images too large for the proposed design, or too small, or they fit
-              in but it looks iffy for reasons.
-            </p>
-
-            <p>
-              A client that's unhappy for a reason is a problem, a client that's unhappy though he or her can't quite
-              put a finger on it is worse. Chances are there wasn't collaboration, communication, and checkpoints, there
-              wasn't a process agreed upon or specified with the granularity required. It's content strategy gone awry
-              right from the start. If that's what you think how bout the other way around? How can you evaluate content
-              without design? No typography, no colors, no layout, no styles, all those things that convey the important
-              signals that go beyond the mere textual, hierarchies of information, weight, emphasis, oblique stresses,
-              priorities, all those subtle cues that also have visual and emotional appeal to the reader.
-            </p>
+          {/* Promosiyalar grid - RESPONSİV: 1 sütun mobil, 2 sütun tablet, 3 sütun desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-6">
+            {promotions.map((promotion) => (
+              <PromotionCard key={promotion.id} promotion={promotion} />
+            ))}
           </div>
-
-          {/* "Read More" düyməsi */}
-          <div className=" mt-6">
-            <button
-              onClick={() => setShowMoreInfo(!showMoreInfo)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors duration-300 text-sm"
-            >
-              <span className="font-medium">Read More</span>
-              <svg
-                className={`w-4 h-4 ml-2 transform transition-transform ${showMoreInfo ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-          </div>
-
-          {/* Əlavə məlumat (açılan bölmə) */}
-          {showMoreInfo && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-gray-700">
-                This is additional information that appears when you click the "Read More" button. You can add more
-                details about your store, promotions, or any other relevant information here.
-              </p>
-            </div>
-          )}
         </div>
-      </div>
+
+        {/* About komponenti - container dışında, kendi Container'ını kullanacak */}
+        <About />
+      </section>
 
       {/* Footer komponenti */}
       <Footer />

@@ -361,6 +361,11 @@ export default function MetaShopHeader() {
     setIsMobileMenuOpen(false)
   }
 
+  const handlePromotionsClick = () => {
+    navigate('/promotions')
+    setIsMobileMenuOpen(false)
+  }
+
   // Get user info safely - bütün mümkün strukturları yoxla
   const getUserName = () => {
     return user?.user?.name || user?.name || user?.username || "İstifadəçi"
@@ -519,7 +524,10 @@ export default function MetaShopHeader() {
                 </div>
 
                 <nav className="flex items-center gap-0">
-                  <button className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none">
+                  <button 
+                    onClick={handlePromotionsClick}
+                    className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none"
+                  >
                     Aksiyalar
                   </button>
                   <button className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none">
@@ -833,7 +841,13 @@ export default function MetaShopHeader() {
                   </span>
                 )}
               </button>
-              {["Aksiyalar", "Mağazalar", "Bizimlə Əlaqə", "Çatdırılma & Geri Qaytarılma", "Outlet"].map((item, index) => (
+              <button
+                onClick={handlePromotionsClick}
+                className="block w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
+              >
+                Aksiyalar
+              </button>
+              {["Mağazalar", "Bizimlə Əlaqə", "Çatdırılma & Geri Qaytarılma", "Outlet"].map((item, index) => (
                 <button
                   key={index}
                   className="block w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"

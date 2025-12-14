@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
 import Rating from './Rating';
-import { useGetFavoritesQuery, useAddToFavoritesMutation, useRemoveFromFavoritesMutation } from '../redux/api/productsApi';
+import { useGetFavoritesQuery, useAddToFavoritesMutation, useRemoveFromFavoritesMutation, useAddToCartMutation } from '../redux/api/productsApi';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -18,10 +18,14 @@ const Product = ({ product }) => {
   
   const [addToFavorites] = useAddToFavoritesMutation();
   const [removeFromFavorites] = useRemoveFromFavoritesMutation();
+  const [addToCart] = useAddToCartMutation();
   
   // Product ID'yi bul - sadece _id veya id kabul et (sku kabul etme çünkü backend'de çalışmaz)
   const productId = product._id || product.id;
   const hasValidId = !!productId;
+  
+  // Stok kontrolü
+  const isOutOfStock = !product.inStock || (product.stock !== undefined && product.stock <= 0);
   
   // Ürünün favorilerde olup olmadığını kontrol et
   const isFavorite = productId && favoritesData?.favorites?.some(
@@ -34,12 +38,12 @@ const Product = ({ product }) => {
     e.stopPropagation();
     
     if (!hasValidId) {
-      toast.error('Bu ürün favorilere eklenemez');
+      toast.error('Bu məhsul favorilərə əlavə edilə bilməz');
       return;
     }
     
     if (!isAuthenticated) {
-      toast.error('Favorilere eklemek üçün giriş yapmalısınız');
+      toast.error('Favorilərə əlavə etmək üçün giriş yapmalısınız');
       navigate('/login');
       return;
     }
@@ -47,15 +51,49 @@ const Product = ({ product }) => {
     try {
       if (isFavorite) {
         await removeFromFavorites(productId).unwrap();
-        toast.success('Favorilerden kaldırıldı');
+        toast.success('Məhsul favorilərdən silindi!');
       } else {
         await addToFavorites(productId).unwrap();
-        toast.success('Favorilere eklendi');
+        toast.success('Məhsul favorilərə əlavə edildi!');
       }
     } catch (error) {
-      const errorMessage = error?.data?.message || error?.message || 'Bir hata oluştu';
+      const errorMessage = error?.data?.message || error?.message || 'Xəta baş verdi!';
       toast.error(errorMessage);
       console.error('Favorites error:', error);
+    }
+  };
+
+  // Səbətə əlavə et handler
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!hasValidId) {
+      toast.error('Bu məhsul səbətə əlavə edilə bilməz');
+      return;
+    }
+    
+    if (!isAuthenticated) {
+      toast.error('Səbətə əlavə etmək üçün giriş yapmalısınız');
+      navigate('/login');
+      return;
+    }
+    
+    if (isOutOfStock) {
+      toast.error('Məhsul stokda qalmayıb!');
+      return;
+    }
+    
+    try {
+      await addToCart({ 
+        productId: productId, 
+        quantity: 1 
+      }).unwrap();
+      toast.success('Məhsul səbətə əlavə edildi!');
+    } catch (error) {
+      const errorMessage = error?.data?.message || error?.message || 'Məhsulu səbətə əlavə edərkən xəta baş verdi!';
+      toast.error(errorMessage);
+      console.error('Add to cart error:', error);
     }
   };
 
@@ -130,12 +168,12 @@ const Product = ({ product }) => {
       <div className="mt-auto">
         {/* Stok statusu */}
         <div className="flex items-center mb-1 sm:mb-2">
-          {product.inStock ? (
+          {product.inStock && !isOutOfStock ? (
             <span className="text-green-600 text-xs sm:text-sm flex items-center">
-              <span className="mr-1">✔</span> In stock
+              <span className="mr-1">✔</span> Stokda var
             </span>
           ) : (
-            <span className="text-red-600 text-xs sm:text-sm">Out of stock</span>
+            <span className="text-red-600 text-xs sm:text-sm">Stokda bitib</span>
           )}
         </div>
         
@@ -146,14 +184,15 @@ const Product = ({ product }) => {
         
         {/* Add to Cart button */}
         <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Add to cart logic here
-          }}
-          className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 cursor-pointer"
+          onClick={handleAddToCart}
+          disabled={isOutOfStock || !isAuthenticated}
+          className={`w-full text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 ${
+            isOutOfStock || !isAuthenticated
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-[#5C4977] hover:bg-[#5C4977]/90 cursor-pointer'
+          }`}
         >
-          Add To Cart
+          {isOutOfStock ? 'Stokda bitib' : 'Səbətə əlavə et'}
         </button>
       </div>
     </div>
