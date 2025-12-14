@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetAllOrdersQuery, useDeleteOrderMutation, useUpdateOrderStatusMutation } from "../../redux/api/orderApi";
 import Swal from "sweetalert2";
-import { FaTrash, FaEye } from "react-icons/fa";
+import { FaTrash, FaEye, FaSearch, FaFilter } from "react-icons/fa";
 import AdminLayout from "./AdminLayout";
 
 const AdminOrders = () => {
@@ -12,8 +12,41 @@ const AdminOrders = () => {
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const orders = data?.orders || [];
+
+  // Filter orders
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm) {
+      return orders.filter((order) => 
+        statusFilter === "all" || order.orderStatus === statusFilter
+      );
+    }
+
+    const searchLower = searchTerm.toLowerCase();
+    
+    return orders.filter((order) => {
+      // Sifariş ID axtarışı
+      const matchesOrderId = order._id.toLowerCase().includes(searchLower);
+      
+      // İstifadəçi adı axtarışı
+      const matchesUserName = order.user?.name?.toLowerCase().includes(searchLower) ||
+                              order.user?.email?.toLowerCase().includes(searchLower);
+      
+      // Məhsul adı axtarışı
+      const matchesProductName = order.orderItems?.some((item) => {
+        const productName = item.product?.name || item.name || "";
+        return productName.toLowerCase().includes(searchLower);
+      }) || false;
+      
+      const matchesSearch = matchesOrderId || matchesUserName || matchesProductName;
+      const matchesStatus = statusFilter === "all" || order.orderStatus === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, searchTerm, statusFilter]);
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
@@ -129,17 +162,45 @@ const AdminOrders = () => {
 
           {/* Orders Table */}
           <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
               <h2 className="text-xl font-bold text-[#5C4977]">Sifarişlər Siyahısı</h2>
               <div className="flex items-center gap-4">
                 <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
-                  {orders.length || 0} sifariş
+                  {filteredOrders.length || 0} sifariş
                 </span>
                 {data?.totalAmount && (
                   <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
                     Ümumi: {data.totalAmount.toFixed(2)} ₼
                   </span>
                 )}
+              </div>
+            </div>
+
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="relative flex-1">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Sifariş ID, istifadəçi adı və ya məhsul adı ilə axtar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
+                />
+              </div>
+              <div className="relative">
+                <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5C4977] focus:border-transparent cursor-pointer appearance-none bg-white"
+                >
+                  <option value="all">Bütün statuslar</option>
+                  <option value="Processing">İşləməkdə</option>
+                  <option value="Shipped">Göndərilib</option>
+                  <option value="Delivered">Çatdırılıb</option>
+                  <option value="Cancelled">Ləğv edilib</option>
+                </select>
               </div>
             </div>
 
@@ -157,7 +218,16 @@ const AdminOrders = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order) => (
+                  {filteredOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-8 text-gray-500">
+                        {searchTerm || statusFilter !== "all" 
+                          ? "Axtarış nəticəsi tapılmadı" 
+                          : "Heç bir sifariş tapılmadı"}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders.map((order) => (
                     <tr
                       key={order._id}
                       className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
@@ -229,16 +299,12 @@ const AdminOrders = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
 
-            {orders.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Heç bir sifariş tapılmadı
-              </div>
-            )}
           </div>
         </div>
       </div>

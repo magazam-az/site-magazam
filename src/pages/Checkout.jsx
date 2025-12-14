@@ -9,13 +9,12 @@ import Breadcrumb from "../components/ui/Breadcrumb";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { data: cartData, isLoading: cartLoading } = useGetCartQuery();
+  const { data: cartData, isLoading: cartLoading, refetch: refetchCart } = useGetCartQuery();
   const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation();
 
   const [shippingInfo, setShippingInfo] = useState({
     address: "",
     city: "",
-    phoneNo: "",
     postalCode: "",
   });
 
@@ -52,10 +51,6 @@ const Checkout = () => {
       toast.error("Şəhər daxil edin");
       return;
     }
-    if (!shippingInfo.phoneNo.trim()) {
-      toast.error("Telefon nömrəsi daxil edin");
-      return;
-    }
 
     if (validCartItems.length === 0) {
       toast.error("Səbətiniz boşdur");
@@ -72,13 +67,50 @@ const Checkout = () => {
         },
       };
 
-      await createOrder(orderData).unwrap();
-      toast.success("Sifarişiniz uğurla verildi!");
-      navigate("/");
+      const result = await createOrder(orderData).unwrap();
+      
+      // Response kontrolü - başarılı ise devam et
+      if (result?.success || result?.order) {
+        // Sepeti UI'da güncelle
+        try {
+          await refetchCart();
+        } catch (refetchError) {
+          console.error("Sepet güncellenirken hata:", refetchError);
+        }
+        
+        toast.success("Sifarişiniz uğurla verildi!");
+        
+        // Kısa bir gecikme sonra ana sayfaya yönlendir
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
+      } else {
+        toast.error("Sifariş verilərkən xəta baş verdi");
+      }
     } catch (error) {
-      toast.error(
-        error?.data?.error || error?.data?.message || "Sifariş verilərkən xəta baş verdi"
-      );
+      // Hata durumunda response'u kontrol et
+      const errorData = error?.data || error;
+      
+      // Eğer response'da success: true veya order varsa, başarılı say
+      if (errorData?.success === true || errorData?.order) {
+        // Sepeti UI'da güncelle
+        try {
+          await refetchCart();
+        } catch (refetchError) {
+          console.error("Sepet güncellenirken hata:", refetchError);
+        }
+        
+        toast.success("Sifarişiniz uğurla verildi!");
+        
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
+      } else {
+        // Gerçek hata durumu
+        const errorMessage = errorData?.error || errorData?.message || error?.message || "Sifariş verilərkən xəta baş verdi";
+        toast.error(errorMessage);
+        console.error("Sifariş hatası:", error);
+      }
     }
   };
 
@@ -140,7 +172,7 @@ const Checkout = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2 cursor-pointer">
                       Ünvan *
                     </label>
                     <input
@@ -149,45 +181,28 @@ const Checkout = () => {
                       value={shippingInfo.address}
                       onChange={handleInputChange}
                       placeholder="Ünvanınızı daxil edin"
-                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors cursor-text"
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Şəhər *
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={shippingInfo.city}
-                        onChange={handleInputChange}
-                        placeholder="Şəhər"
-                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Telefon Nömrəsi *
-                      </label>
-                      <input
-                        type="tel"
-                        name="phoneNo"
-                        value={shippingInfo.phoneNo}
-                        onChange={handleInputChange}
-                        placeholder="+994 XX XXX XX XX"
-                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                        required
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 cursor-pointer">
+                      Şəhər *
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={shippingInfo.city}
+                      onChange={handleInputChange}
+                      placeholder="Şəhər"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors cursor-text"
+                      required
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2 cursor-pointer">
                       Poçt Kodu (İstəyə bağlı)
                     </label>
                     <input
@@ -196,14 +211,14 @@ const Checkout = () => {
                       value={shippingInfo.postalCode}
                       onChange={handleInputChange}
                       placeholder="Poçt kodu"
-                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors cursor-text"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isCreating}
-                    className="w-full bg-[#5C4977] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5C4977]/20"
+                    className="w-full bg-[#5C4977] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5C4977]/20 cursor-pointer"
                   >
                     {isCreating ? (
                       <div className="flex items-center justify-center">
@@ -233,11 +248,11 @@ const Checkout = () => {
                         <img
                           src={item.product.images[0].url}
                           alt={item.product.name}
-                          className="w-16 h-16 object-cover rounded-lg"
+                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
                         />
                       )}
                       <div className="flex-1">
-                        <p className="font-medium text-gray-800 text-sm">
+                        <p className="font-medium text-gray-800 text-sm cursor-pointer">
                           {item.product.name}
                         </p>
                         <p className="text-sm text-gray-600">

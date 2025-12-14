@@ -85,8 +85,8 @@ const SebetCart = ({ isOpen, onClose }) => {
   };
 
   const handleCheckout = () => {
-    onClose();
-    navigate("/shopping-cart");
+    if (onClose) onClose();
+    navigate("/checkout");
   };
 
   const handleReturnToShop = () => {
@@ -95,7 +95,9 @@ const SebetCart = ({ isOpen, onClose }) => {
   };
 
   // Filter valid cart items
-  const validCartItems = cartData?.cart?.filter(item => item?.product) || [];
+  const validCartItems = (cartData?.cart && Array.isArray(cartData.cart)) 
+    ? cartData.cart.filter(item => item?.product) 
+    : [];
 
   // If used as a full page (isOpen is undefined), render full page layout
   if (isOpen === undefined) {
@@ -103,7 +105,7 @@ const SebetCart = ({ isOpen, onClose }) => {
       <div className="min-h-screen bg-[#F3F4F6] flex flex-col">
         <Navbar />
         <section className="flex-1">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pb-3">
             {/* Breadcrumb */}
             <div className="py-6 pb-0">
               <Breadcrumb 
@@ -119,7 +121,7 @@ const SebetCart = ({ isOpen, onClose }) => {
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">
                 Səbət
               </h2>
-              {validCartItems.length > 0 && (
+              {!isLoading && validCartItems.length > 0 && (
                 <p className="text-gray-600 mt-2">
                   Səbətinizdə {validCartItems.length} {validCartItems.length === 1 ? 'məhsul' : 'məhsul'} var
                 </p>
@@ -132,11 +134,11 @@ const SebetCart = ({ isOpen, onClose }) => {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
                 </div>
               </div>
-            ) : error || !validCartItems.length ? (
+            ) : error || (!isLoading && validCartItems.length === 0) ? (
               /* Empty Cart State */
-              <div className="bg-white rounded-xl shadow-sm p-12">
-                <div className="flex flex-col items-center justify-center py-12 px-4">
-                  <div className="mb-6">
+              <div className="bg-white rounded-xl shadow-sm mb-8">
+                <div className="flex flex-col items-center justify-center py-12 px-4 space-y-6">
+                  <div>
                     <svg
                       className="w-32 h-32 text-gray-300 mx-auto"
                       fill="none"
@@ -151,13 +153,13 @@ const SebetCart = ({ isOpen, onClose }) => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">Səbətiniz boşdur</h3>
-                  <p className="text-gray-600 mb-8 text-center max-w-md">
+                  <h3 className="text-3xl md:text-4xl font-bold text-gray-800">Səbətiniz boşdur</h3>
+                  <p className="text-lg md:text-xl text-gray-600 text-center max-w-md">
                     Səbətinizə məhsul əlavə etmək üçün məhsul səhifəsinə keçin
                   </p>
                   <button
                     onClick={handleReturnToShop}
-                    className="px-8 py-3 bg-[#5C4977] text-white rounded-lg hover:bg-[#5C4977]/90 transition-colors font-medium cursor-pointer shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
+                    className="px-8 py-3 bg-[#5C4977] text-white rounded-lg hover:bg-[#5C4977]/90 font-medium cursor-pointer shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 ease-in-out"
                   >
                     Mağazaya Qayıt
                   </button>
@@ -487,7 +489,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                                 -1
                               )
                             }
-                            className="px-3 py-1.5 hover:bg-gray-100 transition-colors text-gray-600 font-medium"
+                            className="px-3 py-1.5 hover:bg-gray-100 transition-colors text-gray-600 font-medium cursor-pointer"
                           >
                             -
                           </button>

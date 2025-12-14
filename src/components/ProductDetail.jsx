@@ -270,6 +270,12 @@ const ProductDetail = () => {
       return;
     }
 
+    if (!isAuthenticated) {
+      toast.error("Sifariş vermək üçün giriş yapmalısınız");
+      navigate('/login');
+      return;
+    }
+
     setIsBuyingNow(true);
     try {
       await addToCart({ 
@@ -277,11 +283,9 @@ const ProductDetail = () => {
         quantity: quantity 
       }).unwrap();
       
-      toast.success("Məhsul səbətə əlavə edildi! Sifariş səhifəsinə yönləndirilirsiniz...");
-      // navigate('/checkout');
+      navigate('/shopping-cart');
     } catch (error) {
       toast.error("Xəta baş verdi!");
-    } finally {
       setIsBuyingNow(false);
     }
   };
@@ -611,32 +615,30 @@ const ProductDetail = () => {
                   {/* Add to Cart */}
                   <Button
                     onClick={handleAddToCart}
-                    disabled={isAddingToCart || isOutOfStock}
+                    disabled={isOutOfStock}
                     className="flex-1"
                   >
-                    {isAddingToCart ? "Əlavə edilir..." : "Səbətə əlavə et"}
+                    Səbətə əlavə et
                   </Button>
 
                   {/* Favoritlər */}
                   <Button
                     onClick={handleAddToFavorites}
-                    disabled={isAddingToFavorites || isRemovingFromFavorites || !isAuthenticated}
+                    disabled={!isAuthenticated}
                     className="flex-1 bg-pink-600 hover:bg-pink-700"
                   >
-                    {isAddingToFavorites || isRemovingFromFavorites 
-                      ? "İşlənir..." 
-                      : isFavorite 
-                        ? "Favorilərdən sil" 
-                        : "Favorilərə əlavə et"}
+                    {isFavorite 
+                      ? "Favorilərdən sil" 
+                      : "Favorilərə əlavə et"}
                   </Button>
 
                   {/* Buy Now */}
                   <Button
                     onClick={handleBuyNow}
-                    disabled={isBuyingNow || isOutOfStock}
+                    disabled={isOutOfStock}
                     className="flex-1 bg-red-600 hover:bg-red-700"
                   >
-                    {isBuyingNow ? "İşlənir..." : "İndi Al"}
+                    İndi Al
                   </Button>
                 </div>
 

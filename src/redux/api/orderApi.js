@@ -6,7 +6,7 @@ export const orderApi = createApi({
     baseUrl: "/api/v1",
     credentials: "include",
   }),
-  tagTypes: ["Orders"],
+  tagTypes: ["Orders", "Cart"],
   endpoints: (builder) => ({
     // Yeni sifariş yarat
     createOrder: builder.mutation({
@@ -15,7 +15,7 @@ export const orderApi = createApi({
         method: "POST",
         body: orderData,
       }),
-      invalidatesTags: ["Orders"],
+      invalidatesTags: ["Orders", "Cart"],
     }),
     // İstifadəçinin sifarişləri
     getMyOrders: builder.query({

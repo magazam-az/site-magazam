@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css'
 // Pages
 import Home from './pages/Home'
 import BlogDetail from './pages/BlogDetail'
+import Checkout from './pages/Checkout'
 import RegisterForm from './components/Register'
 import LoginForm from './components/Login'
 
@@ -19,6 +20,7 @@ import EditBlog from './components/admin/EditBlog'
 import AdminUsers from './components/admin/AdminUsers'
 import EditUser from './components/admin/EditUser'
 import AdminSettings from './components/admin/AdminSettings'
+import AdminOrders from './components/admin/AdminOrders'
 import CategoryManagement from './components/admin/CategoryManagement'
 import CreateCategory from './components/admin/CreateCategory'
 import EditCategory from './components/admin/EditCategory'
@@ -73,6 +75,7 @@ function App() {
           <Route path="/favourites" element={<PrivateRoute><FavoriteButton /></PrivateRoute>} />
           <Route path="/update" element={<PrivateRoute><UpdateName /></PrivateRoute>} />
           <Route path="/shopping-cart" element={<PrivateRoute><SebetCart /></PrivateRoute>} />
+          <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
 
           {/* ====================== FILTER ROUTES (YENİ) ====================== */}
           {/* No category → bütün məhsullar */}
@@ -211,6 +214,12 @@ function App() {
           <Route path='/admin/settings' element={
             <AdminRoute>
               <AdminSettings />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/orders' element={
+            <AdminRoute>
+              <AdminOrders />
             </AdminRoute>
           } />
         </Routes>
