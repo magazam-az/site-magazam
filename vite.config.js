@@ -35,11 +35,11 @@ export default defineConfig({
     // 🔥 Buraya sənin göndərdiyin PROXY-ni əlavə etdim
     proxy: {
       '/api': {
-        target: 'http://localhost:3010/',
+        target: 'https://api-magazam.onrender.com',
         changeOrigin: true
       },
       '/crud': {
-        target: 'http://localhost:3010/',
+        target: 'https://api-magazam.onrender.com',
         changeOrigin: true
       }
     }
