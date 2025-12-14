@@ -14,6 +14,7 @@ import MultiProductSelect from "./MultiProductSelect";
 const AddPromotion = () => {
   const [formData, setFormData] = useState({
     title: "",
+    bigTitle: "",
     slug: "",
     startDate: "",
     endDate: "",
@@ -207,6 +208,22 @@ const AddPromotion = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                      Böyük Başlıq
+                    </label>
+                    <input
+                      type="text"
+                      name="bigTitle"
+                      value={formData.bigTitle}
+                      onChange={handleInputChange}
+                      placeholder="Böyük başlıq"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div>
+                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
                       Slug *
                     </label>
                     <input
@@ -222,7 +239,7 @@ const AddPromotion = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
                       Başlanğıc Tarixi *

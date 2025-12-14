@@ -25,7 +25,7 @@ const Product = ({ product }) => {
   const hasValidId = !!productId;
   
   // Stok kontrolü
-  const isOutOfStock = !product.inStock || (product.stock !== undefined && product.stock <= 0);
+  const isOutOfStock = (product.inStock !== undefined && !product.inStock) || (product.stock !== undefined && product.stock <= 0);
   
   // Ürünün favorilerde olup olmadığını kontrol et
   const isFavorite = productId && favoritesData?.favorites?.some(
@@ -168,7 +168,7 @@ const Product = ({ product }) => {
       <div className="mt-auto">
         {/* Stok statusu */}
         <div className="flex items-center mb-1 sm:mb-2">
-          {product.inStock && !isOutOfStock ? (
+          {!isOutOfStock ? (
             <span className="text-green-600 text-xs sm:text-sm flex items-center">
               <span className="mr-1">✔</span> Stokda var
             </span>
