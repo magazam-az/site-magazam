@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import Home from './pages/Home'
 import BlogDetail from './pages/BlogDetail'
 import PromotionDetail from './pages/PromotionDetail'
+import Contact from './pages/Contact'
 import RegisterForm from './components/Register'
 import LoginForm from './components/Login'
 
@@ -76,6 +77,9 @@ function App() {
 
           {/* Promotion Detail */}
           <Route path="/promotions/:slug" element={<PromotionDetail />} />
+
+          {/* Contact */}
+          <Route path="/contact" element={<Contact />} />
 
           {/* Profile & User Routes */}
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />

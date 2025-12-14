@@ -10,6 +10,7 @@ import {
   useSearchProductsQuery,
 } from "../redux/api/productsApi"
 import { useGetCategoriesQuery } from "../redux/api/categoryApi"
+import { useGetSettingsQuery } from "../redux/api/settingsApi"
 import SebetCart from "./ShoppingCard"
 
 // Desktop üçün İstifadəçi Menyusu
@@ -177,6 +178,10 @@ export default function MetaShopHeader() {
   // Kategorileri API'den al
   const { data: categoriesData } = useGetCategoriesQuery()
   const categories = categoriesData?.categories || []
+  
+  const { data: settingsData } = useGetSettingsQuery()
+  const settings = settingsData?.settings || {}
+  const phoneNumber = settings.phone || "+994 12 310 10 10"
 
   // Səbət məhsul sayını hesabla - DÜZƏLDİ (YENİ HƏLL)
   const getCartItemCount = () => {
@@ -426,11 +431,11 @@ export default function MetaShopHeader() {
             {/* Right Section */}
             <div className="flex items-center gap-8">
               <div className="flex gap-8">
-                <a href="tel:+994123101010" className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                <a href={`tel:${phoneNumber.replace(/\s/g, '')}`} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
                   <Phone className="w-6 h-6 text-gray-700" />
                   <div>
                     <div className="text-black text-sm font-bold">24/7 Dəstək</div>
-                    <div className="text-blue-600 text-sm">+994 12 310 10 10</div>
+                    <div className="text-blue-600 text-sm">{phoneNumber}</div>
                   </div>
                 </a>
                 <div className="flex items-center gap-3">
@@ -450,7 +455,7 @@ export default function MetaShopHeader() {
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-between py-2">
               {/* Left Navigation */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-0">
                 {/* Categories Dropdown */}
                 <div className="relative" ref={categoriesDropdownRef}>
                   <div
@@ -524,21 +529,24 @@ export default function MetaShopHeader() {
                 </div>
 
                 <nav className="flex items-center gap-0">
+                  <Link 
+                    to="/catalog"
+                    className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none"
+                  >
+                    Bütün məhsullar
+                  </Link>
                   <button 
                     onClick={handlePromotionsClick}
                     className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none"
                   >
                     Aksiyalar
                   </button>
-                  <button className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none">
-                    Mağazalar
-                  </button>
-                  <button className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none">
+                  <Link 
+                    to="/contact"
+                    className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none"
+                  >
                     Bizimlə Əlaqə
-                  </button>
-                  <button className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none">
-                    Çatdırılma & Geri Qaytarılma
-                  </button>
+                  </Link>
                 </nav>
               </div>
 
@@ -617,9 +625,9 @@ export default function MetaShopHeader() {
         {/* Top Bar */}
         <div className="bg-white border-b border-gray-200">
           <div className="px-4 py-2 flex justify-between items-center text-xs">
-            <a href="tel:+994123101010" className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+            <a href={`tel:${phoneNumber.replace(/\s/g, '')}`} className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
               <Phone className="w-3 h-3 text-gray-700" />
-              <span className="text-blue-600">+994 12 310 10 10</span>
+              <span className="text-blue-600">{phoneNumber}</span>
             </a>
 
             <div className="flex items-center gap-1">
@@ -847,14 +855,12 @@ export default function MetaShopHeader() {
               >
                 Aksiyalar
               </button>
-              {["Mağazalar", "Bizimlə Əlaqə", "Çatdırılma & Geri Qaytarılma", "Outlet"].map((item, index) => (
-                <button
-                  key={index}
-                  className="block w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
-                >
-                  {item}
-                </button>
-              ))}
+              <Link
+                to="/contact"
+                className="block w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
+              >
+                Bizimlə Əlaqə
+              </Link>
             </div>
           </div>
         </div>
