@@ -1,86 +1,41 @@
 "use client"
 
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import Navbar from "./Navbar"
 import Footer from "./Footer"
+import { useGetPromotionsQuery } from "../redux/api/promotionApi"
 
 const MetashopPromotions = () => {
-  // Promosiyaların məlumatları
-  const promotions = [
-    {
-      id: 1,
-      title: "Apple Shopping Event",
-      subtitle: "24 Nov - 2 Dec",
-      imageUrl: "https://metashop.az/wp-content/uploads/2023/11/apple-shopping-event-banner.jpeg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 2,
-      title: "Pre-Order Google Pixel 7",
-      subtitle: "10 Nov - 28 Nov",
-      imageUrl: "https://metashop.az/wp-content/uploads/2022/12/pre-order-g-pixel-7.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 3,
-      title: "Discount on all Smart appliances up to 25%",
-      subtitle: "10 Nov - 28 Nov",
-      imageUrl: "https://metashop.az/wp-content/uploads/2022/12/discount-on-all-smart-appliances.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 4,
-      title: "New Aurora Headset",
-      subtitle: "20 Oct - 05 Nov",
-      imageUrl: "https://metashop.az/wp-content/uploads/2023/01/logitech-aurora-headset-opt.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 5,
-      title: "DualSense Discount",
-      subtitle: "15 Oct - 25 Oct",
-      imageUrl: "https://metashop.az/wp-content/uploads/2023/01/new-dualsense.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 6,
-      title: "Gift Photo paper for instant cameras",
-      subtitle: "12 Oct - 20 Oct",
-      imageUrl: "https://metashop.az/wp-content/uploads/2023/01/instant-cameras.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 7,
-      title: "Discount Nothing phone 1",
-      subtitle: "10 Oct - 18 Oct",
-      imageUrl: "https://metashop.az/wp-content/uploads/2023/01/nothing-phone-1.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 8,
-      title: "Discount Xiaomi mi 11",
-      subtitle: "27 Sep - 15 Oct",
-      imageUrl: "https://metashop.az/wp-content/uploads/2023/01/xiaomi-mi-11.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-    {
-      id: 9,
-      title: "Discount for new 7000 processors",
-      subtitle: "25 Sep - 10 Oct",
-      imageUrl: "https://metashop.az/wp-content/uploads/2023/01/available-new-7000-series.jpg",
-      readMoreLink: "https://metashop.az/apple-shopping-event/",
-    },
-  ]
+  const { data, error, isLoading } = useGetPromotionsQuery();
+  const promotions = data?.promotions || [];
 
   // "Read More" bölməsi üçün durum
   const [showMoreInfo, setShowMoreInfo] = useState(false)
 
+  // Tarix formatla
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    return `${day} ${month}`;
+  };
+
+  const formatDateRange = (startDate, endDate) => {
+    if (!startDate || !endDate) return "";
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  };
+
   const PromotionCard = ({ promotion }) => {
+    const dateRange = formatDateRange(promotion.startDate, promotion.endDate);
+    
     return (
       <div className="relative group overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 h-full">
         <div className="relative h-48 sm:h-56 md:h-64 w-full overflow-hidden">
           <img
-            src={promotion.imageUrl || "/placeholder.svg"}
+            src={promotion.image?.url || "/placeholder.svg"}
             alt={promotion.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
@@ -88,31 +43,27 @@ const MetashopPromotions = () => {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-          <p className="text-xs font-light opacity-90 mb-1">{promotion.subtitle}</p>
+          <p className="text-xs font-light opacity-90 mb-1">{dateRange}</p>
           <h3 className="text-base font-semibold mb-3 line-clamp-2">{promotion.title}</h3>
 
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <a
-              href={promotion.readMoreLink}
+            <Link
+              to={`/promotions/${promotion.slug || promotion._id}`}
               className="inline-flex items-center bg-white text-gray-800 px-3 py-1.5 rounded text-sm font-medium hover:bg-gray-100 transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               <span>Read More</span>
               <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
               </svg>
-            </a>
+            </Link>
           </div>
         </div>
 
-        <a
-          href={promotion.readMoreLink}
+        <Link
+          to={`/promotions/${promotion.slug || promotion._id}`}
           className="absolute inset-0 z-10"
           aria-label={`${promotion.title} üçün ətraflı məlumat`}
-          target="_blank"
-          rel="noopener noreferrer"
-        ></a>
+        ></Link>
       </div>
     )
   }
@@ -138,11 +89,25 @@ const MetashopPromotions = () => {
         </div>
 
         {/* Promosiyalar grid - RESPONSİV: 1 sütun mobil, 2 sütun tablet, 3 sütun desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-10 md:mb-12">
-          {promotions.map((promotion) => (
-            <PromotionCard key={promotion.id} promotion={promotion} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-600">Xəta baş verdi: {error?.data?.error || "Promotion-lar yüklənərkən xəta baş verdi"}</p>
+          </div>
+        ) : promotions.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Hələ promotion yoxdur.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-10 md:mb-12">
+            {promotions.map((promotion) => (
+              <PromotionCard key={promotion._id} promotion={promotion} />
+            ))}
+          </div>
+        )}
 
         {/* Alt məlumat bölməsi */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8 mb-8">

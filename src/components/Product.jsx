@@ -109,8 +109,8 @@ const Product = ({ product }) => {
     {/* Məhsul Şəkili sahəsi - sabit ölçü */}
     <div className="w-full flex justify-center items-center mb-3 sm:mb-4 overflow-hidden" style={{ height: '200px' }}>
       <img 
-        src={product.imageUrl} 
-        alt={product.imageAlt} 
+        src={product.imageUrl || product.images?.[0]?.url || "https://placehold.co/234x234/6B7280/ffffff?text=Product+Image"} 
+        alt={product.imageAlt || product.name} 
         className="object-contain w-full h-full max-w-[180px] max-h-[180px] sm:max-w-[234px] sm:max-h-[234px] transition-transform duration-300 ease-out hover:scale-110"
         onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/234x234/6B7280/ffffff?text=Product+Image"; }}
       />
