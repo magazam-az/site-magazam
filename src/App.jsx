@@ -47,6 +47,7 @@ import AdminDashboard from './components/admin/AdminDashboard'
 
 // ScrollToTop Component
 import ScrollToTop from './components/ui/ScrollToTop'
+import Promosiyalar from './components/Promotions'
 
 function App() {
   return (
@@ -76,6 +77,8 @@ function App() {
           {/* ====================== FILTER ROUTES (YENİ) ====================== */}
           {/* No category → bütün məhsullar */}
           <Route path="/catalog" element={<Filter />} />
+
+            <Route path="/promotions" element={<Promosiyalar />} />
 
           {/* Category seçilib */}
           <Route path="/catalog/:category" element={<Filter />} />
