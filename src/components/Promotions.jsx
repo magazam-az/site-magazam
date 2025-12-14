@@ -6,10 +6,45 @@ import Navbar from "./Navbar"
 import Footer from "./Footer"
 import { useGetPromotionsQuery } from "../redux/api/promotionApi"
 
+// Breadcrumb komponentini əlavə edin (əgər varsa)
+// Əgər Breadcrumb komponentiniz yoxdursa, aşağıdakını əlavə edin:
+const Breadcrumb = ({ items }) => {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-gray-600">
+      {items.map((item, index) => (
+        <div key={index} className="flex items-center">
+          {index > 0 && <span className="mx-2">/</span>}
+          {item.path ? (
+            <Link to={item.path} className="hover:text-gray-900">
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-gray-900 font-medium">{item.label}</span>
+          )}
+        </div>
+      ))}
+    </nav>
+  )
+}
+
+// About komponentini əlavə edin (əgər varsa)
+// Əgər About komponentiniz yoxdursa, bu hissəni silin və ya öz About komponentinizi əlavə edin
+const About = () => {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8 my-8">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
+        About Our Promotions
+      </h2>
+      <p className="text-gray-600">
+        Discover our latest promotions and special offers on electronics and household appliances.
+      </p>
+    </div>
+  )
+}
+
 const MetashopPromotions = () => {
   const { data, error, isLoading } = useGetPromotionsQuery();
   const promotions = data?.promotions || [];
-
 
   // Tarix formatla
   const formatDate = (dateString) => {
@@ -84,43 +119,40 @@ const MetashopPromotions = () => {
             />
           </div>
 
-        {/* Promosiyalar grid - RESPONSİV: 1 sütun mobil, 2 sütun tablet, 3 sütun desktop */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          {/* Başlıq */}
+          <div className="py-6 mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Promosiyalar
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Ən son kampaniya və xüsusi təkliflərimizi kəşf edin
+            </p>
           </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-red-600">Xəta baş verdi: {error?.data?.error || "Promotion-lar yüklənərkən xəta baş verdi"}</p>
-          </div>
-        ) : promotions.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">Hələ promotion yoxdur.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-10 md:mb-12">
-            {promotions.map((promotion) => (
-              <PromotionCard key={promotion._id} promotion={promotion} />
-            ))}
-          </div>
-        )}
 
-        {/* Alt məlumat bölməsi */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8 mb-8">
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
-            Online store of household appliances and electronics
-          </h2>
+          {/* Promosiyalar grid - TƏKRARLANAN HİSSƏNİ SİLDİM */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-red-600">Xəta baş verdi: {error?.data?.error || "Promotion-lar yüklənərkən xəta baş verdi"}</p>
+            </div>
+          ) : promotions.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Hələ promotion yoxdur.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-10 md:mb-12">
+              {promotions.map((promotion) => (
+                <PromotionCard key={promotion._id} promotion={promotion} />
+              ))}
+            </div>
+          )}
 
-          {/* Promosiyalar grid - RESPONSİV: 1 sütun mobil, 2 sütun tablet, 3 sütun desktop */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-6">
-            {promotions.map((promotion) => (
-              <PromotionCard key={promotion.id} promotion={promotion} />
-            ))}
-          </div>
+          {/* About komponenti */}
+          <About />
         </div>
-
-        {/* About komponenti - container dışında, kendi Container'ını kullanacak */}
-        <About />
       </section>
 
       {/* Footer komponenti */}

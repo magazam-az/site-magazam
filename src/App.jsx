@@ -44,6 +44,7 @@ import Profile from './components/Profile'
 import SebetCart from './components/ShoppingCard'
 import FavoriteButton from './components/Favorites'
 import UpdateName from './components/Uptade'
+import Checkout from './pages/Checkout' // ✅ CHECKOUT IMPORT EDİN
 
 // ⭐ Filter Page (kategoriya + subcategory + dynamic breadcrumb)
 import Filter from './components/Filter'
