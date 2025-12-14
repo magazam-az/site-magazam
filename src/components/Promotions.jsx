@@ -10,7 +10,7 @@ import { useGetPromotionsQuery } from "../redux/api/promotionApi"
 // Əgər Breadcrumb komponentiniz yoxdursa, aşağıdakını əlavə edin:
 const Breadcrumb = ({ items }) => {
   return (
-    <nav className="flex items-center space-x-2 text-sm text-gray-600">
+      <nav className="flex items-center space-x-2 text-sm text-gray-600">
       {items.map((item, index) => (
         <div key={index} className="flex items-center">
           {index > 0 && <span className="mx-2">/</span>}
@@ -19,7 +19,7 @@ const Breadcrumb = ({ items }) => {
               {item.label}
             </Link>
           ) : (
-            <span className="text-gray-900 font-medium">{item.label}</span>
+            <span className="text-gray-900 font-bold">Promosiyalar</span>
           )}
         </div>
       ))}
