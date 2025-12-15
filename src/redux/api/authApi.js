@@ -1,11 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setIsAuthenticated, setUser, logout } from "../features/userSlice";
-import { CRUD_BASE_URL } from "../../config/api";
 
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: CRUD_BASE_URL,
+    baseUrl: "/crud/v1",
     credentials: "include",
   }),
   endpoints: (builder) => ({
@@ -21,11 +20,22 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          // ⭐ DÜZƏLDİLMİŞ
+          // Token-i localStorage-ə yaz
+          const token = data?.token || data?.data?.token;
+          if (token) {
+            localStorage.setItem('token', token.trim());
+          }
+          if (data?.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
+          localStorage.setItem('isAuthenticated', 'true');
+
           dispatch(setUser(data.user));
           dispatch(setIsAuthenticated(true));
 
-        } catch (err) {}
+        } catch (err) {
+          console.error('[DEBUG] ❌ [authApi] Register error:', err);
+        }
       },
     }),
 
@@ -40,12 +50,99 @@ export const authApi = createApi({
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
+          // #region agent log
+          const loginLog = {
+            location: 'authApi.js:43',
+            message: '✅ Login response (onQueryStarted)',
+            data: {
+              hasToken: !!data?.token,
+              tokenLength: data?.token?.length,
+              hasUser: !!data?.user,
+              userId: data?.user?._id,
+            },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'B'
+          };
+          fetch('http://127.0.0.1:7242/ingest/49f3303b-3f26-416c-a253-5eeb0b1414d8', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginLog)
+          }).catch(() => {});
+          console.log('[DEBUG] ✅ [authApi] Login response:', {
+            hasToken: !!data?.token,
+            tokenLength: data?.token?.length,
+            hasUser: !!data?.user
+          });
+          // #endregion
 
-          // ⭐ DÜZƏLDİLMİŞ
+          // Token-i localStorage-ə yaz
+          const token = data?.token || data?.data?.token;
+          if (token) {
+            localStorage.setItem('token', token.trim());
+            // #region agent log
+            const storageLog = {
+              location: 'authApi.js:65',
+              message: '✅ Token localStorage-ə yazıldı',
+              data: {
+                tokenLength: token?.length,
+                tokenPrefix: token?.substring(0, 20) + '...',
+                verified: localStorage.getItem('token') === token.trim()
+              },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            };
+            fetch('http://127.0.0.1:7242/ingest/49f3303b-3f26-416c-a253-5eeb0b1414d8', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(storageLog)
+            }).catch(() => {});
+            console.log('[DEBUG] ✅ [authApi] Token stored:', {
+              tokenLength: token?.length,
+              verified: localStorage.getItem('token') === token.trim()
+            });
+            // #endregion
+          } else {
+            console.error('[DEBUG] ❌ [authApi] NO TOKEN IN RESPONSE!', {
+              dataKeys: Object.keys(data || {}),
+              data: JSON.stringify(data).substring(0, 200)
+            });
+          }
+
+          // User məlumatlarını yaz
+          if (data?.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
+          localStorage.setItem('isAuthenticated', 'true');
+
           dispatch(setUser(data.user));
           dispatch(setIsAuthenticated(true));
 
-        } catch (err) {}
+        } catch (err) {
+          // #region agent log
+          const errorLog = {
+            location: 'authApi.js:94',
+            message: '❌ Login error',
+            data: {
+              error: err?.message || String(err),
+              status: err?.status
+            },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'B'
+          };
+          fetch('http://127.0.0.1:7242/ingest/49f3303b-3f26-416c-a253-5eeb0b1414d8', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(errorLog)
+          }).catch(() => {});
+          console.error('[DEBUG] ❌ [authApi] Login error:', err);
+          // #endregion
+        }
       },
     }),
 
