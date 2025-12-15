@@ -1,10 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { API_BASE_URL } from "../../config/api.js";
+import { prepareHeaders } from "./prepareHeaders.js";
 
 export const specApi = createApi({
   reducerPath: "specApi",
   baseQuery: fetchBaseQuery({ 
-    baseUrl: "/api/v1",
+    baseUrl: API_BASE_URL,
     credentials: "include",
+    prepareHeaders,
   }),
   tagTypes: ["Specs"],
   endpoints: (builder) => ({
