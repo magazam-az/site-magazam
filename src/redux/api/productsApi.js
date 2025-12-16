@@ -9,12 +9,15 @@ export const productApi = createApi({
     credentials: "include",
     prepareHeaders,
   }),
+  tagTypes: ["Products"],
   endpoints: (builder) => ({
     getProducts: builder.query({
       query: () => "/products",
+      providesTags: ["Products"],
     }),
     getProductDetails: builder.query({
       query: (id) => `/products/${id}`,
+      providesTags: (result, error, id) => [{ type: "Products", id }],
     }),
     addProduct: builder.mutation({
       query: (productData) => ({
@@ -23,12 +26,14 @@ export const productApi = createApi({
         body: productData,
         // ✅ RTK Query FormData-nı avtomatik olaraq tanıyır və Content-Type header-ını düzgün təyin edir
       }),
+      invalidatesTags: ["Products"],
     }),
     deleteProduct: builder.mutation({
       query: (id) => ({
         url: `/admin/products/${id}`,
         method: "DELETE",
       }),
+      invalidatesTags: ["Products"],
     }),
     editProduct: builder.mutation({
       query: ({ id, formData }) => ({
@@ -37,6 +42,7 @@ export const productApi = createApi({
         body: formData,
         // ✅ RTK Query FormData-nı avtomatik olaraq tanıyır və Content-Type header-ını düzgün təyin edir
       }),
+      invalidatesTags: ["Products"],
     }),
     getCart: builder.query({
       query: () => "/products/cart",

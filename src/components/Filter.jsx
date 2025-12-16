@@ -743,6 +743,7 @@ const Filter = () => {
   }, [allProducts, selectedCategory, selectedSubcategory]);
 
   // Brand options (mövcud kateqoriya/subkateqoriya üzrə)
+  // Seçilmiş brend və xüsusiyyətləri nəzərə alaraq yenilənir
   const brandOptions = useMemo(() => {
     if (!brands.length) return [];
 
@@ -751,6 +752,18 @@ const Filter = () => {
       if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
       if (stockStatus === "in_stock" && p.stock <= 0) return false;
       if (stockStatus === "out_of_stock" && p.stock > 0) return false;
+      
+      // Seçilmiş xüsusiyyətlərə görə filter
+      if (selectedSpecs.length > 0) {
+        const specsObj = normalizeProductSpecs(p.specs);
+        if (!specsObj) return false;
+        // Ən azı bir seçilmiş spec ID məhsulda olmalıdır
+        const hasSelectedSpec = selectedSpecs.some(specId => 
+          Object.prototype.hasOwnProperty.call(specsObj, specId)
+        );
+        if (!hasSelectedSpec) return false;
+      }
+      
       return true;
     });
 
@@ -765,9 +778,10 @@ const Filter = () => {
         };
       })
       .filter((b) => b.name);
-  }, [brands, allProducts, selectedCategory, selectedSubcategory, stockStatus]);
+  }, [brands, allProducts, selectedCategory, selectedSubcategory, stockStatus, selectedSpecs]);
 
   // Spec options
+  // Seçilmiş brend və xüsusiyyətləri nəzərə alaraq yenilənir
   const specOptions = useMemo(() => {
     if (!specs.length) return [];
 
@@ -776,6 +790,12 @@ const Filter = () => {
       if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
       if (stockStatus === "in_stock" && p.stock <= 0) return false;
       if (stockStatus === "out_of_stock" && p.stock > 0) return false;
+      
+      // Seçilmiş brendlərə görə filter
+      if (selectedBrands.length > 0) {
+        if (!selectedBrands.includes(p.brand)) return false;
+      }
+      
       return true;
     });
 
@@ -797,7 +817,7 @@ const Filter = () => {
         };
       })
       .filter((s) => s.name);
-  }, [specs, allProducts, selectedCategory, selectedSubcategory, stockStatus]);
+  }, [specs, allProducts, selectedCategory, selectedSubcategory, stockStatus, selectedBrands]);
 
   // Size options (specs-dən)
   const sizeOptions = useMemo(() => {

@@ -166,16 +166,16 @@ const Product = ({ product, mehsul }) => {
     <div className="flex flex-col flex-grow text-left">
       <div className="mb-2 sm:mb-3 flex-grow">
         <h3 className="text-sm sm:text-base font-semibold text-gray-800 line-clamp-2 mb-1 sm:mb-2">{productData.name}</h3>
-        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-1 sm:mt-2">{productData.brand}</p>
-        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-0.5 sm:mt-1">{productData.model}</p>
-        <div className="mt-1 sm:mt-2">
+        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-1 sm:mt-2 pl-1">{productData.brand}</p>
+        <p className="text-sm sm:text-base text-gray-400 line-clamp-1 mt-0.5 sm:mt-1 pl-1">{productData.model}</p>
+        <div className="mt-1 sm:mt-2 pl-1">
           <Rating rating={productData.rating || productData.ratings || 5} />
         </div>
       </div>
       
       <div className="mt-auto">
         {/* Stok statusu */}
-        <div className="flex items-center mb-1 sm:mb-2">
+        <div className="flex items-center mb-1 sm:mb-2 pl-1">
           {!isOutOfStock ? (
             <span className="text-green-600 text-xs sm:text-sm flex items-center">
               <span className="mr-1">✔</span> Stokda var
@@ -186,7 +186,7 @@ const Product = ({ product, mehsul }) => {
         </div>
         
         {/* Qiymət */}
-        <div className="text-base sm:text-lg font-bold text-[#5C4977] mb-2 sm:mb-3">
+        <div className="text-base sm:text-lg font-bold text-[#5C4977] mb-2 sm:mb-3 pl-1">
           {typeof productData.price === 'number' 
             ? `${productData.price.toFixed(2)} ₼` 
             : productData.price || '0.00 ₼'}
