@@ -177,20 +177,29 @@ const LoginForm = () => {
               )}
             </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                name="rememberMe"
-                checked={formData.rememberMe}
-                onChange={handleChange}
-                disabled={isLoading}
-                className="h-4 w-4 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977]"
-              />
-              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 cursor-pointer">
-                Məni xatırla
-              </label>
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  className="h-4 w-4 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977]"
+                />
+                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 cursor-pointer">
+                  Məni xatırla
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors cursor-pointer"
+              >
+                Şifrəni unutdunuz?
+              </button>
             </div>
 
             {/* Submit Button */}

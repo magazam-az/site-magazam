@@ -10,6 +10,10 @@ import PromotionDetail from './pages/PromotionDetail'
 import Contact from './pages/Contact'
 import RegisterForm from './components/Register'
 import LoginForm from './components/Login'
+import ForgotPassword from './components/ForgotPassword'
+import ResetPassword from './components/ResetPassword'
+import EmailVerification from './components/EmailVerification'
+import PasswordResetRedirect from './components/PasswordResetRedirect'
 
 // Admin Components
 import AddProducts from './components/admin/AddProducts'
@@ -69,6 +73,19 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RegisterForm />} />
           <Route path="/login" element={<LoginForm />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          
+          {/* Password Reset Routes - YUXARIDA OLMALIDIR, digər route-lardan əvvəl */}
+          <Route path="/password/reset/token/:token" element={<ResetPassword />} />
+          
+          {/* Köhnə format linkləri üçün redirect (crud/v1/password/reset/token/...) */}
+          <Route path="/crud/v1/password/reset/token/:token" element={<PasswordResetRedirect />} />
+          
+          {/* Email Verification Routes (6 rəqəmli kod sistemi) */}
+          <Route path="/email/verify/resend" element={<EmailVerification />} />
+          
+          {/* Catch-all route for crud paths - SONDA OLMALIDIR */}
+          <Route path="/crud/*" element={<PasswordResetRedirect />} />
 
           {/* Product Detail */}
           <Route path="/product/:id" element={<ProductDetail />} />

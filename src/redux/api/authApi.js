@@ -169,6 +169,22 @@ export const authApi = createApi({
       }),
     }),
 
+    verifyEmail: builder.mutation({
+      query: (body) => ({
+        url: `/email/verify`,
+        method: "POST",
+        body, // { email, code }
+      }),
+    }),
+
+    resendVerificationEmail: builder.mutation({
+      query: (body) => ({
+        url: "/email/resend-verification",
+        method: "POST",
+        body,
+      }),
+    }),
+
     updateProfile: builder.mutation({
       query: (body) => {
         // Eğer FormData ise (avatar yükleme durumunda)
@@ -207,5 +223,7 @@ export const {
   useLazyLogoutQuery,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useVerifyEmailMutation,
+  useResendVerificationEmailMutation,
   useUpdateProfileMutation,
 } = authApi;

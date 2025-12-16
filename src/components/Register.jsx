@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { setUser, setIsAuthenticated } from '../redux/features/userSlice';
 
 const RegisterForm = () => {
-  const [register, { isLoading, error }] = useRegisterMutation();
+  const [register, { isLoading, error, isSuccess }] = useRegisterMutation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
@@ -21,6 +21,7 @@ const RegisterForm = () => {
   const [formErrors, setFormErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -85,14 +86,12 @@ const RegisterForm = () => {
       
       console.log('Qeydiyyat uğurla tamamlandı!', result);
       
-      // User məlumatlarını Redux store və localStorage-a yaz
-      dispatch(setUser({
-        name: formData.name,
-        email: formData.email,
-        id: result.user?.id,
-        token: result.token
-      }));
-      dispatch(setIsAuthenticated(true));
+      // Email verification mesajı göstər
+      // Token və user məlumatlarını yazma, çünki email təsdiqlənməyib
+      // Email təsdiqləndikdən sonra login edə bilər
+      
+      const userEmail = formData.email; // Email-i saxla
+      setRegisteredEmail(userEmail);
       
       setFormData({
         name: '',
@@ -102,7 +101,8 @@ const RegisterForm = () => {
         rememberMe: false
       });
       
-      navigate('/');
+      // Email verification səhifəsinə yönləndir (6 rəqəmli kod ilə)
+      navigate(`/email/verify/resend?email=${encodeURIComponent(userEmail)}`);
       
     } catch (err) {
       console.error('Qeydiyyat uğursuz oldu:', err);
@@ -128,6 +128,14 @@ const RegisterForm = () => {
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error.data?.message || 'Qeydiyyat uğursuz oldu. Zəhmət olmasa yenidən cəhd edin.'}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {isSuccess && !error && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                <p className="font-medium mb-1">✅ Qeydiyyat uğurlu oldu!</p>
+                <p className="text-sm">Təsdiqləmə emaili <strong>{registeredEmail}</strong> ünvanına göndərildi. Emailinizi yoxlayın və hesabınızı təsdiqləyin.</p>
               </div>
             )}
 
