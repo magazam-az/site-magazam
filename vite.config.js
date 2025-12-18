@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'node:url'
 
 // Proxy target URL-i - buradan API URL-ləri alınır
-const API_TARGET = 'https://magazam-api.onrender.com';
+const API_TARGET = 'http://localhost:3010/';
 
 export default defineConfig({
   plugins: [
