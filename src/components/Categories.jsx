@@ -4,6 +4,7 @@ import Container from "../components/ui/Container";
 import { useGetProductsQuery } from "../redux/api/productsApi";
 import { useGetCategoriesQuery } from "../redux/api/categoryApi"; // 🔥 Category API
 import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 // Tək bir kategoriya elementinin komponenti
 export const CategoryCard = ({ name, slug, productCount, imageUrl, imageAlt, subcategories = [], categorySlug, customPath, productText = "product" }) => {
