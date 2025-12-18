@@ -42,6 +42,7 @@ import CreateSpec from './components/admin/CreateSpec'
 import EditSpec from './components/admin/EditSpec'
 
 import PrivateRoute from './components/PrivateRoute'
+import PublicRoute from './components/PublicRoute'
 import AdminRoute from './components/AdminRoues'
 
 import ProductDetail from './components/ProductDetail'
@@ -71,8 +72,8 @@ function App() {
         <Routes>
           {/* ====================== PUBLIC ROUTES ====================== */}
           <Route path="/" element={<Home />} />
-          <Route path="/register" element={<RegisterForm />} />
-          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<PublicRoute><RegisterForm /></PublicRoute>} />
+          <Route path="/login" element={<PublicRoute><LoginForm /></PublicRoute>} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           
           {/* Password Reset Routes - YUXARIDA OLMALIDIR, digər route-lardan əvvəl */}

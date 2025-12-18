@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGetPromotionsQuery, useDeletePromotionMutation } from "../../redux/api/promotionApi";
 import Swal from "sweetalert2";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 const AdminPromotion = () => {
@@ -67,7 +68,7 @@ const AdminPromotion = () => {
     return (
       <AdminLayout pageTitle="Promotion">
         <div className="flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
       </AdminLayout>
     );

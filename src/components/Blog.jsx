@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Container from './ui/Container';
 import { useGetBlogsQuery } from '../redux/api/blogApi';
@@ -80,7 +80,7 @@ const Blog = ({ variant = "slider" }) => {
         <Container>
           <div className="w-full py-4 sm:py-6">
             <div className="flex items-center justify-center p-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+              <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
             </div>
           </div>
         </Container>

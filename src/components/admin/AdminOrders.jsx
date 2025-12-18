@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGetAllOrdersQuery, useDeleteOrderMutation, useUpdateOrderStatusMutation } from "../../redux/api/orderApi";
 import Swal from "sweetalert2";
 import { FaTrash, FaEye, FaSearch, FaFilter } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 const AdminOrders = () => {
@@ -140,7 +141,7 @@ const AdminOrders = () => {
     return (
       <AdminLayout pageTitle="Sifarişlər">
         <div className="flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
       </AdminLayout>
     );

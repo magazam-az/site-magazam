@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRegisterMutation } from '../redux/api/authApi';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, User, Lock, Mail, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Mail, UserPlus, Loader2 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { setUser, setIsAuthenticated } from '../redux/features/userSlice';
 
@@ -106,6 +106,15 @@ const RegisterForm = () => {
       
     } catch (err) {
       console.error('Qeydiyyat uğursuz oldu:', err);
+      
+      // Handle duplicate email error
+      const errorMessage = err?.data?.message || err?.message || '';
+      if (errorMessage && (errorMessage.toLowerCase().includes('email') || errorMessage.includes('artıq istifadə olunur'))) {
+        setFormErrors(prev => ({
+          ...prev,
+          email: errorMessage
+        }));
+      }
     }
   };
 
@@ -124,8 +133,8 @@ const RegisterForm = () => {
         {/* Form Container */}
         <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* API Error Message */}
-            {error && (
+            {/* API Error Message - Only show if it's not an email error (email errors show under the field) */}
+            {error && !formErrors.email && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error.data?.message || 'Qeydiyyat uğursuz oldu. Zəhmət olmasa yenidən cəhd edin.'}
               </div>
@@ -278,7 +287,15 @@ const RegisterForm = () => {
             </div>
 
             {/* Remember Me */}
-            <div className="flex items-center">
+            <div 
+              className="flex items-center cursor-pointer"
+              onClick={(e) => {
+                // Sadece div'e direkt tıklanırsa (checkbox veya label değilse) toggle et
+                if (e.target === e.currentTarget && !isLoading) {
+                  setFormData(prev => ({ ...prev, rememberMe: !prev.rememberMe }));
+                }
+              }}
+            >
               <input
                 type="checkbox"
                 id="rememberMe"
@@ -286,9 +303,9 @@ const RegisterForm = () => {
                 checked={formData.rememberMe}
                 onChange={handleChange}
                 disabled={isLoading}
-                className="h-4 w-4 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977]"
+                className="h-4 w-4 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977] cursor-pointer"
               />
-              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 cursor-pointer">
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 cursor-pointer select-none flex-1">
                 Məni xatırla
               </label>
             </div>
@@ -300,10 +317,7 @@ const RegisterForm = () => {
               className="w-full bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-[#5C4977]/20 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Qeydiyyat olunur...
-                </>
+                <Loader2 className="h-5 w-5 text-white animate-spin" />
               ) : (
                 <>
                   <UserPlus className="h-5 w-5" />

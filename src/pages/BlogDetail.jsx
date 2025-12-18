@@ -4,6 +4,7 @@ import { useGetBlogDetailsQuery } from '../redux/api/blogApi';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Breadcrumb from '../components/ui/Breadcrumb';
+import { Loader2 } from 'lucide-react';
 
 const BlogDetail = () => {
   const { slug } = useParams();
@@ -24,8 +25,7 @@ const BlogDetail = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col justify-center items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-gray-400 mb-4"></div>
-          <p className="text-gray-600 font-semibold text-xl">Yüklənir...</p>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
         <Footer />
       </div>

@@ -5,6 +5,7 @@ import Navbar from "./Navbar"
 import Footer from "./Footer"
 import About from "./About"
 import { useGetPromotionsQuery } from "../redux/api/promotionApi"
+import { Loader2 } from "lucide-react"
 
 // Breadcrumb komponenti
 const Breadcrumb = ({ items }) => {
@@ -115,7 +116,7 @@ const MetashopPromotions = () => {
           {/* Promosiyalar grid */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+              <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
             </div>
           ) : error ? (
             <div className="text-center py-12">

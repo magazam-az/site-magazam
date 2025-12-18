@@ -6,7 +6,7 @@ import {
 } from "../redux/api/productsApi";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import Breadcrumb from "./ui/Breadcrumb";
@@ -131,7 +131,7 @@ const SebetCart = ({ isOpen, onClose }) => {
             {isLoading ? (
               <div className="bg-white rounded-xl shadow-sm p-12">
                 <div className="flex justify-center items-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+                  <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
                 </div>
               </div>
             ) : error || (!isLoading && validCartItems.length === 0) ? (
@@ -384,7 +384,7 @@ const SebetCart = ({ isOpen, onClose }) => {
         <div className="p-6">
           {isLoading ? (
             <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+              <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
             </div>
           ) : error || !validCartItems.length ? (
             /* Empty Cart State */

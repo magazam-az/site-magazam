@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/ui/Breadcrumb";
+import { Loader2 } from "lucide-react";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -119,7 +120,7 @@ const Checkout = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
         <Footer />
       </div>
@@ -221,10 +222,7 @@ const Checkout = () => {
                     className="w-full bg-[#5C4977] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5C4977]/20 cursor-pointer"
                   >
                     {isCreating ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                        Sifariş verilir...
-                      </div>
+                      <Loader2 className="h-5 w-5 text-white animate-spin mx-auto" />
                     ) : (
                       "Sifarişi Təsdiqlə"
                     )}

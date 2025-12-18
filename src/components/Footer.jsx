@@ -1,4 +1,4 @@
-import { Facebook, Twitter, Linkedin } from "lucide-react"
+import { Facebook, Twitter, Linkedin, Loader2 } from "lucide-react"
 import { FaWhatsapp } from "react-icons/fa"
 import { Link } from "react-router-dom"
 import { useGetCategoriesQuery } from "../redux/api/categoryApi"
@@ -77,7 +77,9 @@ export default function Footer() {
                   )
                 })
               ) : (
-                <li className="text-gray-500 text-xs sm:text-sm">Yüklənir...</li>
+                <li className="flex justify-center items-center py-2">
+                  <Loader2 className="h-4 w-4 text-[#5C4977] animate-spin" />
+                </li>
               )}
             </ul>
           </div>

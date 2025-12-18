@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGetCategoryQuery, useUpdateCategoryMutation } from "../../redux/api/categoryApi";
 import Swal from "sweetalert2";
 import { FaImage } from "react-icons/fa";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 const EditCategory = () => {
@@ -103,7 +103,7 @@ const EditCategory = () => {
     return (
       <AdminLayout pageTitle="Kateqoriyanı Redaktə Et">
         <div className="flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
       </AdminLayout>
     );

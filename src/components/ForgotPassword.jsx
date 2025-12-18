@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForgotPasswordMutation } from '../redux/api/authApi';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 
 const ForgotPassword = () => {
   const [forgotPassword, { isLoading, error, isSuccess }] = useForgotPasswordMutation();
@@ -147,10 +147,7 @@ const ForgotPassword = () => {
               className="w-full bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-[#5C4977]/20 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Göndərilir...
-                </>
+                <Loader2 className="h-5 w-5 text-white animate-spin" />
               ) : (
                 <>
                   <Mail className="h-5 w-5" />

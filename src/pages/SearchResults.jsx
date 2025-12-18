@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, X } from "lucide-react";
+import { Search, X, Loader2 } from "lucide-react";
 import { useSearchProductsQuery } from "../redux/api/productsApi";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -93,8 +93,7 @@ const SearchResults = () => {
           {/* Loading State */}
           {isLoading && (
             <div className="text-center py-16">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
-              <p className="mt-4 text-gray-600">Axtarış nəticələri yüklənir...</p>
+              <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin mx-auto" />
             </div>
           )}
 

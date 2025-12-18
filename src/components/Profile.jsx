@@ -203,8 +203,12 @@ export default function Profile() {
                               disabled={isLoading}
                               className="px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             >
-                              <Save className="w-4 h-4" />
-                              {isLoading ? "Yenilənir..." : "Yadda saxla"}
+                              {isLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Save className="w-4 h-4" />
+                              )}
+                              {!isLoading && "Yadda saxla"}
                             </button>
                             <button
                               onClick={handleCancel}

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useUpdateProfileMutation } from "../redux/api/authApi";
 import { useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
+import { Loader2 } from "lucide-react";
 
 const UpdateName = () => {
   const { user } = useSelector((state) => state.user);
@@ -46,7 +47,11 @@ const UpdateName = () => {
           disabled={isLoading}
           className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
         >
-          {isLoading ? "Yenilənir..." : "Adı Yenilə"}
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+          ) : (
+            "Adı Yenilə"
+          )}
         </button>
       </form>
     </div>

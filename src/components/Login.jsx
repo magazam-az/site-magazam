@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLoginMutation } from '../redux/api/authApi';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Mail, Loader2 } from 'lucide-react';
 
 const LoginForm = () => {
   const [login, { isLoading, error }] = useLoginMutation();
@@ -179,7 +179,15 @@ const LoginForm = () => {
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
+              <div 
+                className="flex items-center cursor-pointer"
+                onClick={(e) => {
+                  // Sadece div'e direkt tıklanırsa (checkbox veya label değilse) toggle et
+                  if (e.target === e.currentTarget && !isLoading) {
+                    setFormData(prev => ({ ...prev, rememberMe: !prev.rememberMe }));
+                  }
+                }}
+              >
                 <input
                   type="checkbox"
                   id="rememberMe"
@@ -187,9 +195,9 @@ const LoginForm = () => {
                   checked={formData.rememberMe}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="h-4 w-4 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977]"
+                  className="h-4 w-4 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977] cursor-pointer"
                 />
-                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 cursor-pointer">
+                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 cursor-pointer select-none flex-1">
                   Məni xatırla
                 </label>
               </div>
@@ -209,10 +217,7 @@ const LoginForm = () => {
               className="w-full bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-[#5C4977]/20"
             >
               {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Giriş edilir...
-                </div>
+                <Loader2 className="h-5 w-5 text-white animate-spin mx-auto" />
               ) : (
                 'Daxil ol'
               )}

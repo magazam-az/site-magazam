@@ -10,7 +10,7 @@ import {
 import { useGetCategoriesQuery } from '../redux/api/categoryApi';
 import { useSelector } from 'react-redux';
 import { toast } from "react-hot-toast";
-import { Heart, Share2, GitCompare, Eye, ShoppingBag, ChevronLeft, ChevronRight, ZoomIn, X } from 'lucide-react';
+import { Heart, Share2, GitCompare, Eye, ShoppingBag, ChevronLeft, ChevronRight, ZoomIn, X, Loader2 } from 'lucide-react';
 import { FaFacebook, FaTwitter, FaPinterest, FaLinkedin } from 'react-icons/fa';
 import { SiVisa, SiMastercard } from 'react-icons/si';
 import { FaApplePay, FaGooglePay } from 'react-icons/fa';
@@ -365,7 +365,7 @@ const ProductDetail = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100">
-        Yüklənir...
+        <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
       </div>
     );
   }

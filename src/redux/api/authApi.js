@@ -22,20 +22,9 @@ export const authApi = createApi({
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-
-          // Token-i localStorage-ə yaz
-          const token = data?.token || data?.data?.token;
-          if (token) {
-            localStorage.setItem('token', token.trim());
-          }
-          if (data?.user) {
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
-          localStorage.setItem('isAuthenticated', 'true');
-
-          dispatch(setUser(data.user));
-          dispatch(setIsAuthenticated(true));
-
+          // Register işleminde authentication state set edilmemeli
+          // Çünkü email doğrulanmadan login olmamış oluyor
+          // Token ve user bilgileri sadece login işleminde set edilmeli
         } catch (err) {
           console.error('[DEBUG] ❌ [authApi] Register error:', err);
         }

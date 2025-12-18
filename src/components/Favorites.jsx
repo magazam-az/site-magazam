@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useGetFavoritesQuery } from "../redux/api/productsApi";
 import { Link } from "react-router-dom";
 // Lucide icon
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import Breadcrumb from "./ui/Breadcrumb";
@@ -33,8 +33,7 @@ const FavoriteButton = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col justify-center items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-gray-400 mb-4"></div>
-          <p className="text-gray-600 font-semibold text-xl">Yüklənir...</p>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
         <Footer />
       </div>

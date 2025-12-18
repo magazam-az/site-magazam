@@ -3,7 +3,7 @@ import { useGetSettingsQuery } from '../redux/api/settingsApi';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Breadcrumb from '../components/ui/Breadcrumb';
-import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Youtube, Instagram } from 'lucide-react';
+import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Youtube, Instagram, Loader2 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
 const Contact = () => {
@@ -15,7 +15,7 @@ const Contact = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
         <Footer />
       </div>

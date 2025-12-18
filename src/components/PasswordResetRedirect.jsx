@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 // Bu komponent köhnə format linkləri (crud/v1/password/reset/token/...) 
 // yeni format route-a (/password/reset/token/...) yönləndirir
@@ -42,8 +43,7 @@ const PasswordResetRedirect = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977] mx-auto mb-4"></div>
-        <p className="text-gray-600">Yönləndirilir...</p>
+        <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin mx-auto" />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetAllUsersQuery, useDeleteUserMutation } from "../../redux/api/userApi";
 import { FaRegEdit, FaTrash } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 import AdminLayout from "./AdminLayout";
 
@@ -55,7 +56,7 @@ const AdminUsers = () => {
         <div className="bg-gray-50 min-h-full p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+              <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
             </div>
           </div>
         </div>

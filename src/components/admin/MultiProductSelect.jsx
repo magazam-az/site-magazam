@@ -129,9 +129,15 @@ const MultiProductSelect = ({ products = [], selectedProducts = [], onChange, pl
                   return (
                     <label
                       key={product._id}
-                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-[#5C4977]/5 ${
+                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-[#5C4977]/5 select-none ${
                         isSelected ? 'bg-[#5C4977]/10' : ''
                       }`}
+                      onClick={(e) => {
+                        // Checkbox'a direkt tıklanmadıysa toggle et
+                        if (e.target.type !== 'checkbox') {
+                          toggleProduct(product._id);
+                        }
+                      }}
                     >
                       <div className="flex items-center mt-0.5">
                         <input

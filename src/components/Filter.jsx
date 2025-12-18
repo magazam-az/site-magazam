@@ -1,6 +1,6 @@
 // src/pages/Filter.jsx
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Check, Shuffle, Search, Heart, Filter as FilterIcon, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { Check, Shuffle, Search, Heart, Filter as FilterIcon, X, ChevronLeft, ChevronRight, ChevronDown, Loader2 } from "lucide-react";
 import {
   useFilterProductsQuery,
   useGetProductsQuery,
@@ -1028,10 +1028,7 @@ const Filter = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977] mb-4"></div>
-            <div className="text-lg text-[#5C4977]">Məhsullar yüklənir...</div>
-          </div>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
         <Footer />
       </div>
@@ -1372,10 +1369,10 @@ const Filter = () => {
                         const isDisabled = spec.disabled;
 
                         return (
-                          <label
+                          <div
                             key={spec.id || spec.name}
-                            className={`flex items-center justify-between text-sm ${
-                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            className={`flex items-center justify-between text-sm cursor-pointer select-none ${
+                              isDisabled ? "opacity-50 cursor-not-allowed" : ""
                             } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
                             onClick={() => {
                               if (isDisabled) return;
@@ -1386,18 +1383,18 @@ const Filter = () => {
                               );
                             }}
                           >
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-2 flex-1">
                               <input
                                 type="checkbox"
                                 readOnly
                                 checked={isSelected}
                                 disabled={isDisabled}
-                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
+                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer"
                               />
                               <span>{spec.name}</span>
                             </span>
                             <span className="text-xs text-gray-500">{spec.count}</span>
-                          </label>
+                          </div>
                         );
                       })}
                     </div>
@@ -1413,11 +1410,12 @@ const Filter = () => {
                         const isSelected = selectedBrands.includes(brand.name);
                         const isDisabled = brand.disabled;
 
+                        const checkboxId = `brand-${brand.id || brand.name}`;
                         return (
-                          <label
+                          <div
                             key={brand.id || brand.name}
-                            className={`flex items-center justify-between text-sm ${
-                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            className={`flex items-center justify-between text-sm cursor-pointer select-none ${
+                              isDisabled ? "opacity-50 cursor-not-allowed" : ""
                             } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
                             onClick={() => {
                               if (isDisabled) return;
@@ -1429,18 +1427,18 @@ const Filter = () => {
                               setSelectedBrand("");
                             }}
                           >
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-2 flex-1">
                               <input
                                 type="checkbox"
                                 readOnly
                                 checked={isSelected}
                                 disabled={isDisabled}
-                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
+                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer"
                               />
                               <span>{brand.name}</span>
                             </span>
                             <span className="text-xs text-gray-500">{brand.count}</span>
-                          </label>
+                          </div>
                         );
                       })}
                     </div>
@@ -1459,8 +1457,8 @@ const Filter = () => {
                         return (
                           <label
                             key={size.name}
-                            className={`flex items-center justify-between text-sm ${
-                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            className={`flex items-center justify-between text-sm cursor-pointer select-none ${
+                              isDisabled ? "opacity-50 cursor-not-allowed" : ""
                             } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
                             onClick={() => {
                               if (isDisabled) return;
@@ -1471,13 +1469,13 @@ const Filter = () => {
                               );
                             }}
                           >
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-2 flex-1">
                               <input
                                 type="checkbox"
                                 readOnly
                                 checked={isSelected}
                                 disabled={isDisabled}
-                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977]"
+                                className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer"
                               />
                               <span>{size.name}</span>
                             </span>

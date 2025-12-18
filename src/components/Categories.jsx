@@ -197,9 +197,7 @@ export default function Categories() {
     return (
       <Container>
         <div className="w-full py-8 sm:py-12 flex justify-center items-center">
-          <span className="text-gray-600 text-sm sm:text-base">
-            Yüklənir...
-          </span>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
       </Container>
     );

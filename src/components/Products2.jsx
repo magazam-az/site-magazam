@@ -5,7 +5,7 @@ import { useGetBrandsQuery } from "../redux/api/brandApi";
 import { useGetSpecsQuery } from "../redux/api/specApi";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { Heart, GitCompare, ZoomIn, SlidersHorizontal } from 'lucide-react';
+import { Heart, GitCompare, ZoomIn, SlidersHorizontal, Loader2 } from 'lucide-react';
 
 // ⭐ REUSABLE STAR RATING COMPONENT
 const StarRating = ({ rating = 0 }) => {
@@ -376,7 +376,9 @@ const Products2 = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto mt-20 px-4 py-8">
-        <div className="text-center text-xl mt-10">Yüklənir...</div>
+        <div className="text-center mt-10">
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin mx-auto" />
+        </div>
       </div>
     );
   }

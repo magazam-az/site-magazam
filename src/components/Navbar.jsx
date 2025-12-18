@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package, LogOut } from "lucide-react"
+import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package, LogOut, Loader2 } from "lucide-react"
 import { useSelector, useDispatch } from "react-redux"
 import { useNavigate, Link } from "react-router-dom"
 import { logout } from "../redux/features/userSlice"
@@ -254,7 +254,9 @@ export default function MetaShopHeader() {
     return (
       <div className="absolute top-full left-0 right-0 bg-white shadow-2xl border border-[#5C4977]/20 rounded-xl mt-2 max-h-60 overflow-y-auto z-50">
         {searchLoading ? (
-          <div className="p-4 text-gray-500 text-center">Yüklənir...</div>
+          <div className="p-4 flex justify-center items-center">
+            <Loader2 className="h-5 w-5 text-[#5C4977] animate-spin" />
+          </div>
         ) : searchError ? (
           <div className="p-4 text-red-500 text-center">Xəta baş verdi</div>
         ) : searchResults?.products?.length > 0 ? (

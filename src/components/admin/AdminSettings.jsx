@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "../../redux/api/settingsApi";
 import Swal from "sweetalert2";
 import AdminLayout from "./AdminLayout";
-import { Phone, MapPin, Facebook, Instagram, Linkedin, Twitter, Youtube, Link as LinkIcon } from "lucide-react";
+import { Phone, MapPin, Facebook, Instagram, Linkedin, Twitter, Youtube, Link as LinkIcon, Loader2 } from "lucide-react";
 
 const AdminSettings = () => {
   const { data, isLoading } = useGetSettingsQuery();
@@ -72,7 +72,7 @@ const AdminSettings = () => {
     return (
       <AdminLayout pageTitle="Tənzimləmələr">
         <div className="flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
         </div>
       </AdminLayout>
     );

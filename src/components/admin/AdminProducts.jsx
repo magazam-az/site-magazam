@@ -6,6 +6,7 @@ import { FaRegEdit, FaPlus, FaChartLine, FaBoxOpen } from "react-icons/fa";
 import { MdDeleteSweep } from "react-icons/md";
 import { FiTrendingUp } from "react-icons/fi";
 import { HiOutlineRefresh } from "react-icons/hi";
+import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 import AdminLayout from "./AdminLayout";
 
@@ -62,7 +63,7 @@ const AdminProducts = () => {
             <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] to-[#f0edf5] pt-24 px-4">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5C4977]"></div>
+                        <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
                     </div>
                 </div>
             </div>
