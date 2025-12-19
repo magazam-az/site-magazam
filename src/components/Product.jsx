@@ -81,6 +81,7 @@ const Product = ({ product, mehsul }) => {
       return;
     }
     
+    // Login olmayanda login səhifəsinə yönləndir
     if (!isAuthenticated) {
       toast.error('Səbətə əlavə etmək üçün giriş yapmalısınız');
       navigate('/login');
@@ -195,9 +196,9 @@ const Product = ({ product, mehsul }) => {
         {/* Add to Cart button */}
         <button 
           onClick={handleAddToCart}
-          disabled={isOutOfStock || !isAuthenticated}
+          disabled={isOutOfStock}
           className={`w-full text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 ${
-            isOutOfStock || !isAuthenticated
+            isOutOfStock
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-[#5C4977] hover:bg-[#5C4977]/90 cursor-pointer'
           }`}

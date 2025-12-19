@@ -742,34 +742,31 @@ const Filter = () => {
     ];
   }, [allProducts, selectedCategory, selectedSubcategory]);
 
-  // Brand options (mövcud kateqoriya/subkateqoriya üzrə)
-  // Seçilmiş brend və xüsusiyyətləri nəzərə alaraq yenilənir
-  const brandOptions = useMemo(() => {
-    if (!brands.length) return [];
+  // Brand options - yalnız cari səhifədəki məhsullara əsaslanır
+  // Seçilmiş brendləri nəzərə almadan hesablanır (circular dependency qarşısını almaq üçün)
+  const brandOptionsQuery = useMemo(() => {
+    const query = {};
+    if (selectedCategory) query.category = selectedCategory;
+    if (selectedSubcategory) query.subcategory = selectedSubcategory;
+    if (priceMin > 0) query.minPrice = priceMin;
+    if (priceMax < dynamicMaxPrice) query.maxPrice = priceMax;
+    if (stockStatus) {
+      query.stockStatus = stockStatus;
+    }
+    if (selectedSpecs.length > 0) query.specs = selectedSpecs;
+    // selectedBrands-i buraya əlavə etmirik - circular dependency qarşısını almaq üçün
+    return query;
+  }, [selectedCategory, selectedSubcategory, priceMin, priceMax, stockStatus, selectedSpecs, dynamicMaxPrice]);
 
-    const filteredProducts = allProducts.filter((p) => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
-      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
-      if (stockStatus === "in_stock" && p.stock <= 0) return false;
-      if (stockStatus === "out_of_stock" && p.stock > 0) return false;
-      
-      // Seçilmiş xüsusiyyətlərə görə filter
-      if (selectedSpecs.length > 0) {
-        const specsObj = normalizeProductSpecs(p.specs);
-        if (!specsObj) return false;
-        // Ən azı bir seçilmiş spec ID məhsulda olmalıdır
-        const hasSelectedSpec = selectedSpecs.some(specId => 
-          Object.prototype.hasOwnProperty.call(specsObj, specId)
-        );
-        if (!hasSelectedSpec) return false;
-      }
-      
-      return true;
-    });
+  const { data: brandOptionsData } = useFilterProductsQuery(brandOptionsQuery);
+  const productsForBrandOptions = brandOptionsData?.products || [];
+
+  const brandOptions = useMemo(() => {
+    if (!brands.length || productsForBrandOptions.length === 0) return [];
 
     return brands
       .map((brand) => {
-        const count = filteredProducts.filter((p) => p.brand === brand.name).length;
+        const count = productsForBrandOptions.filter((p) => p.brand === brand.name).length;
         return {
           id: brand._id,
           name: brand.name,
@@ -777,31 +774,38 @@ const Filter = () => {
           disabled: count === 0,
         };
       })
-      .filter((b) => b.name);
-  }, [brands, allProducts, selectedCategory, selectedSubcategory, stockStatus, selectedSpecs]);
+      .filter((b) => b.count > 0); // Yalnız count > 0 olanları göstər
+  }, [brands, productsForBrandOptions]);
 
-  // Spec options
-  // Seçilmiş brend və xüsusiyyətləri nəzərə alaraq yenilənir
+  // Spec options - yalnız cari səhifədəki məhsullara əsaslanır
+  // Seçilmiş xüsusiyyətləri nəzərə almadan hesablanır (circular dependency qarşısını almaq üçün)
+  const specOptionsQuery = useMemo(() => {
+    const query = {};
+    if (selectedCategory) query.category = selectedCategory;
+    if (selectedSubcategory) query.subcategory = selectedSubcategory;
+    if (selectedBrands.length > 0) {
+      query.brands = selectedBrands;
+    } else if (selectedBrand) {
+      query.brand = selectedBrand;
+    }
+    if (priceMin > 0) query.minPrice = priceMin;
+    if (priceMax < dynamicMaxPrice) query.maxPrice = priceMax;
+    if (stockStatus) {
+      query.stockStatus = stockStatus;
+    }
+    // selectedSpecs-i buraya əlavə etmirik - circular dependency qarşısını almaq üçün
+    return query;
+  }, [selectedCategory, selectedSubcategory, selectedBrand, selectedBrands, priceMin, priceMax, stockStatus, dynamicMaxPrice]);
+
+  const { data: specOptionsData } = useFilterProductsQuery(specOptionsQuery);
+  const productsForSpecOptions = specOptionsData?.products || [];
+
   const specOptions = useMemo(() => {
-    if (!specs.length) return [];
-
-    const filteredProducts = allProducts.filter((p) => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
-      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
-      if (stockStatus === "in_stock" && p.stock <= 0) return false;
-      if (stockStatus === "out_of_stock" && p.stock > 0) return false;
-      
-      // Seçilmiş brendlərə görə filter
-      if (selectedBrands.length > 0) {
-        if (!selectedBrands.includes(p.brand)) return false;
-      }
-      
-      return true;
-    });
+    if (!specs.length || productsForSpecOptions.length === 0) return [];
 
     return specs
       .map((spec) => {
-        const count = filteredProducts.filter((p) => {
+        const count = productsForSpecOptions.filter((p) => {
           const specsObj = normalizeProductSpecs(p.specs);
           if (!specsObj) return false;
 
@@ -816,8 +820,8 @@ const Filter = () => {
           disabled: count === 0,
         };
       })
-      .filter((s) => s.name);
-  }, [specs, allProducts, selectedCategory, selectedSubcategory, stockStatus, selectedBrands]);
+      .filter((s) => s.count > 0); // Yalnız count > 0 olanları göstər
+  }, [specs, productsForSpecOptions]);
 
   // Size options (specs-dən)
   const sizeOptions = useMemo(() => {

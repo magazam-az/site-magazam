@@ -179,6 +179,13 @@ const ProductDetail = () => {
   const handleAddToCart = async () => {
     if (!product) return;
 
+    // Login olmayanda login səhifəsinə yönləndir
+    if (!isAuthenticated) {
+      toast.error("Səbətə əlavə etmək üçün giriş yapmalısınız");
+      navigate('/login');
+      return;
+    }
+
     if (isOutOfStock) {
       toast.error("Məhsul stokda qalmayıb!");
       return;
