@@ -20,5 +20,5 @@ jobs:
           username: root
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /var/magazam/site-magazam
+            cd /var/magazam
             ./deploy.sh
