@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useGetFavoritesQuery } from "../redux/api/productsApi";
+import { useGetProductsQuery } from "../redux/api/productsApi";
 import { Link } from "react-router-dom";
 // Lucide icon
 import { Heart, Loader2 } from "lucide-react";
@@ -7,25 +7,47 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import Breadcrumb from "./ui/Breadcrumb";
 import Product from "./Product";
+import { getFavorites } from "../utils/favorites";
 
 const FavoriteButton = () => {
-  const {
-    data: favoriteData,
-    isLoading,
-  } = useGetFavoritesQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
-
+  // Tüm ürünleri getir
+  const { data: productsData, isLoading } = useGetProductsQuery();
+  const allProducts = productsData?.products || [];
+  
+  const [favoriteIds, setFavoriteIds] = useState([]);
   const [localFavorites, setLocalFavorites] = useState([]);
 
-  // Favorit siyahısı dəyişdikcə localFavorites yenilənir
+  // localStorage'dan favori ID'lerini al
   useEffect(() => {
-    if (favoriteData?.favorites) {
-      setLocalFavorites(favoriteData.favorites);
-    } else {
-      setLocalFavorites([]);
-    }
-  }, [favoriteData]);
+    const ids = getFavorites();
+    setFavoriteIds(ids);
+    
+    // Favori ID'lere göre ürünleri filtrele
+    const favoriteProducts = allProducts.filter(product => 
+      ids.includes(product._id)
+    );
+    setLocalFavorites(favoriteProducts);
+  }, [allProducts]);
+
+  // localStorage değişikliklerini dinle
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const ids = getFavorites();
+      setFavoriteIds(ids);
+      const favoriteProducts = allProducts.filter(product => 
+        ids.includes(product._id)
+      );
+      setLocalFavorites(favoriteProducts);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('favoritesUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('favoritesUpdated', handleStorageChange);
+    };
+  }, [allProducts]);
 
   // 1) Yüklənmə vəziyyəti
   if (isLoading) {

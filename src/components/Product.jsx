@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import Rating from './Rating';
-import { useGetFavoritesQuery, useAddToFavoritesMutation, useRemoveFromFavoritesMutation, useAddToCartMutation } from '../redux/api/productsApi';
+import { useAddToCartMutation } from '../redux/api/productsApi';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { getFavorites, addToFavorites, removeFromFavorites, isFavorite as checkIsFavorite } from '../utils/favorites';
 
 // Product Card Component
 const Product = ({ product, mehsul }) => {
@@ -19,13 +20,6 @@ const Product = ({ product, mehsul }) => {
   const { isAuthenticated } = useSelector((state) => state.user || {});
   const navigate = useNavigate();
   
-  // Favorileri getir
-  const { data: favoritesData } = useGetFavoritesQuery(undefined, {
-    skip: !isAuthenticated,
-  });
-  
-  const [addToFavorites] = useAddToFavoritesMutation();
-  const [removeFromFavorites] = useRemoveFromFavoritesMutation();
   const [addToCart] = useAddToCartMutation();
   
   // Product ID'yi bul - sadece _id veya id kabul et (sku kabul etme çünkü backend'de çalışmaz)
@@ -35,13 +29,35 @@ const Product = ({ product, mehsul }) => {
   // Stok kontrolü
   const isOutOfStock = (productData.inStock !== undefined && !productData.inStock) || (productData.stock !== undefined && productData.stock <= 0);
   
-  // Ürünün favorilerde olup olmadığını kontrol et
-  const isFavorite = productId && favoritesData?.favorites?.some(
-    (fav) => fav._id === productId || fav._id?.toString() === productId?.toString()
-  ) || false;
+  // Ürünün favorilerde olup olmadığını kontrol et (localStorage'dan)
+  const [isFavorite, setIsFavorite] = useState(false);
+  
+  useEffect(() => {
+    if (productId) {
+      setIsFavorite(checkIsFavorite(productId));
+    }
+  }, [productId]);
+  
+  // localStorage değişikliklerini dinle
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (productId) {
+        setIsFavorite(checkIsFavorite(productId));
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event için de dinle (aynı tab'deki değişiklikler için)
+    window.addEventListener('favoritesUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('favoritesUpdated', handleStorageChange);
+    };
+  }, [productId]);
   
   // Heart icon click handler
-  const handleHeartClick = async (e) => {
+  const handleHeartClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -50,23 +66,20 @@ const Product = ({ product, mehsul }) => {
       return;
     }
     
-    if (!isAuthenticated) {
-      toast.error('Favorilərə əlavə etmək üçün giriş yapmalısınız');
-      navigate('/login');
-      return;
-    }
-    
     try {
       if (isFavorite) {
-        await removeFromFavorites(productId).unwrap();
+        removeFromFavorites(productId);
+        setIsFavorite(false);
         toast.success('Məhsul favorilərdən silindi!');
       } else {
-        await addToFavorites(productId).unwrap();
+        addToFavorites(productId);
+        setIsFavorite(true);
         toast.success('Məhsul favorilərə əlavə edildi!');
       }
+      // Custom event gönder (aynı tab'deki diğer componentler için)
+      window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
-      const errorMessage = error?.data?.message || error?.message || 'Xəta baş verdi!';
-      toast.error(errorMessage);
+      toast.error('Xəta baş verdi!');
       console.error('Favorites error:', error);
     }
   };
@@ -140,14 +153,13 @@ const Product = ({ product, mehsul }) => {
           onClick={handleHeartClick}
           className="absolute top-2 right-2 z-10 cursor-pointer focus:outline-none focus:ring-0 outline-none border-0 bg-transparent p-0 m-0"
           style={{ border: 'none', boxShadow: 'none' }}
-          disabled={!isAuthenticated}
         >
           <Heart 
             className={`w-7 h-7 transition-all duration-300 cursor-pointer hover:scale-110 ${
               isFavorite 
                 ? 'text-red-500 fill-red-500' 
                 : 'text-gray-400 hover:text-red-400'
-            } ${!isAuthenticated ? 'opacity-50' : ''}`} 
+            }`} 
             style={{ outline: 'none' }}
           />
         </button>

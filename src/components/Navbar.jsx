@@ -6,9 +6,9 @@ import { logout } from "../redux/features/userSlice"
 import { useLazyLogoutQuery } from "../redux/api/authApi"
 import {
   useGetCartQuery,
-  useGetFavoritesQuery,
   useSearchProductsQuery,
 } from "../redux/api/productsApi"
+import { getFavorites } from "../utils/favorites"
 import { useGetCategoriesQuery } from "../redux/api/categoryApi"
 import { useGetSettingsQuery } from "../redux/api/settingsApi"
 import SebetCart from "./ShoppingCard"
@@ -168,12 +168,28 @@ export default function MetaShopHeader() {
     isLoading: cartLoading,
     error: cartError,
   } = useGetCartQuery()
+
+  // Favoriler sayısını localStorage'dan al
+  const [favoriteCount, setFavoriteCount] = useState(0)
   
-  const {
-    data: favoriteData,
-    isLoading: favoriteLoading,
-    error: favoriteError,
-  } = useGetFavoritesQuery()
+  useEffect(() => {
+    const updateFavoriteCount = () => {
+      const favorites = getFavorites()
+      setFavoriteCount(favorites.length)
+    }
+    
+    // İlk yüklemede sayıyı al
+    updateFavoriteCount()
+    
+    // localStorage değişikliklerini dinle
+    window.addEventListener('storage', updateFavoriteCount)
+    window.addEventListener('favoritesUpdated', updateFavoriteCount)
+    
+    return () => {
+      window.removeEventListener('storage', updateFavoriteCount)
+      window.removeEventListener('favoritesUpdated', updateFavoriteCount)
+    }
+  }, [])
 
   // Kategorileri API'den al
   const { data: categoriesData } = useGetCategoriesQuery()
@@ -210,19 +226,9 @@ export default function MetaShopHeader() {
     return 0
   }
 
-  // Favorit məhsul sayını hesabla - DÜZƏLDİ
+  // Favorit məhsul sayını hesabla - localStorage'dan
   const getFavoriteItemCount = () => {
-    if (favoriteLoading) return 0
-    if (favoriteError) return 0
-    
-    // Müxtəlif API strukturları üçün yoxlama
-    if (favoriteData?.favorites && Array.isArray(favoriteData.favorites)) {
-      return favoriteData.favorites.length
-    } else if (Array.isArray(favoriteData)) {
-      return favoriteData.length
-    }
-    
-    return 0
+    return favoriteCount
   }
 
   // Axtarış funksiyası

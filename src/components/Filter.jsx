@@ -693,7 +693,7 @@ const Filter = () => {
     dynamicMaxPrice,
   ]);
 
-  const { data, error, isError, isLoading } = useFilterProductsQuery(filterQuery);
+  const { data, error, isError, isLoading, isFetching } = useFilterProductsQuery(filterQuery);
 
   useEffect(() => {
     if (isError) {
@@ -701,6 +701,18 @@ const Filter = () => {
       toast.error(error?.data?.message || "Bir xəta baş verdi!");
     }
   }, [isError, error]);
+
+  // Mobilde filtre açıkken body scroll'unu engelle
+  useEffect(() => {
+    if (isFilterOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFilterOpen]);
 
   const products = data?.products || [];
 
@@ -1085,12 +1097,31 @@ const Filter = () => {
           )}
 
           <div className="flex flex-col lg:flex-row gap-6 pb-6">
+            {/* Mobile Overlay */}
+            {isFilterOpen && (
+              <div
+                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                onClick={() => setIsFilterOpen(false)}
+              />
+            )}
+
             {/* Filter Panel */}
             <div
-              className={`bg-white p-6 rounded-2xl shadow-md border border-gray-200/60 ${
-                isFilterOpen ? "block" : "hidden"
-              } lg:block w-full lg:w-80`}
+              className={`fixed lg:relative top-0 right-0 h-screen lg:h-auto w-[85vw] max-w-sm lg:max-w-none bg-white p-6 rounded-none lg:rounded-2xl shadow-xl lg:shadow-md border border-gray-200/60 z-50 lg:z-auto transform transition-transform duration-300 ease-in-out ${
+                isFilterOpen ? "translate-x-0" : "translate-x-full"
+              } lg:translate-x-0 lg:block w-full lg:w-80 overflow-y-auto`}
             >
+              {/* Mobile Close Button */}
+              <div className="flex justify-between items-center mb-4 lg:hidden">
+                <h2 className="text-xl font-bold text-gray-800">Filtrlər</h2>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                >
+                  <X className="w-6 h-6 text-gray-600" />
+                </button>
+              </div>
+
               <div className="space-y-8">
                 {/* Category Section */}
                 <div className="pb-6 border-b border-gray-200">
@@ -1636,28 +1667,36 @@ const Filter = () => {
               </div>
 
               {/* Məhsul Kartları - Product component kullan */}
-              {formattedProducts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {formattedProducts.map((product) => (
-                    <Product key={product._id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-[#5C4977]/10">
-                  <div className="text-[#5C4977]/60 text-5xl mb-4">😕</div>
-                  <div className="text-gray-400 text-lg mb-2">Məhsul tapılmadı</div>
-                  <div className="text-gray-500 text-sm mb-6">
-                    Seçdiyiniz filterlərə uyğun məhsul yoxdur.
+              <div className="relative">
+                {/* Loading overlay - filter değiştiğinde göster */}
+                {isFetching && (
+                  <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl">
+                    <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={clearAllFilters}
-                    className="cursor-pointer"
-                  >
-                    Filtrləri Təmizlə
-                  </Button>
-                </div>
-              )}
+                )}
+                {formattedProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {formattedProducts.map((product) => (
+                      <Product key={product._id} product={product} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-[#5C4977]/10">
+                    <div className="text-[#5C4977]/60 text-5xl mb-4">😕</div>
+                    <div className="text-gray-400 text-lg mb-2">Məhsul tapılmadı</div>
+                    <div className="text-gray-500 text-sm mb-6">
+                      Seçdiyiniz filterlərə uyğun məhsul yoxdur.
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={clearAllFilters}
+                      className="cursor-pointer"
+                    >
+                      Filtrləri Təmizlə
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

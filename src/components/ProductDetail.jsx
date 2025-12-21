@@ -2,14 +2,12 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   useGetProductDetailsQuery, 
-  useAddToCartMutation, 
-  useAddToFavoritesMutation,
-  useGetFavoritesQuery,
-  useRemoveFromFavoritesMutation
+  useAddToCartMutation
 } from '../redux/api/productsApi';
 import { useGetCategoriesQuery } from '../redux/api/categoryApi';
 import { useSelector } from 'react-redux';
 import { toast } from "react-hot-toast";
+import { getFavorites, addToFavorites, removeFromFavorites, isFavorite as checkIsFavorite } from '../utils/favorites';
 import { Heart, Share2, GitCompare, Eye, ShoppingBag, ChevronLeft, ChevronRight, ZoomIn, X, Loader2 } from 'lucide-react';
 import { FaFacebook, FaTwitter, FaPinterest, FaLinkedin } from 'react-icons/fa';
 import { SiVisa, SiMastercard } from 'react-icons/si';
@@ -83,21 +81,36 @@ const ProductDetail = () => {
   const { data: categoriesData } = useGetCategoriesQuery();
   const categories = categoriesData?.categories || [];
 
-  // Favorileri getir
-  const { data: favoritesData } = useGetFavoritesQuery(undefined, {
-    skip: !isAuthenticated,
-  });
-
   // RTK Query mutations
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
-  const [addToFavorites, { isLoading: isAddingToFavorites }] = useAddToFavoritesMutation();
-  const [removeFromFavorites, { isLoading: isRemovingFromFavorites }] = useRemoveFromFavoritesMutation();
 
-  // Ürünün favorilerde olup olmadığını kontrol et
+  // Ürünün favorilerde olup olmadığını kontrol et (localStorage'dan)
   const productId = product?._id;
-  const isFavorite = productId && favoritesData?.favorites?.some(
-    (fav) => fav._id === productId || fav._id?.toString() === productId?.toString()
-  ) || false;
+  const [isFavorite, setIsFavorite] = useState(false);
+  
+  useEffect(() => {
+    if (productId) {
+      setIsFavorite(checkIsFavorite(productId));
+    }
+  }, [productId]);
+  
+  // localStorage değişikliklerini dinle
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (productId) {
+        setIsFavorite(checkIsFavorite(productId));
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event için de dinle (aynı tab'deki değişiklikler için)
+    window.addEventListener('favoritesUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('favoritesUpdated', handleStorageChange);
+    };
+  }, [productId]);
 
   const [activeImg, setActiveImg] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -203,7 +216,7 @@ const ProductDetail = () => {
   };
 
   // ✅ FAVORİTLƏRƏ ƏLAVƏ ET / FAVORİLƏRDƏN SİL
-  const handleAddToFavorites = async (e) => {
+  const handleAddToFavorites = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -211,12 +224,6 @@ const ProductDetail = () => {
     
     if (!product) return;
 
-    if (!isAuthenticated) {
-      toast.error("Favorilərə əlavə etmək üçün giriş yapmalısınız");
-      navigate('/login');
-      return;
-    }
-
     if (isOutOfStock) {
       toast.error("Məhsul stokda qalmayıb!");
       return;
@@ -224,29 +231,26 @@ const ProductDetail = () => {
 
     try {
       if (isFavorite) {
-        await removeFromFavorites(product._id).unwrap();
+        removeFromFavorites(product._id);
+        setIsFavorite(false);
         toast.success("Məhsul favorilərdən silindi!");
       } else {
-        await addToFavorites(product._id).unwrap();
+        addToFavorites(product._id);
+        setIsFavorite(true);
         toast.success("Məhsul favorilərə əlavə edildi!");
       }
+      // Custom event gönder (aynı tab'deki diğer componentler için)
+      window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (err) {
-      toast.error(
-        err?.data?.message || (isFavorite ? "Məhsulu favorilərdən silərkən xəta baş verdi!" : "Məhsulu favorilərə əlavə edərkən xəta baş verdi!")
-      );
+      toast.error("Xəta baş verdi!");
+      console.error('Favorites error:', err);
     }
   };
 
   // ❤️ Şəkil üstündəki HEART icon
-  const handleFavoriteIconClick = async (e) => {
+  const handleFavoriteIconClick = (e) => {
     e.stopPropagation();
     if (!product) return;
-
-    if (!isAuthenticated) {
-      toast.error("Favorilərə əlavə etmək üçün giriş yapmalısınız");
-      navigate('/login');
-      return;
-    }
 
     if (isOutOfStock) {
       toast.error("Məhsul stokda qalmayıb!");
@@ -255,16 +259,19 @@ const ProductDetail = () => {
 
     try {
       if (isFavorite) {
-        await removeFromFavorites(product._id).unwrap();
+        removeFromFavorites(product._id);
+        setIsFavorite(false);
         toast.success("Məhsul favorilərdən silindi!");
       } else {
-        await addToFavorites(product._id).unwrap();
+        addToFavorites(product._id);
+        setIsFavorite(true);
         toast.success("Məhsul favorilərə əlavə edildi!");
       }
+      // Custom event gönder (aynı tab'deki diğer componentler için)
+      window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (err) {
-      toast.error(
-        err?.data?.message || (isFavorite ? "Məhsulu favorilərdən silərkən xəta baş verdi!" : "Məhsulu favorilərə əlavə edərkən xəta baş verdi!")
-      );
+      toast.error("Xəta baş verdi!");
+      console.error('Favorites error:', err);
     }
   };
 
@@ -464,15 +471,12 @@ const ProductDetail = () => {
                     <button 
                       className="absolute top-3 right-3 z-10 cursor-pointer bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-md hover:bg-white transition-all duration-300 hover:scale-110"
                       onClick={handleFavoriteIconClick}
-                      disabled={isAddingToFavorites || isRemovingFromFavorites || !isAuthenticated}
                     >
                       <Heart className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-300 ${
-                        isAddingToFavorites || isRemovingFromFavorites 
-                          ? 'text-gray-300' 
-                          : isFavorite 
-                            ? 'text-red-500 fill-red-500' 
-                            : 'text-gray-400 hover:text-red-500'
-                      } ${!isAuthenticated ? 'opacity-50' : ''}`} />
+                        isFavorite 
+                          ? 'text-red-500 fill-red-500' 
+                          : 'text-gray-400 hover:text-red-500'
+                      }`} />
                     </button>
 
                     {/* Zoom Button */}
@@ -631,7 +635,6 @@ const ProductDetail = () => {
                   {/* Favoritlər */}
                   <Button
                     onClick={handleAddToFavorites}
-                    disabled={!isAuthenticated}
                     className="flex-1 bg-pink-600 hover:bg-pink-700"
                   >
                     {isFavorite 
