@@ -262,7 +262,7 @@ export default function Profile() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Sürətli Girişlər</h3>
                 <div className="space-y-3">
                   <button
-                    onClick={() => navigate("/checkout")}
+                    onClick={() => navigate("/my-orders")}
                     className="w-full flex items-center gap-3 p-4 text-left rounded-xl border border-gray-200 hover:border-[#5C4977] hover:bg-[#f5f2fa] transition-all group cursor-pointer"
                   >
                     <Package className="w-5 h-5 text-gray-400 group-hover:text-[#5C4977]" />

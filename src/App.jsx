@@ -51,6 +51,8 @@ import SebetCart from './components/ShoppingCard'
 import FavoriteButton from './components/Favorites'
 import UpdateName from './components/Uptade'
 import Checkout from './pages/Checkout' // ✅ CHECKOUT IMPORT EDİN
+import MyOrders from './pages/MyOrders' // ✅ MY ORDERS IMPORT EDİN
+import OrderDetail from './pages/OrderDetail' // ✅ ORDER DETAIL IMPORT EDİN
 
 // ⭐ Filter Page (kategoriya + subcategory + dynamic breadcrumb)
 import Filter from './components/Filter'
@@ -109,6 +111,8 @@ function App() {
           <Route path="/update" element={<PrivateRoute><UpdateName /></PrivateRoute>} />
           <Route path="/shopping-cart" element={<PrivateRoute><SebetCart /></PrivateRoute>} />
           <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+          <Route path="/my-orders" element={<PrivateRoute><MyOrders /></PrivateRoute>} />
+          <Route path="/order/:id" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
 
           {/* ====================== FILTER ROUTES (YENİ) ====================== */}
           {/* No category → bütün məhsullar */}
