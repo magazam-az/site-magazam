@@ -48,6 +48,7 @@ export default defineConfig({
 
     allowedHosts: ["magazam.az", "localhost"],
 
+    // 🔥 Proxy konfigurasiyası - target buradan alınır
     proxy: {
       '/api': {
         target: API_TARGET,
