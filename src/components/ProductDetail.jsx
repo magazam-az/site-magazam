@@ -626,10 +626,17 @@ const ProductDetail = () => {
                   {/* Add to Cart */}
                   <Button
                     onClick={handleAddToCart}
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || isAddingToCart}
                     className="flex-1"
                   >
-                    Səbətə əlavə et
+                    {isAddingToCart ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Əlavə olunur...
+                      </span>
+                    ) : (
+                      'Səbətə əlavə et'
+                    )}
                   </Button>
 
                   {/* Favoritlər */}

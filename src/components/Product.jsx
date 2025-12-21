@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Loader2 } from 'lucide-react';
 import Rating from './Rating';
 import { useAddToCartMutation } from '../redux/api/productsApi';
 import { useSelector } from 'react-redux';
@@ -18,7 +18,7 @@ const Product = ({ product, mehsul }) => {
 
   const { isAuthenticated } = useSelector((state) => state.user || {});
   const navigate = useNavigate();
-  const [addToCart] = useAddToCartMutation();
+  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
 
   // yalnız _id və ya id
   const productId = productData._id || productData.id;
@@ -84,7 +84,6 @@ const Product = ({ product, mehsul }) => {
     }
 
     if (!isAuthenticated) {
-      toast.error('Səbətə əlavə etmək üçün giriş yapmalısınız');
       navigate('/login');
       return;
     }
@@ -112,12 +111,13 @@ const Product = ({ product, mehsul }) => {
     x: 0,
     y: 0,
     moved: false,
-    pointerId: null
+    pointerId: null,
+    isInteractiveElement: false
   });
 
   const shouldIgnoreNavigate = (target) => {
     // Kartın içindəki interaktiv elementlərə toxunanda navigate etməsin
-    return !!target?.closest?.('button, a, input, textarea, select, label');
+    return !!target?.closest?.('button, a, input, textarea, select, label, [role="button"]');
   };
 
   const goToDetail = useCallback(() => {
@@ -125,6 +125,15 @@ const Product = ({ product, mehsul }) => {
   }, [hasValidId, productId, navigate]);
 
   const onPointerDown = (e) => {
+    // Eğer interaktif bir elemente tıklandıysa, navigate işlemini engelle
+    const isInteractive = shouldIgnoreNavigate(e.target);
+    pointerRef.current.isInteractiveElement = isInteractive;
+    
+    // Eğer interaktif element ise, pointer event'lerini işleme
+    if (isInteractive) {
+      return;
+    }
+
     pointerRef.current.x = e.clientX ?? 0;
     pointerRef.current.y = e.clientY ?? 0;
     pointerRef.current.moved = false;
@@ -137,6 +146,9 @@ const Product = ({ product, mehsul }) => {
   };
 
   const onPointerMove = (e) => {
+    // Eğer interaktif element ise, hareket etme
+    if (pointerRef.current.isInteractiveElement) return;
+
     const dx = Math.abs((e.clientX ?? 0) - pointerRef.current.x);
     const dy = Math.abs((e.clientY ?? 0) - pointerRef.current.y);
 
@@ -145,10 +157,16 @@ const Product = ({ product, mehsul }) => {
   };
 
   const onPointerUp = (e) => {
+    // Eğer interaktif element ise, navigate etme
+    if (pointerRef.current.isInteractiveElement) {
+      pointerRef.current.isInteractiveElement = false;
+      return;
+    }
+
     // swipe/drag olubsa açma
     if (pointerRef.current.moved) return;
 
-    // interaktiv elementə toxunubsa açma
+    // interaktiv elementə toxunubsa açma (ek güvence)
     if (shouldIgnoreNavigate(e.target)) return;
 
     goToDetail();
@@ -188,15 +206,17 @@ const Product = ({ product, mehsul }) => {
       {hasValidId && (
         <button
           onClick={handleHeartClick}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
           className="absolute top-2 right-2 z-10 cursor-pointer focus:outline-none focus:ring-0 outline-none border-0 bg-transparent p-0 m-0"
-          style={{ border: 'none', boxShadow: 'none' }}
+          style={{ border: 'none', boxShadow: 'none', pointerEvents: 'auto' }}
           aria-label="Add to favorites"
         >
           <Heart
             className={`w-7 h-7 transition-all duration-300 cursor-pointer hover:scale-110 ${
               isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'
             }`}
-            style={{ outline: 'none' }}
+            style={{ outline: 'none', pointerEvents: 'none' }}
           />
         </button>
       )}
@@ -248,12 +268,22 @@ const Product = ({ product, mehsul }) => {
 
           <button
             onClick={handleAddToCart}
-            disabled={isOutOfStock}
-            className={`w-full text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 ${
-              isOutOfStock ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#5C4977] hover:bg-[#5C4977]/90 cursor-pointer'
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            disabled={isOutOfStock || isAddingToCart}
+            className={`w-full text-white py-3 sm:py-3.5 md:py-4 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors duration-200 mb-2 flex items-center justify-center ${
+              isOutOfStock || isAddingToCart ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#5C4977] hover:bg-[#5C4977]/90 cursor-pointer'
             }`}
+            style={{ pointerEvents: 'auto' }}
           >
-            {isOutOfStock ? 'Stokda bitib' : 'Səbətə əlavə et'}
+            {isAddingToCart ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <span>Əlavə olunur...</span>
+              </>
+            ) : (
+              isOutOfStock ? 'Stokda bitib' : 'Səbətə əlavə et'
+            )}
           </button>
         </div>
       </div>
