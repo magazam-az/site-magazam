@@ -89,7 +89,7 @@ const MetashopPromotions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
       {/* Navbar komponenti */}
       <Navbar />
 

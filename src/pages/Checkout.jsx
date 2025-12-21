@@ -117,7 +117,7 @@ const Checkout = () => {
 
   if (cartLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
@@ -129,26 +129,62 @@ const Checkout = () => {
 
   if (validCartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">Səbətiniz boşdur</p>
-            <button
-              onClick={() => navigate("/catalog")}
-              className="bg-[#5C4977] text-white px-6 py-2 rounded-lg hover:bg-[#5C4977]/90 transition-colors cursor-pointer"
-            >
-              Məhsullara bax
-            </button>
+        <section className="flex-1">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 w-full">
+            {/* Breadcrumb */}
+            <div className="mt-6">
+              <Breadcrumb
+                items={[
+                  { label: "Ana səhifə", path: "/" },
+                  { label: "Səbət", path: "/shopping-cart" },
+                  { label: "Sifariş" },
+                ]}
+              />
+            </div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-center space-y-6 max-w-md mx-auto">
+                {/* Shopping Cart Icon */}
+                <div className="mx-auto">
+                  <svg
+                    className="w-32 h-32 text-gray-300 mx-auto"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1"
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                </div>
+
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
+                  Səbətiniz boşdur
+                </h2>
+                <p className="text-lg md:text-xl text-gray-600">
+                  Sifariş vermək üçün səbətinizə məhsul əlavə edin.
+                </p>
+                <button
+                  onClick={() => navigate("/catalog")}
+                  className="inline-flex items-center justify-center px-8 py-3 bg-[#5C4977] text-white text-base font-semibold rounded-lg hover:bg-[#4a3d62] transition-all duration-300 cursor-pointer"
+                >
+                  Məhsullara bax
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
         <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
       <Navbar />
       <section className="flex-1">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">

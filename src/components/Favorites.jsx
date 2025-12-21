@@ -52,7 +52,7 @@ const FavoriteButton = () => {
   // 1) Yüklənmə vəziyyəti
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
         <Navbar />
         <div className="flex-1 flex flex-col justify-center items-center">
           <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
@@ -65,17 +65,21 @@ const FavoriteButton = () => {
   // 2) Boş siyahı
   if (!localFavorites.length) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center py-12">
+        <section className="flex-1">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 w-full">
-            <Breadcrumb 
-              items={[
-                { label: "Ana səhifə", path: "/" },
-                { label: "Seçilmişlər" }
-              ]}
-            />
-            <div className="text-center space-y-6 max-w-md mx-auto">
+            {/* Breadcrumb */}
+            <div className="mt-6">
+              <Breadcrumb 
+                items={[
+                  { label: "Ana səhifə", path: "/" },
+                  { label: "Seçilmişlər" }
+                ]}
+              />
+            </div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-center space-y-6 max-w-md mx-auto">
               {/* Böyük Heart ikonu - light grey outline */}
               <Heart className="mx-auto w-32 h-32 text-gray-300 stroke-2 fill-none mb-4" />
 
@@ -91,9 +95,10 @@ const FavoriteButton = () => {
               >
                 Mağazaya Qayıt
               </Link>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
         <Footer />
       </div>
     );
@@ -115,12 +120,12 @@ const FavoriteButton = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
       <Navbar />
       <section className="flex-1">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 w-full">
           {/* Breadcrumb */}
-          <div className="py-6 pb-0">
+          <div className="mt-6">
             <Breadcrumb 
               items={[
                 { label: "Ana səhifə", path: "/" },

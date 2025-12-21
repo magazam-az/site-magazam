@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Edit, Save, X, Package, Heart, ShoppingCart } from "lucide-react";
+import { User, Mail, Edit, Save, X, Package, Heart, ShoppingCart, Loader2 } from "lucide-react";
 import { useUpdateProfileMutation } from "../redux/api/authApi";
 import { toast } from "react-hot-toast";
 import Navbar from "./Navbar";
@@ -29,20 +29,30 @@ export default function Profile() {
       setName(user?.name || "");
       setEmail(user?.email || "");
       // Avatar preview'i user'dan al, yoksa null
-      setAvatarPreview(user?.avatar?.url || user?.user?.avatar?.url || null);
+      // Eğer avatar file seçilmişse ve henüz kaydedilmemişse, preview'i değiştirme
+      if (!avatar) {
+        setAvatarPreview(user?.avatar?.url || user?.user?.avatar?.url || null);
+      }
     }
-  }, [user]);
+  }, [user, avatar]);
+  
+  // Avatar yüklendikten sonra preview'i güncelle
+  useEffect(() => {
+    if (avatar) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(avatar);
+    }
+  }, [avatar]);
 
   // Avatar seçimi
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       setAvatar(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      // Preview useEffect'te otomatik olarak güncellenecek
     }
   };
 
@@ -71,13 +81,18 @@ export default function Profile() {
       }
 
       // Backend-ə FormData göndəririk
-      await updateProfile(formData).unwrap();
+      const result = await updateProfile(formData).unwrap();
 
       // userSlice artıq authApi.onQueryStarted içində yenilənir
       toast.success("Profil uğurla yeniləndi!");
       setMessage({ type: "success", text: "Profil uğurla yeniləndi" });
       setIsEditing(false);
       setAvatar(null); // Reset avatar file
+      
+      // Avatar yüklendiyse, preview'i response'dan gelen yeni URL ile güncelle
+      if (result?.user?.avatar?.url) {
+        setAvatarPreview(result.user.avatar.url);
+      }
 
       // 3 saniyədən sonra mesajı sil
       setTimeout(() => {
@@ -105,7 +120,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
       <Navbar />
       
       <div className="flex-1 py-8">
@@ -176,7 +191,7 @@ export default function Profile() {
                         <User className="w-4 h-4" />
                         Ad Soyad
                       </label>
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <input
                           type="text"
                           value={name}
@@ -191,31 +206,31 @@ export default function Profile() {
                         {!isEditing ? (
                           <button
                             onClick={() => setIsEditing(true)}
-                            className="px-4 py-3 bg-[#5C4977] text-white rounded-xl hover:bg-[#5C4977]/90 transition-colors flex items-center gap-2 cursor-pointer"
+                            className="w-full sm:w-auto px-4 py-3 bg-[#5C4977] text-white rounded-xl hover:bg-[#5C4977]/90 transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                           >
                             <Edit className="w-4 h-4" />
-                            Düzəliş
+                            <span>Düzəliş</span>
                           </button>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                             <button
                               onClick={handleSave}
                               disabled={isLoading}
-                              className="px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                              className="flex-1 sm:flex-none px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
                             >
                               {isLoading ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                               ) : (
                                 <Save className="w-4 h-4" />
                               )}
-                              {!isLoading && "Yadda saxla"}
+                              {!isLoading && <span>Yadda saxla</span>}
                             </button>
                             <button
                               onClick={handleCancel}
-                              className="px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors flex items-center gap-2 cursor-pointer"
+                              className="flex-1 sm:flex-none px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                             >
                               <X className="w-4 h-4" />
-                              Ləğv et
+                              <span>Ləğv et</span>
                             </button>
                           </div>
                         )}

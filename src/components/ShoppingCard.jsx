@@ -102,7 +102,7 @@ const SebetCart = ({ isOpen, onClose }) => {
   // If used as a full page (isOpen is undefined), render full page layout
   if (isOpen === undefined) {
     return (
-      <div className="min-h-screen bg-[#F3F4F6] flex flex-col">
+      <div className="min-h-screen bg-[#F3F4F6] flex flex-col pb-14 md:pb-0">
         <Navbar />
         <section className="flex-1">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pb-3">
@@ -401,12 +401,6 @@ const SebetCart = ({ isOpen, onClose }) => {
                     strokeLinejoin="round"
                     strokeWidth="1"
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 6L18 18M18 6L6 18"
                   />
                 </svg>
               </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package, LogOut, Loader2 } from "lucide-react"
 import { useSelector, useDispatch } from "react-redux"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link, useLocation } from "react-router-dom"
 import { logout } from "../redux/features/userSlice"
 import { useLazyLogoutQuery } from "../redux/api/authApi"
 import {
@@ -117,6 +117,7 @@ export default function MetaShopHeader() {
 
   // Ref for categories dropdown
   const categoriesDropdownRef = useRef(null)
+  const mobileCategoriesRef = useRef(null)
 
   // Fərqli store strukturları üçün useSelector
   const userState = useSelector(state => state.user || state.userSlice || state.auth)
@@ -124,6 +125,7 @@ export default function MetaShopHeader() {
   
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const [triggerLogout] = useLazyLogoutQuery()
 
   // Debounced search
@@ -137,7 +139,11 @@ export default function MetaShopHeader() {
   // Close categories dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (isCategoriesOpen && categoriesDropdownRef.current && !categoriesDropdownRef.current.contains(event.target)) {
+      // Check if click is outside both desktop and mobile dropdowns
+      const isOutsideDesktop = !categoriesDropdownRef.current?.contains(event.target)
+      const isOutsideMobile = !mobileCategoriesRef.current?.contains(event.target)
+      
+      if (isCategoriesOpen && isOutsideDesktop && isOutsideMobile) {
         setIsCategoriesOpen(false)
         setExpandedCategory(null)
       }
@@ -366,6 +372,11 @@ export default function MetaShopHeader() {
 
   const handleShoppingCartClick = () => {
     setIsCartOpen(true)
+    setIsMobileMenuOpen(false)
+  }
+
+  const handleShoppingCartPageClick = () => {
+    navigate('/shopping-cart')
     setIsMobileMenuOpen(false)
   }
 
@@ -795,10 +806,13 @@ export default function MetaShopHeader() {
             )}
 
             {/* Categories */}
-            <div className="border-b border-gray-200">
+            <div className="border-b border-gray-200" ref={mobileCategoriesRef}>
               <button
                 className="flex items-center justify-between w-full px-4 py-4 text-left font-medium text-gray-900 hover:bg-gray-50 cursor-pointer"
-                onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsCategoriesOpen(!isCategoriesOpen)
+                }}
               >
                 <span>Bütün Kateqoriyalar</span>
                 <ChevronDown
@@ -850,12 +864,32 @@ export default function MetaShopHeader() {
             {/* Main Menu Items */}
             <div className="border-b border-gray-200">
               <button
+                onClick={() => {
+                  navigate('/catalog')
+                  setIsMobileMenuOpen(false)
+                }}
+                className="block w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
+              >
+                Bütün məhsullar
+              </button>
+              <button
+                onClick={handleShoppingCartPageClick}
+                className="relative flex items-center justify-between w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
+              >
+                <span>Səbət</span>
+                {getCartItemCount() > 0 && (
+                  <span className="bg-[#5C4977] text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+                    {getCartItemCount()}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={handleFavoritesClick}
                 className="relative flex items-center justify-between w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
               >
                 <span>Seçilmişlər</span>
                 {getFavoriteItemCount() > 0 && (
-                  <span className="bg-[#5C4977] text-white text-xs rounded-full px-2 py-1 min-w-5 h-5 flex items-center justify-center">
+                  <span className="bg-[#5C4977] text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
                     {getFavoriteItemCount()}
                   </span>
                 )}
@@ -880,49 +914,80 @@ export default function MetaShopHeader() {
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden">
           <div className="flex items-center justify-around py-2">
             <button 
-              className="flex flex-col items-center text-purple-900 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
+              className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                location.pathname === '/' 
+                  ? 'text-purple-900' 
+                  : 'text-gray-500 hover:text-[#5C4977]'
+              }`}
               onClick={handleHomeClick}
             >
               <svg className="w-5 h-5 transition-all duration-300 cursor-pointer" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
-              <span className="text-xs mt-1 font-medium transition-all duration-300 cursor-pointer">Ana səhifə</span>
+              <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                location.pathname === '/' ? 'font-medium' : ''
+              }`}>Ana səhifə</span>
             </button>
 
-            <button className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer">
+            <button 
+              className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                location.pathname === '/catalog' || location.pathname.startsWith('/catalog/')
+                  ? 'text-purple-900' 
+                  : 'text-gray-500 hover:text-[#5C4977]'
+              }`}
+              onClick={() => navigate('/catalog')}
+            >
               <Package className="w-5 h-5 transition-all duration-300 cursor-pointer" />
-              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Məhsullar</span>
+              <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                location.pathname === '/catalog' || location.pathname.startsWith('/catalog/') ? 'font-medium' : ''
+              }`}>Məhsullar</span>
             </button>
 
             {/* Shopping Cart - DÜZƏLDİ (YENİ HƏLL) */}
             <button 
-              className="relative flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
+              className={`relative flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                location.pathname === '/shopping-cart'
+                  ? 'text-purple-900' 
+                  : 'text-gray-500 hover:text-[#5C4977]'
+              }`}
               onClick={handleShoppingCartClick}
             >
               <ShoppingCart className="w-5 h-5 transition-all duration-300 cursor-pointer" />
               {getCartItemCount() > 0 && (
-                <span className="absolute -top-1 right-4 flex items-center justify-center w-5 h-5 bg-[#5C4977] text-white text-xs font-bold rounded-full">
+                <span className="absolute -top-0.5 -left-1.5 flex items-center justify-center w-4 h-4 bg-[#5C4977] text-white text-[10px] font-bold rounded-full leading-none pt-0.5">
                   {getCartItemCount()}
                 </span>
               )}
-              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Səbət</span>
+              <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                location.pathname === '/shopping-cart' ? 'font-medium' : ''
+              }`}>Səbət</span>
             </button>
 
             <button 
-              className="relative flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
+              className={`relative flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                location.pathname === '/favourites'
+                  ? 'text-purple-900' 
+                  : 'text-gray-500 hover:text-[#5C4977]'
+              }`}
               onClick={handleFavoritesClick}
             >
               <Heart className="w-5 h-5 transition-all duration-300 cursor-pointer" />
               {getFavoriteItemCount() > 0 && (
-                <span className="absolute -top-1 right-4 flex items-center justify-center w-5 h-5 bg-[#5C4977] text-white text-xs font-bold rounded-full">
+                <span className="absolute -top-0.5 -left-1.5 flex items-center justify-center w-4 h-4 bg-[#5C4977] text-white text-[10px] font-bold rounded-full leading-none pt-0.5">
                   {getFavoriteItemCount()}
                 </span>
               )}
-              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Seçilmiş</span>
+              <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                location.pathname === '/favourites' ? 'font-medium' : ''
+              }`}>Seçilmiş</span>
             </button>
 
             <button 
-              className="flex flex-col items-center text-gray-500 hover:text-[#5C4977] transition-all duration-300 cursor-pointer"
+              className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                location.pathname === '/profile'
+                  ? 'text-purple-900' 
+                  : 'text-gray-500 hover:text-[#5C4977]'
+              }`}
               onClick={() => {
                 if (safeIsAuthenticated) {
                   handleProfileClick()
@@ -932,7 +997,9 @@ export default function MetaShopHeader() {
               }}
             >
               <User className="w-5 h-5 transition-all duration-300 cursor-pointer" />
-              <span className="text-xs mt-1 transition-all duration-300 cursor-pointer">Hesab</span>
+              <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                location.pathname === '/profile' ? 'font-medium' : ''
+              }`}>Hesab</span>
             </button>
           </div>
         </div>
