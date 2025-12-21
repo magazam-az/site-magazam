@@ -31,8 +31,7 @@ const Checkout = () => {
   };
 
   const subtotal = calculateTotal();
-  const freeShippingThreshold = 3470;
-  const shippingPrice = subtotal >= freeShippingThreshold ? 0 : 10;
+  const shippingPrice = 0;
   const totalPrice = subtotal + shippingPrice;
 
   const handleInputChange = (e) => {
@@ -306,17 +305,6 @@ const Checkout = () => {
                     <span>Məhsullar:</span>
                     <span>{subtotal.toFixed(2)} ₼</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Çatdırılma:</span>
-                    <span className={shippingPrice === 0 ? "text-green-600 font-semibold" : ""}>
-                      {shippingPrice === 0 ? "Pulsuz" : `${shippingPrice.toFixed(2)} ₼`}
-                    </span>
-                  </div>
-                  {subtotal < freeShippingThreshold && (
-                    <p className="text-xs text-gray-500">
-                      {(freeShippingThreshold - subtotal).toFixed(2)} ₼ daha əlavə edin və pulsuz çatdırılma əldə edin
-                    </p>
-                  )}
                   <div className="pt-4 border-t-2 border-gray-200">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900">Yekun:</span>

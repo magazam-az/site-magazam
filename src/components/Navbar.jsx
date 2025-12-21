@@ -1004,22 +1004,7 @@ export default function MetaShopHeader() {
 
             {safeIsAuthenticated ? (
               <>
-                <button 
-                  className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
-                    location.pathname === '/my-orders'
-                      ? 'text-purple-900' 
-                      : 'text-gray-500 hover:text-[#5C4977]'
-                  }`}
-                  onClick={() => {
-                    navigate('/my-orders')
-                    setIsMobileMenuOpen(false)
-                  }}
-                >
-                  <Package className="w-5 h-5 transition-all duration-300 cursor-pointer" />
-                  <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
-                    location.pathname === '/my-orders' ? 'font-medium' : ''
-                  }`}>Sifarişlərim</span>
-                </button>
+             
                 <button 
                   className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
                     location.pathname === '/profile'

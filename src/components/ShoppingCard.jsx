@@ -283,28 +283,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                     </h3>
 
                     {/* Free Shipping Progress */}
-                    {remainingForFreeShipping > 0 && (
-                      <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
-                          </svg>
-                          <span className="text-sm font-semibold text-purple-900">
-                            Pulsuz çatdırılma
-                          </span>
-                        </div>
-                        <p className="text-sm text-purple-700 mb-2">
-                          Səbətə <span className="font-bold">{remainingForFreeShipping.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₼</span> əlavə edin
-                        </p>
-                        <div className="w-full bg-purple-200 rounded-full h-2">
-                          <div 
-                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${Math.min(100, ((freeShippingThreshold - remainingForFreeShipping) / freeShippingThreshold) * 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
+                
 
                     {/* Price Breakdown */}
                     <div className="space-y-3 mb-6">
@@ -525,11 +504,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Free Shipping Message */}
-                {remainingForFreeShipping > 0 && (
-                  <p className="text-sm text-gray-600 mb-6">
-                    Səbətə {remainingForFreeShipping.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₼ əlavə edin və pulsuz çatdırılma əldə edin!
-                  </p>
-                )}
+             
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
