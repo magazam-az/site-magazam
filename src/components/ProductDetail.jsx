@@ -114,7 +114,6 @@ const ProductDetail = () => {
 
   const [activeImg, setActiveImg] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [thumbnailsIndex, setThumbnailsIndex] = useState(0);
   const [isFullScreenImageOpen, setIsFullScreenImageOpen] = useState(false);
@@ -276,7 +275,7 @@ const ProductDetail = () => {
   };
 
   // ✅ İNDİ AL
-  const handleBuyNow = async () => {
+  const handleBuyNow = () => {
     if (!product) return;
 
     if (isOutOfStock) {
@@ -290,18 +289,8 @@ const ProductDetail = () => {
       return;
     }
 
-    setIsBuyingNow(true);
-    try {
-      await addToCart({ 
-        productId: product._id, 
-        quantity: quantity 
-      }).unwrap();
-      
-      navigate('/shopping-cart');
-    } catch (error) {
-      toast.error("Xəta baş verdi!");
-      setIsBuyingNow(false);
-    }
+    // Direkt checkout sayfasına yönlendir (sepete ekleme işlemi checkout sayfasında yapılacak)
+    navigate('/checkout');
   };
 
   // Build breadcrumb dynamically
@@ -378,16 +367,24 @@ const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
+      <div className="min-h-screen bg-[#F3F4F6] flex flex-col pb-14 md:pb-0">
+        <Navbar />
+        <div className="flex-1 flex justify-center items-center">
+          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
+        </div>
+        <Footer />
       </div>
     );
   }
 
   if (isError || !product) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        Məhsul tapılmadı.
+      <div className="min-h-screen bg-[#F3F4F6] flex flex-col pb-14 md:pb-0">
+        <Navbar />
+        <div className="flex-1 flex justify-center items-center">
+          Məhsul tapılmadı.
+        </div>
+        <Footer />
       </div>
     );
   }
@@ -395,9 +392,9 @@ const ProductDetail = () => {
   const productImages = product?.images || [{ url: activeImg }];
 
   return (
-    <div className="bg-[#F3F4F6] min-h-screen">
+    <div className="bg-[#F3F4F6] min-h-screen flex flex-col pb-14 md:pb-0">
       <Navbar />
-      <section className="py-4 sm:py-6 md:py-8" style={{ backgroundColor: '#F3F4F6' }}>
+      <section className="flex-1 py-4 sm:py-6 md:py-8" style={{ backgroundColor: '#F3F4F6' }}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           {/* Custom Breadcrumbs */}
           <CustomBreadcrumb items={breadcrumbs} />

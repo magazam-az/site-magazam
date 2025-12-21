@@ -1181,7 +1181,7 @@ const Filter = () => {
 
             {/* Filter Panel */}
             <div
-              className={`fixed lg:relative top-0 right-0 h-screen lg:h-auto w-[85vw] max-w-sm lg:max-w-none bg-white p-6 rounded-none lg:rounded-2xl shadow-xl lg:shadow-md border border-gray-200/60 z-50 lg:z-auto transform transition-transform duration-300 ease-in-out ${
+              className={`fixed lg:relative top-0 right-0 h-screen lg:h-auto w-[85vw] max-w-sm lg:max-w-none bg-white p-6 pb-32 lg:pb-6 rounded-none lg:rounded-2xl shadow-xl lg:shadow-md border border-gray-200/60 z-50 lg:z-auto transform transition-transform duration-300 ease-in-out ${
                 isFilterOpen ? "translate-x-0" : "translate-x-full"
               } lg:translate-x-0 lg:block w-full lg:w-80 overflow-y-auto`}
             >
