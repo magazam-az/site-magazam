@@ -13,9 +13,9 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
   const scrollContainerRef = React.useRef(null);
+  const startXRef = React.useRef(0);
+  const scrollLeftRef = React.useRef(0);
 
   // Mobil/tablet kontrolü
   React.useEffect(() => {
@@ -28,12 +28,53 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Global mouse move and up handlers for drag
+  React.useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (!scrollContainerRef.current || !isDragging) return;
+      
+      e.preventDefault();
+      const rect = scrollContainerRef.current.getBoundingClientRect();
+      const x = e.pageX - rect.left;
+      const walk = (x - startXRef.current) * 2; // Scroll speed multiplier
+      scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.style.cursor = 'grab';
+        scrollContainerRef.current.style.userSelect = 'auto';
+      }
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging]);
+
   // Drag handlers for horizontal scroll
   const handleMouseDown = (e) => {
     if (!scrollContainerRef.current) return;
+    // Check if the click is on an interactive element (button, link, etc.)
+    const target = e.target;
+    const isInteractiveElement = target.closest('a, button, input, select, textarea, [role="button"]');
+    
+    if (isInteractiveElement) {
+      // Allow normal interaction for buttons/links
+      return;
+    }
+    
     setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    const rect = scrollContainerRef.current.getBoundingClientRect();
+    startXRef.current = e.pageX - rect.left;
+    scrollLeftRef.current = scrollContainerRef.current.scrollLeft;
     scrollContainerRef.current.style.cursor = 'grabbing';
     scrollContainerRef.current.style.userSelect = 'none';
   };
@@ -44,22 +85,6 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
       scrollContainerRef.current.style.cursor = 'grab';
       scrollContainerRef.current.style.userSelect = 'auto';
     }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.style.cursor = 'grab';
-      scrollContainerRef.current.style.userSelect = 'auto';
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed multiplier
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
   return (
@@ -169,15 +194,17 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
             style={{ WebkitOverflowScrolling: 'touch', paddingBottom: '12px', cursor: 'grab' }}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
-            onMouseUp={handleMouseUp}
-            onMouseMove={handleMouseMove}
           >
             <div className="flex gap-3 sm:gap-4 md:gap-5" style={{ width: 'max-content' }}>
               {products.map((product, index) => (
                 <div 
                   key={`${product.sku || product.id || index}-${index}`}
                   className="flex-shrink-0"
-                  style={{ width: '280px', minWidth: '280px', pointerEvents: isDragging ? 'none' : 'auto' }}
+                  style={{ 
+                    width: '280px', 
+                    minWidth: '280px',
+                    pointerEvents: isDragging ? 'none' : 'auto'
+                  }}
                 >
                   <Product product={product} />
                 </div>

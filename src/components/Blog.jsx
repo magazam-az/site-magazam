@@ -13,10 +13,10 @@ const Blog = ({ variant = "slider" }) => {
   const { data, error, isLoading } = useGetBlogsQuery();
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
   const [swiperInstance, setSwiperInstance] = useState(null);
   const scrollContainerRef = useRef(null);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
 
   // Blog verilerini articles formatına çevir
   const articles = data?.blogs?.map((blog) => ({
@@ -40,12 +40,53 @@ const Blog = ({ variant = "slider" }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Global mouse move and up handlers for drag
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (!scrollContainerRef.current || !isDragging) return;
+      
+      e.preventDefault();
+      const rect = scrollContainerRef.current.getBoundingClientRect();
+      const x = e.pageX - rect.left;
+      const walk = (x - startXRef.current) * 2; // Scroll speed multiplier
+      scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.style.cursor = 'grab';
+        scrollContainerRef.current.style.userSelect = 'auto';
+      }
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging]);
+
   // Drag handlers for horizontal scroll
   const handleMouseDown = (e) => {
     if (!scrollContainerRef.current) return;
+    // Check if the click is on an interactive element (button, link, etc.)
+    const target = e.target;
+    const isInteractiveElement = target.closest('a, button, input, select, textarea, [role="button"]');
+    
+    if (isInteractiveElement) {
+      // Allow normal interaction for buttons/links
+      return;
+    }
+    
     setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    const rect = scrollContainerRef.current.getBoundingClientRect();
+    startXRef.current = e.pageX - rect.left;
+    scrollLeftRef.current = scrollContainerRef.current.scrollLeft;
     scrollContainerRef.current.style.cursor = 'grabbing';
     scrollContainerRef.current.style.userSelect = 'none';
   };
@@ -56,22 +97,6 @@ const Blog = ({ variant = "slider" }) => {
       scrollContainerRef.current.style.cursor = 'grab';
       scrollContainerRef.current.style.userSelect = 'auto';
     }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.style.cursor = 'grab';
-      scrollContainerRef.current.style.userSelect = 'auto';
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed multiplier
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
   if (isLoading) {
@@ -132,15 +157,17 @@ const Blog = ({ variant = "slider" }) => {
             style={{ WebkitOverflowScrolling: 'touch', paddingBottom: '12px', cursor: 'grab' }}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
-            onMouseUp={handleMouseUp}
-            onMouseMove={handleMouseMove}
           >
             <div className="flex gap-6" style={{ width: 'max-content' }}>
               {articles.map((article) => (
                 <div 
                   key={article.id}
                   className="flex-shrink-0"
-                  style={{ width: '280px', minWidth: '280px', pointerEvents: isDragging ? 'none' : 'auto' }}
+                  style={{ 
+                    width: '280px', 
+                    minWidth: '280px',
+                    pointerEvents: isDragging ? 'none' : 'auto'
+                  }}
                 >
                   <article
                     className="bg-white rounded-lg overflow-hidden transition-shadow duration-300 group"

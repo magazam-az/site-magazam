@@ -235,8 +235,12 @@ const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax })
         
         {/* Min handle */}
         <div
-          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer z-10"
-          style={{ left: `calc(${minPercentage}% - 10px)` }}
+          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer z-10 touch-none"
+          style={{ 
+            left: `calc(${minPercentage}% - 10px)`,
+            touchAction: 'none',
+            WebkitTapHighlightColor: 'transparent'
+          }}
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -259,12 +263,42 @@ const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax })
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
           }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const touch = e.touches[0];
+            const startX = touch.clientX;
+            const startValue = clampedValueMin;
+
+            const handleTouchMove = (moveEvent) => {
+              moveEvent.preventDefault();
+              if (moveEvent.touches.length === 0) return;
+              const touch = moveEvent.touches[0];
+              const newValue = getValueFromX(touch.clientX);
+              // Ensure min doesn't exceed max - minGap
+              const maxAllowedValue = clampedValueMax - minGap;
+              const constrainedValue = Math.max(min, Math.min(maxAllowedValue, newValue));
+              onChangeMin(Math.round(constrainedValue));
+            };
+
+            const handleTouchEnd = () => {
+              document.removeEventListener('touchmove', handleTouchMove);
+              document.removeEventListener('touchend', handleTouchEnd);
+            };
+
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
+          }}
         />
 
         {/* Max handle */}
         <div
-          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer z-10"
-          style={{ left: `calc(${maxPercentage}% - 10px)` }}
+          className="absolute top-1/2 w-5 h-5 bg-white border-2 border-[#5C4977] rounded-full shadow transform -translate-y-1/2 hover:scale-110 transition-transform cursor-pointer z-10 touch-none"
+          style={{ 
+            left: `calc(${maxPercentage}% - 10px)`,
+            touchAction: 'none',
+            WebkitTapHighlightColor: 'transparent'
+          }}
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -286,6 +320,32 @@ const RangeSlider = ({ min, max, valueMin, valueMax, onChangeMin, onChangeMax })
 
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const touch = e.touches[0];
+            const startX = touch.clientX;
+            const startValue = clampedValueMax;
+
+            const handleTouchMove = (moveEvent) => {
+              moveEvent.preventDefault();
+              if (moveEvent.touches.length === 0) return;
+              const touch = moveEvent.touches[0];
+              const newValue = getValueFromX(touch.clientX);
+              // Ensure max doesn't go below min + minGap
+              const minAllowedValue = clampedValueMin + minGap;
+              const constrainedValue = Math.max(minAllowedValue, Math.min(max, newValue));
+              onChangeMax(Math.round(constrainedValue));
+            };
+
+            const handleTouchEnd = () => {
+              document.removeEventListener('touchmove', handleTouchMove);
+              document.removeEventListener('touchend', handleTouchEnd);
+            };
+
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
           }}
         />
       </div>
@@ -572,7 +632,11 @@ const Filter = () => {
 
   const [priceMin, setPriceMin] = useState(0);
   const [priceMax, setPriceMax] = useState(3000);
+  const [debouncedPriceMin, setDebouncedPriceMin] = useState(0);
+  const [debouncedPriceMax, setDebouncedPriceMax] = useState(3000);
   const [selectedPricePreset, setSelectedPricePreset] = useState("");
+  const [inputPriceMin, setInputPriceMin] = useState("");
+  const [inputPriceMax, setInputPriceMax] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState("newest");
@@ -648,6 +712,16 @@ const Filter = () => {
     }
   }, [dynamicMaxPrice]);
 
+  // Debounce price değişiklikleri - API request'ini geciktir
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPriceMin(priceMin);
+      setDebouncedPriceMax(priceMax);
+    }, 500); // 500ms bekle
+
+    return () => clearTimeout(timer);
+  }, [priceMin, priceMax]);
+
   // Backend filter query
   const filterQuery = useMemo(() => {
     const query = {};
@@ -662,8 +736,8 @@ const Filter = () => {
       query.brand = selectedBrand;
     }
 
-    if (priceMin > 0) query.minPrice = priceMin;
-    if (priceMax < dynamicMaxPrice) query.maxPrice = priceMax;
+    if (debouncedPriceMin > 0) query.minPrice = debouncedPriceMin;
+    if (debouncedPriceMax < dynamicMaxPrice) query.maxPrice = debouncedPriceMax;
     if (searchTerm) query.search = searchTerm;
     if (sort) query.sort = sort;
 
@@ -683,8 +757,8 @@ const Filter = () => {
     selectedSubcategory,
     selectedBrand,
     selectedBrands,
-    priceMin,
-    priceMax,
+    debouncedPriceMin,
+    debouncedPriceMax,
     searchTerm,
     sort,
     stockStatus,
@@ -723,9 +797,9 @@ const Filter = () => {
     if (selectedSpecs.length > 0) count++;
     if (selectedBrands.length > 0) count++;
     if (selectedSizes.length > 0) count++;
-    if (priceMin > 0 || priceMax < dynamicMaxPrice) count++;
+    if (debouncedPriceMin > 0 || debouncedPriceMax < dynamicMaxPrice) count++;
     return count;
-  }, [stockStatus, selectedSpecs, selectedBrands, selectedSizes, priceMin, priceMax, dynamicMaxPrice]);
+  }, [stockStatus, selectedSpecs, selectedBrands, selectedSizes, debouncedPriceMin, debouncedPriceMax, dynamicMaxPrice]);
 
   // Stock status options (dinamik)
   const stockOptions = useMemo(() => {
@@ -760,15 +834,15 @@ const Filter = () => {
     const query = {};
     if (selectedCategory) query.category = selectedCategory;
     if (selectedSubcategory) query.subcategory = selectedSubcategory;
-    if (priceMin > 0) query.minPrice = priceMin;
-    if (priceMax < dynamicMaxPrice) query.maxPrice = priceMax;
+    if (debouncedPriceMin > 0) query.minPrice = debouncedPriceMin;
+    if (debouncedPriceMax < dynamicMaxPrice) query.maxPrice = debouncedPriceMax;
     if (stockStatus) {
       query.stockStatus = stockStatus;
     }
     if (selectedSpecs.length > 0) query.specs = selectedSpecs;
     // selectedBrands-i buraya əlavə etmirik - circular dependency qarşısını almaq üçün
     return query;
-  }, [selectedCategory, selectedSubcategory, priceMin, priceMax, stockStatus, selectedSpecs, dynamicMaxPrice]);
+  }, [selectedCategory, selectedSubcategory, debouncedPriceMin, debouncedPriceMax, stockStatus, selectedSpecs, dynamicMaxPrice]);
 
   const { data: brandOptionsData } = useFilterProductsQuery(brandOptionsQuery);
   const productsForBrandOptions = brandOptionsData?.products || [];
@@ -800,14 +874,14 @@ const Filter = () => {
     } else if (selectedBrand) {
       query.brand = selectedBrand;
     }
-    if (priceMin > 0) query.minPrice = priceMin;
-    if (priceMax < dynamicMaxPrice) query.maxPrice = priceMax;
+    if (debouncedPriceMin > 0) query.minPrice = debouncedPriceMin;
+    if (debouncedPriceMax < dynamicMaxPrice) query.maxPrice = debouncedPriceMax;
     if (stockStatus) {
       query.stockStatus = stockStatus;
     }
     // selectedSpecs-i buraya əlavə etmirik - circular dependency qarşısını almaq üçün
     return query;
-  }, [selectedCategory, selectedSubcategory, selectedBrand, selectedBrands, priceMin, priceMax, stockStatus, dynamicMaxPrice]);
+  }, [selectedCategory, selectedSubcategory, selectedBrand, selectedBrands, debouncedPriceMin, debouncedPriceMax, stockStatus, dynamicMaxPrice]);
 
   const { data: specOptionsData } = useFilterProductsQuery(specOptionsQuery);
   const productsForSpecOptions = specOptionsData?.products || [];
@@ -1224,90 +1298,84 @@ const Filter = () => {
                         <label className="block text-xs text-gray-500 mb-1">Min.</label>
                         <input
                           type="number"
-                          value={priceMin}
+                          value={inputPriceMin === "" ? "" : inputPriceMin}
+                          placeholder={priceMin.toString()}
                           onChange={(e) => {
                             setSelectedPricePreset("");
-                            const inputValue = e.target.value;
-                            if (inputValue === "") {
-                              setPriceMin(0);
-                              return;
-                            }
-                            const numValue = Number(inputValue);
-                            if (!isNaN(numValue) && numValue >= 0) {
-                              // Ensure min doesn't exceed dynamicMaxPrice
-                              if (numValue > dynamicMaxPrice) {
-                                setPriceMin(dynamicMaxPrice);
-                                return;
-                              }
-                              // Ensure min doesn't exceed max
-                              if (numValue <= priceMax) {
-                                setPriceMin(numValue);
-                              } else {
-                                // If min > max, set both to the same value
-                                setPriceMin(priceMax);
-                              }
-                            }
+                            setInputPriceMin(e.target.value);
                           }}
-                          onBlur={(e) => {
-                            // Ensure min is at least 0 on blur
-                            if (priceMin < 0) {
-                              setPriceMin(0);
-                            }
-                            // Ensure min doesn't exceed dynamicMaxPrice
-                            if (priceMin > dynamicMaxPrice) {
-                              setPriceMin(dynamicMaxPrice);
-                            }
+                          onFocus={(e) => {
+                            e.target.select();
+                            setInputPriceMin("");
                           }}
                           className="w-full p-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
                           min="0"
-                          max={priceMax}
+                          max={dynamicMaxPrice}
                         />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Maks.</label>
                         <input
                           type="number"
-                          value={priceMax}
+                          value={inputPriceMax === "" ? "" : inputPriceMax}
+                          placeholder={priceMax.toString()}
                           onChange={(e) => {
                             setSelectedPricePreset("");
-                            const inputValue = e.target.value;
-                            if (inputValue === "") {
-                              setPriceMax(dynamicMaxPrice);
-                              return;
-                            }
-                            const numValue = Number(inputValue);
-                            if (!isNaN(numValue) && numValue >= 0) {
-                              // Ensure max doesn't exceed dynamicMaxPrice
-                              if (numValue > dynamicMaxPrice) {
-                                setPriceMax(dynamicMaxPrice);
-                                return;
-                              }
-                              // Ensure max is not less than min
-                              if (numValue >= priceMin) {
-                                setPriceMax(numValue);
-                              } else {
-                                // If max < min, set both to the same value
-                                setPriceMax(priceMin);
-                              }
-                            }
+                            setInputPriceMax(e.target.value);
                           }}
-                          onBlur={(e) => {
-                            // Ensure max is at least min on blur
-                            if (priceMax < priceMin) {
-                              setPriceMax(priceMin);
-                            }
-                            // Ensure max doesn't exceed dynamicMaxPrice
-                            if (priceMax > dynamicMaxPrice) {
-                              setPriceMax(dynamicMaxPrice);
-                            }
+                          onFocus={(e) => {
+                            e.target.select();
+                            setInputPriceMax("");
                           }}
                           className="w-full p-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                          min={priceMin}
+                          min="0"
                           max={dynamicMaxPrice}
                         />
                       </div>
                     </div>
-
+                    
+                    {/* Tətbiq et button */}
+                    <button
+                      onClick={() => {
+                        setSelectedPricePreset("");
+                        let newMin = priceMin;
+                        let newMax = priceMax;
+                        
+                        // Parse input values
+                        if (inputPriceMin !== "") {
+                          const numMin = Number(inputPriceMin);
+                          if (!isNaN(numMin) && numMin >= 0) {
+                            newMin = Math.max(0, Math.min(dynamicMaxPrice, numMin));
+                          }
+                        }
+                        
+                        if (inputPriceMax !== "") {
+                          const numMax = Number(inputPriceMax);
+                          if (!isNaN(numMax) && numMax >= 0) {
+                            newMax = Math.max(0, Math.min(dynamicMaxPrice, numMax));
+                          }
+                        }
+                        
+                        // Ensure min <= max
+                        if (newMin > newMax) {
+                          const temp = newMin;
+                          newMin = newMax;
+                          newMax = temp;
+                        }
+                        
+                        // Update prices
+                        setPriceMin(newMin);
+                        setPriceMax(newMax);
+                        
+                        // Clear input fields
+                        setInputPriceMin("");
+                        setInputPriceMax("");
+                      }}
+                      className="w-full bg-[#5C4977] hover:bg-[#5C4977]/90 text-white font-medium py-2.5 px-4 rounded-md transition-colors shadow-md shadow-[#5C4977]/20 text-sm cursor-pointer"
+                    >
+                      Tətbiq et
+                    </button>
+                    
                     <RangeSlider
                       min={0}
                       max={dynamicMaxPrice}
