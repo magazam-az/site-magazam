@@ -46,6 +46,8 @@ export default defineConfig({
     port: 3001,
     open: true,
 
+    allowedHosts: ["magazam.az", "localhost"],
+
     // 🔥 Proxy konfigurasiyası - target buradan alınır
     proxy: {
       '/api': {
