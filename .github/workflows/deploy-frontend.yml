@@ -18,14 +18,7 @@ jobs:
         with:
           host: 46.224.121.130
           username: root
-          key: |
-            -----BEGIN OPENSSH PRIVATE KEY-----
-            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-            QyNTUxOQAAACDC3tKBZ6UOpvXdsF0ORnneyXYGkVty/a/vO3w0oGiGwQAAAJgNPkjmDT5I
-            5gAAAAtzc2gtZWQyNTUxOQAAACDC3tKBZ6UOpvXdsF0ORnneyXYGkVty/a/vO3w0oGiGwQ
-            AAAEBI2FDx4r3jQwSqcQEFJd+0lMFyLd3CAWT0VUkL2p1docLe0oFnpQ6m9d2wXQ5Ged7J
-            dgaRW3L9r+87fDSgaIbBAAAADmhldHpuZXItc2VydmVyAQIDBAUGBw==
-            -----END OPENSSH PRIVATE KEY-----
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /var/magazam/site-magazam
             ./deploy.sh
