@@ -569,6 +569,14 @@ export default function MetaShopHeader() {
                   >
                     Bizimlə Əlaqə
                   </Link>
+                  {safeIsAuthenticated && (
+                    <Link 
+                      to="/my-orders"
+                      className="px-5 py-2 rounded-full transition-all duration-300 hover:text-[#5C4977] hover:bg-[#5C4977]/10 hover:shadow-sm hover:shadow-[#5C4977]/20 border-none text-base font-medium cursor-pointer select-none"
+                    >
+                      Sifarişlərim
+                    </Link>
+                  )}
                 </nav>
               </div>
 
@@ -903,9 +911,21 @@ export default function MetaShopHeader() {
               <Link
                 to="/contact"
                 className="block w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Bizimlə Əlaqə
               </Link>
+              {safeIsAuthenticated && (
+                <button
+                  onClick={() => {
+                    navigate('/my-orders')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="block w-full text-left px-4 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50 border-b border-gray-200 cursor-pointer"
+                >
+                  Sifarişlərim
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -982,25 +1002,53 @@ export default function MetaShopHeader() {
               }`}>Seçilmiş</span>
             </button>
 
-            <button 
-              className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
-                location.pathname === '/profile'
-                  ? 'text-purple-900' 
-                  : 'text-gray-500 hover:text-[#5C4977]'
-              }`}
-              onClick={() => {
-                if (safeIsAuthenticated) {
-                  handleProfileClick()
-                } else {
-                  handleLoginClick()
-                }
-              }}
-            >
-              <User className="w-5 h-5 transition-all duration-300 cursor-pointer" />
-              <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
-                location.pathname === '/profile' ? 'font-medium' : ''
-              }`}>Hesab</span>
-            </button>
+            {safeIsAuthenticated ? (
+              <>
+                <button 
+                  className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                    location.pathname === '/my-orders'
+                      ? 'text-purple-900' 
+                      : 'text-gray-500 hover:text-[#5C4977]'
+                  }`}
+                  onClick={() => {
+                    navigate('/my-orders')
+                    setIsMobileMenuOpen(false)
+                  }}
+                >
+                  <Package className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+                  <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                    location.pathname === '/my-orders' ? 'font-medium' : ''
+                  }`}>Sifarişlərim</span>
+                </button>
+                <button 
+                  className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                    location.pathname === '/profile'
+                      ? 'text-purple-900' 
+                      : 'text-gray-500 hover:text-[#5C4977]'
+                  }`}
+                  onClick={handleProfileClick}
+                >
+                  <User className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+                  <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                    location.pathname === '/profile' ? 'font-medium' : ''
+                  }`}>Hesab</span>
+                </button>
+              </>
+            ) : (
+              <button 
+                className={`flex flex-col items-center transition-all duration-300 cursor-pointer ${
+                  location.pathname === '/profile'
+                    ? 'text-purple-900' 
+                    : 'text-gray-500 hover:text-[#5C4977]'
+                }`}
+                onClick={handleLoginClick}
+              >
+                <User className="w-5 h-5 transition-all duration-300 cursor-pointer" />
+                <span className={`text-xs mt-1 transition-all duration-300 cursor-pointer ${
+                  location.pathname === '/profile' ? 'font-medium' : ''
+                }`}>Hesab</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

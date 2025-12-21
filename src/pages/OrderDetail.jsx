@@ -209,20 +209,8 @@ const OrderDetail = () => {
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Sifariş Xülasəsi</h2>
 
                 <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Məhsullar:</span>
-                    <span>{order.itemsPrice?.toFixed(2) || '0.00'} ₼</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Çatdırılma:</span>
-                    <span>
-                      {order.shippingPrice === 0 ? (
-                        <span className="text-green-600 font-semibold">Pulsuz</span>
-                      ) : (
-                        `${order.shippingPrice?.toFixed(2) || '0.00'} ₼`
-                      )}
-                    </span>
-                  </div>
+                 
+                 
                   <div className="pt-4 border-t-2 border-gray-200">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900">Yekun:</span>
@@ -234,22 +222,7 @@ const OrderDetail = () => {
                 </div>
 
                 {/* Payment Info */}
-                {order.paymentInfo && (
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-[#5C4977]" />
-                      Ödəniş Məlumatları
-                    </h3>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <p>
-                        <span className="font-medium">Status:</span>{' '}
-                        <span className={order.paymentInfo.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}>
-                          {order.paymentInfo.status === 'paid' ? 'Ödənilib' : 'Gözləyir'}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                )}
+             
 
                 {/* Delivered Date */}
                 {order.deliveredAt && (

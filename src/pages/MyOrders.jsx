@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGetMyOrdersQuery } from '../redux/api/orderApi';
-import { Package, Loader2, ChevronRight, Calendar, MapPin, CreditCard } from 'lucide-react';
+import { Package, Loader2, ChevronRight, MapPin } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Breadcrumb from '../components/ui/Breadcrumb';
@@ -45,19 +45,6 @@ const MyOrders = () => {
       default:
         return status || 'Gözləyir';
     }
-  };
-
-  // Tarix formatla
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Tarix yoxdur';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('az-AZ', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   if (isLoading) {
@@ -128,18 +115,12 @@ const MyOrders = () => {
                             Sifariş #{order._id.slice(-8).toUpperCase()}
                           </h3>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{formatDate(order.createdAt)}</span>
+                        {order.shippingInfo?.address && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4" />
+                            <span>{order.shippingInfo.city}, {order.shippingInfo.address}</span>
                           </div>
-                          {order.shippingInfo?.address && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{order.shippingInfo.city}, {order.shippingInfo.address}</span>
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <span
@@ -190,16 +171,6 @@ const MyOrders = () => {
                       <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
                         <span>Məhsullar:</span>
                         <span>{order.itemsPrice?.toFixed(2) || '0.00'} ₼</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
-                        <span>Çatdırılma:</span>
-                        <span>
-                          {order.shippingPrice === 0 ? (
-                            <span className="text-green-600 font-semibold">Pulsuz</span>
-                          ) : (
-                            `${order.shippingPrice?.toFixed(2) || '0.00'} ₼`
-                          )}
-                        </span>
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                         <span className="font-semibold text-gray-900">Yekun:</span>
