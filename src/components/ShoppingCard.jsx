@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   useGetCartQuery,
   useRemoveFromCartMutation,
@@ -33,14 +33,12 @@ const SebetCart = ({ isOpen, onClose }) => {
   // Calculate subtotal
   const calculateTotal = () => {
     if (!cartData?.cart) return 0;
-    
+
     return cartData.cart.reduce((total, item) => {
-      if (!item?.product) {
-        return total;
-      }
+      if (!item?.product) return total;
       const price = item.product.price || 0;
       const quantity = item.quantity || 0;
-      return total + (price * quantity);
+      return total + price * quantity;
     }, 0);
   };
 
@@ -48,28 +46,18 @@ const SebetCart = ({ isOpen, onClose }) => {
   const freeShippingThreshold = 3470; // 3.470,00 ₼
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
 
+  // ✅ TOASTS SİLİNDİ: say artıb-azalanda heç bir toast çıxmayacaq
   const handleQuantityChange = async (productId, currentQuantity, stock, change) => {
     const newQuantity = currentQuantity + change;
 
-    if (newQuantity < 1) {
-      toast.error("Məhsul sayı 1-dən az ola bilməz");
-      return;
-    }
-
-    if (newQuantity > stock) {
-      toast.error("Kifayət qədər stok yoxdur");
-      return;
-    }
+    // Toast istəmədiyin üçün sadəcə return edirik
+    if (newQuantity < 1) return;
+    if (newQuantity > stock) return;
 
     try {
       await updateQuantity({ productId, quantity: newQuantity }).unwrap();
-      toast.success("Məhsul sayı yeniləndi");
-    } catch (error) {
-      const errorMessage = 
-        error?.data?.message || 
-        error?.message || 
-        "Miqdar yenilənərkən xəta baş verdi";
-      toast.error(errorMessage);
+    } catch (err) {
+      // istəsən burada da toast yox, səssiz keçsin
     }
   };
 
@@ -99,9 +87,10 @@ const SebetCart = ({ isOpen, onClose }) => {
   };
 
   // Filter valid cart items
-  const validCartItems = (cartData?.cart && Array.isArray(cartData.cart)) 
-    ? cartData.cart.filter(item => item?.product) 
-    : [];
+  const validCartItems =
+    cartData?.cart && Array.isArray(cartData.cart)
+      ? cartData.cart.filter((item) => item?.product)
+      : [];
 
   // If used as a full page (isOpen is undefined), render full page layout
   if (isOpen === undefined) {
@@ -112,10 +101,10 @@ const SebetCart = ({ isOpen, onClose }) => {
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pb-3">
             {/* Breadcrumb */}
             <div className="py-6 pb-0">
-              <Breadcrumb 
+              <Breadcrumb
                 items={[
                   { label: "Ana səhifə", path: "/" },
-                  { label: "Səbət" }
+                  { label: "Səbət" },
                 ]}
               />
             </div>
@@ -127,7 +116,8 @@ const SebetCart = ({ isOpen, onClose }) => {
               </h2>
               {!isLoading && validCartItems.length > 0 && (
                 <p className="text-gray-600 mt-2">
-                  Səbətinizdə {validCartItems.length} {validCartItems.length === 1 ? 'məhsul' : 'məhsul'} var
+                  Səbətinizdə {validCartItems.length}{" "}
+                  {validCartItems.length === 1 ? "məhsul" : "məhsul"} var
                 </p>
               )}
             </div>
@@ -157,7 +147,9 @@ const SebetCart = ({ isOpen, onClose }) => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-3xl md:text-4xl font-bold text-gray-800">Səbətiniz boşdur</h3>
+                  <h3 className="text-3xl md:text-4xl font-bold text-gray-800">
+                    Səbətiniz boşdur
+                  </h3>
                   <p className="text-lg md:text-xl text-gray-600 text-center max-w-md">
                     Səbətinizə məhsul əlavə etmək üçün məhsul səhifəsinə keçin
                   </p>
@@ -188,7 +180,8 @@ const SebetCart = ({ isOpen, onClose }) => {
                           >
                             <img
                               src={
-                                item.product.images && item.product.images.length > 0
+                                item.product.images &&
+                                item.product.images.length > 0
                                   ? item.product.images[0]?.url
                                   : "/placeholder.svg"
                               }
@@ -222,7 +215,9 @@ const SebetCart = ({ isOpen, onClose }) => {
                               </div>
                             </div>
                             <button
-                              onClick={(e) => handleRemoveFromCart(item.product._id, e)}
+                              onClick={(e) =>
+                                handleRemoveFromCart(item.product._id, e)
+                              }
                               className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 cursor-pointer p-2 hover:bg-red-50 rounded-full"
                               title="Səbətdən sil"
                             >
@@ -267,9 +262,14 @@ const SebetCart = ({ isOpen, onClose }) => {
 
                             {/* Total Price */}
                             <div className="text-right">
-                              <span className="text-xs text-gray-500 block">Cəmi:</span>
+                              <span className="text-xs text-gray-500 block">
+                                Cəmi:
+                              </span>
                               <span className="text-xl font-bold text-gray-900">
-                                {(item.quantity * (item.product.price || 0)).toFixed(2)} ₼
+                                {(
+                                  item.quantity * (item.product.price || 0)
+                                ).toFixed(2)}{" "}
+                                ₼
                               </span>
                             </div>
                           </div>
@@ -286,19 +286,25 @@ const SebetCart = ({ isOpen, onClose }) => {
                       Sifariş Xülasəsi
                     </h3>
 
-                    {/* Free Shipping Progress */}
-                
-
                     {/* Price Breakdown */}
                     <div className="space-y-3 mb-6">
                       <div className="flex justify-between text-gray-600">
                         <span>Məhsullar:</span>
                         <span>{validCartItems.length} ədəd</span>
                       </div>
-                 
+                      <div className="flex justify-between text-gray-600">
+                        <span>Çatdırılma:</span>
+                        <span className="text-green-600 font-semibold">
+                          {remainingForFreeShipping === 0
+                            ? "Pulsuz"
+                            : "Hesablanacaq"}
+                        </span>
+                      </div>
                       <div className="pt-4 border-t-2 border-gray-200">
                         <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold text-gray-900">Yekun:</span>
+                          <span className="text-lg font-semibold text-gray-900">
+                            Yekun:
+                          </span>
                           <span className="text-2xl font-bold text-[#5C4977]">
                             {subtotal.toFixed(2)} ₼
                           </span>
@@ -338,15 +344,17 @@ const SebetCart = ({ isOpen, onClose }) => {
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-500 ease-in-out ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
       />
 
       {/* Cart Modal */}
-      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-500 ease-in-out overflow-y-auto ${
-        isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
-      }`}>
+      <div
+        className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-500 ease-in-out overflow-y-auto ${
+          isOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
+        }`}
+      >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-xl font-semibold text-gray-900">Səbət</h2>
@@ -411,7 +419,8 @@ const SebetCart = ({ isOpen, onClose }) => {
                       >
                         <img
                           src={
-                            item.product.images && item.product.images.length > 0
+                            item.product.images &&
+                            item.product.images.length > 0
                               ? item.product.images[0]?.url
                               : "/placeholder.svg"
                           }
@@ -441,7 +450,9 @@ const SebetCart = ({ isOpen, onClose }) => {
                           )}
                         </div>
                         <button
-                          onClick={(e) => handleRemoveFromCart(item.product._id, e)}
+                          onClick={(e) =>
+                            handleRemoveFromCart(item.product._id, e)
+                          }
                           className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-2 cursor-pointer"
                         >
                           <X className="w-4 h-4 cursor-pointer" />
@@ -485,7 +496,8 @@ const SebetCart = ({ isOpen, onClose }) => {
 
                         {/* Price */}
                         <span className="font-semibold text-gray-900 text-sm">
-                          {item.quantity} × {(item.product.price || 0).toFixed(2)} ₼
+                          {item.quantity} × {(item.product.price || 0).toFixed(2)}{" "}
+                          ₼
                         </span>
                       </div>
                     </div>
@@ -501,9 +513,6 @@ const SebetCart = ({ isOpen, onClose }) => {
                     {subtotal.toFixed(2)} ₼
                   </span>
                 </div>
-
-                {/* Free Shipping Message */}
-             
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
