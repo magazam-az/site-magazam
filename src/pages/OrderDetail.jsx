@@ -209,13 +209,15 @@ const OrderDetail = () => {
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Sifariş Xülasəsi</h2>
 
                 <div className="space-y-3 mb-6">
-                 
-                 
+                  <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>Məhsullar:</span>
+                    <span>{order.itemsPrice?.toFixed(2) || '0.00'} ₼</span>
+                  </div>
                   <div className="pt-4 border-t-2 border-gray-200">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900">Yekun:</span>
                       <span className="text-2xl font-bold text-[#5C4977]">
-                        {order.totalPrice?.toFixed(2) || '0.00'} ₼
+                        {order.itemsPrice?.toFixed(2) || '0.00'} ₼
                       </span>
                     </div>
                   </div>

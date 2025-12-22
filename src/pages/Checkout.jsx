@@ -31,7 +31,8 @@ const Checkout = () => {
   };
 
   const subtotal = calculateTotal();
-  const shippingPrice = 0;
+  // Çatdırılma qiyməti - pulsuz
+  const shippingPrice = 0; // Çatdırılma pulsuzdur
   const totalPrice = subtotal + shippingPrice;
 
   const handleInputChange = (e) => {

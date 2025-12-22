@@ -129,7 +129,7 @@ const MyOrders = () => {
                           {getStatusText(order.orderStatus)}
                         </span>
                         <span className="text-xl font-bold text-[#5C4977]">
-                          {order.totalPrice?.toFixed(2) || '0.00'} ₼
+                          {order.itemsPrice?.toFixed(2) || '0.00'} ₼
                         </span>
                       </div>
                     </div>
@@ -175,7 +175,7 @@ const MyOrders = () => {
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                         <span className="font-semibold text-gray-900">Yekun:</span>
                         <span className="text-xl font-bold text-[#5C4977]">
-                          {order.totalPrice?.toFixed(2) || '0.00'} ₼
+                          {order.itemsPrice?.toFixed(2) || '0.00'} ₼
                         </span>
                       </div>
                     </div>
