@@ -112,13 +112,24 @@
 }
 
 .hero-image-zoom-bg {
-  transition: background-size 0.5s ease;
+  transition: background-size 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   background-size: cover;
   background-position: center;
 }
 
+/* Sol slider için büyüme efekti */
 .hero-image-zoom-bg:hover {
   background-size: 110%;
+}
+
+/* Sağ taraftaki şekiller için küçülme efekti - elementin kendisi küçülür */
+.hero-right-section .hero-image-zoom-bg {
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.hero-right-section .hero-image-zoom-bg:hover {
+  transform: scale(0.95);
 }
 
 @media(min-width:300px) and (max-width:700px){

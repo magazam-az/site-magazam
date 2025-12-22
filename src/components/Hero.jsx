@@ -196,7 +196,7 @@ export default function ProductBanners() {
         )}
         
         {/* --- 2. Right Column (contains top card and bottom blocks) --- */}
-        <div className="lg:flex-1 flex flex-col gap-6">
+        <div className="lg:flex-1 flex flex-col gap-6 hero-right-section">
           
           {/* Card 2.1: Right Top */}
           {rightTop.image?.url && (
