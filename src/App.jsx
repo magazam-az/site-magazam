@@ -41,6 +41,9 @@ import EditBrand from './components/admin/EditBrand'
 import SpecsManagement from './components/admin/SpecsManagement'
 import CreateSpec from './components/admin/CreateSpec'
 import EditSpec from './components/admin/EditSpec'
+import AdminHero from './components/admin/AdminHero'
+import AddHero from './components/admin/AddHero'
+import EditHero from './components/admin/EditHero'
 
 import PrivateRoute from './components/PrivateRoute'
 import PublicRoute from './components/PublicRoute'
@@ -292,6 +295,24 @@ function App() {
           <Route path='/admin/orders' element={
             <AdminRoute>
               <AdminOrders />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/heroes' element={
+            <AdminRoute>
+              <AdminHero />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/add-hero' element={
+            <AdminRoute>
+              <AddHero />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/edit-hero/:id' element={
+            <AdminRoute>
+              <EditHero />
             </AdminRoute>
           } />
         </Routes>
