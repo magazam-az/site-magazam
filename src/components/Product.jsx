@@ -93,6 +93,12 @@ const Product = ({ product, mehsul }) => {
       return;
     }
 
+    // Stok yoxlaması
+    if (product?.stock !== undefined && product.stock < 1) {
+      toast.error('Məhsul stokda qalmayıb!');
+      return;
+    }
+
     try {
       await addToCart({ productId, quantity: 1 }).unwrap();
       toast.success('Məhsul səbətə əlavə edildi!');

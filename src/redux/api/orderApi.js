@@ -13,11 +13,19 @@ export const orderApi = createApi({
   endpoints: (builder) => ({
     // Yeni sifariş yarat
     createOrder: builder.mutation({
-      query: (orderData) => ({
-        url: "/order/new",
-        method: "POST",
-        body: orderData,
-      }),
+      query: (orderData) => {
+        console.log('[DEBUG] 🔵 [orderApi] createOrder mutation çağırıldı', {
+          url: "/order/new",
+          method: "POST",
+          orderData,
+        });
+        return {
+          url: "/order/new",
+          method: "POST",
+          body: orderData,
+          credentials: "include",
+        };
+      },
       invalidatesTags: ["Orders", "Cart"],
     }),
     // İstifadəçinin sifarişləri

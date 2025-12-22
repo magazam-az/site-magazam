@@ -9,7 +9,7 @@ export const productApi = createApi({
     credentials: "include",
     prepareHeaders,
   }),
-  tagTypes: ["Products"],
+  tagTypes: ["Products", "Cart"],
   endpoints: (builder) => ({
     getProducts: builder.query({
       query: () => "/products",
@@ -65,6 +65,25 @@ export const productApi = createApi({
         credentials: "include",
       }),
       invalidatesTags: ["Cart"],
+      async onQueryStarted({ productId, quantity }, { dispatch, queryFulfilled }) {
+        // Optimistic update
+        const patchResult = dispatch(
+          productApi.util.updateQueryData("getCart", undefined, (draft) => {
+            if (draft?.cart) {
+              const item = draft.cart.find(item => item.product?._id === productId);
+              if (item) {
+                item.quantity = quantity;
+              }
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          // Revert on error
+          patchResult.undo();
+        }
+      },
     }),
     removeFromCart: builder.mutation({
       query: (productId) => ({

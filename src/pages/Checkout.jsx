@@ -7,6 +7,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { Loader2 } from "lucide-react";
+import { API_BASE_URL } from "../config/api.js";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -59,18 +60,36 @@ const Checkout = () => {
       return;
     }
 
+    // Token yoxlaması
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error("Giriş etməlisiniz");
+      navigate("/login");
+      return;
+    }
+
     try {
       const orderData = {
-        shippingInfo,
+        shippingInfo: {
+          address: shippingInfo.address.trim(),
+          city: shippingInfo.city.trim(),
+          postalCode: shippingInfo.postalCode?.trim() || "",
+        },
         paymentInfo: {
           id: "",
           status: "pending",
         },
       };
 
-      console.log("Sifariş göndərilir:", orderData);
+      console.log("=== SIFARIŞ GÖNDƏRİLİR ===");
+      console.log("Order Data:", JSON.stringify(orderData, null, 2));
+      console.log("Səbət məhsulları sayı:", validCartItems.length);
+      console.log("Token var:", !!token);
+      console.log("Token:", token?.substring(0, 20) + '...');
+      console.log("API Base URL:", API_BASE_URL);
+      
       const result = await createOrder(orderData).unwrap();
-      console.log("Sifariş cavabı:", result);
+      console.log("✅ Sifariş cavabı:", result);
       
       // Response kontrolü - başarılı ise devam et
       if (result?.success || result?.order) {
@@ -85,24 +104,35 @@ const Checkout = () => {
         
         // Kısa bir gecikme sonra ana sayfaya yönlendir
         setTimeout(() => {
-          navigate("/");
-        }, 1000);
+          navigate("/my-orders");
+        }, 1500);
       } else {
         console.error("Gözlənilməz cavab formatı:", result);
         toast.error("Sifariş verilərkən xəta baş verdi");
       }
     } catch (error) {
-      // Hata mesajını al
-      const errorMessage = 
-        error?.data?.message || 
-        error?.message || 
-        "Sifariş verilərkən xəta baş verdi";
+      // Hata mesajını al - RTK Query error formatı
+      let errorMessage = "Sifariş verilərkən xəta baş verdi";
+      
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.error?.data?.message) {
+        errorMessage = error.error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
       
       console.error("Sifariş xətası detalları:", {
         error,
+        errorType: typeof error,
         errorData: error?.data,
+        errorError: error?.error,
         errorMessage,
-        status: error?.status,
+        status: error?.status || error?.error?.status,
+        originalStatus: error?.originalStatus,
+        fullError: JSON.stringify(error, null, 2),
       });
       
       toast.error(errorMessage);

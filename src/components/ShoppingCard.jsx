@@ -65,7 +65,11 @@ const SebetCart = ({ isOpen, onClose }) => {
       await updateQuantity({ productId, quantity: newQuantity }).unwrap();
       toast.success("Məhsul sayı yeniləndi");
     } catch (error) {
-      toast.error("Miqdar yenilənərkən xəta baş verdi");
+      const errorMessage = 
+        error?.data?.message || 
+        error?.message || 
+        "Miqdar yenilənərkən xəta baş verdi";
+      toast.error(errorMessage);
     }
   };
 

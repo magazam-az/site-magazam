@@ -203,6 +203,12 @@ const ProductDetail = () => {
       return;
     }
 
+    // Stok yoxlaması
+    if (quantity > product.stock) {
+      toast.error(`Stokda kifayət qədər məhsul yoxdur. Mövcud stok: ${product.stock} ədəd`);
+      return;
+    }
+
     try {
       await addToCart({ 
         productId: product._id, 
@@ -210,7 +216,11 @@ const ProductDetail = () => {
       }).unwrap();
       toast.success("Məhsul səbətə əlavə edildi!");
     } catch (error) {
-      toast.error("Məhsulu səbətə əlavə edərkən xəta baş verdi!");
+      const errorMessage = 
+        error?.data?.message || 
+        error?.message || 
+        "Məhsulu səbətə əlavə edərkən xəta baş verdi!";
+      toast.error(errorMessage);
     }
   };
 
