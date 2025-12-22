@@ -11,6 +11,15 @@ const PasswordResetRedirect = () => {
   const [isRedirecting, setIsRedirecting] = useState(true);
 
   useEffect(() => {
+    // Əgər vercel.app-dədirsə, magazam.az-ə yönləndir
+    if (window.location.hostname.includes('vercel.app')) {
+      const currentPath = window.location.pathname;
+      const newUrl = `https://magazam.az${currentPath}`;
+      console.log('Redirecting from vercel.app to magazam.az:', newUrl);
+      window.location.replace(newUrl);
+      return;
+    }
+
     // URL-dən token-i çıxar (əgər params-dan gəlmirsə)
     let resetToken = token;
     

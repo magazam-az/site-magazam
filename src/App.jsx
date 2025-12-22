@@ -2,6 +2,7 @@ import './App.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { useEffect } from 'react'
 
 // Pages
 import Home from './pages/Home'
@@ -64,9 +65,25 @@ import AdminDashboard from './components/admin/AdminDashboard'
 import ScrollToTop from './components/ui/ScrollToTop'
 import Promosiyalar from './components/Promotions'
 
+// Global redirect komponenti - vercel.app-dən magazam.az-ə yönləndirir
+const GlobalRedirect = () => {
+  useEffect(() => {
+    // Əgər vercel.app-dədirsə, magazam.az-ə yönləndir
+    if (window.location.hostname.includes('vercel.app')) {
+      const currentPath = window.location.pathname + window.location.search;
+      const newUrl = `https://magazam.az${currentPath}`;
+      console.log('Global redirect: vercel.app -> magazam.az:', newUrl);
+      window.location.replace(newUrl);
+    }
+  }, []);
+  
+  return null;
+};
+
 function App() {
   return (
     <BrowserRouter>
+      <GlobalRedirect />
       <ScrollToTop />
       <div className="App">
         <ToastContainer position="top-right" autoClose={3000} theme="light" />

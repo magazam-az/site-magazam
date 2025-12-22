@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>site-magazam</title>
+    <!-- Global redirect - vercel.app-dən magazam.az-ə yönləndirir -->
+    <script>
+      (function() {
+        if (window.location.hostname.includes('vercel.app')) {
+          const currentPath = window.location.pathname + window.location.search + window.location.hash;
+          const newUrl = 'https://magazam.az' + currentPath;
+          console.log('Global redirect (index.html): vercel.app -> magazam.az:', newUrl);
+          window.location.replace(newUrl);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

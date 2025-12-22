@@ -19,6 +19,16 @@ const ResetPassword = () => {
 
   useEffect(() => {
     console.log('ResetPassword component mounted, token:', token);
+    
+    // Əgər vercel.app-dədirsə, magazam.az-ə yönləndir
+    if (window.location.hostname.includes('vercel.app')) {
+      const currentPath = window.location.pathname;
+      const newUrl = `https://magazam.az${currentPath}`;
+      console.log('Redirecting from vercel.app to magazam.az:', newUrl);
+      window.location.replace(newUrl);
+      return;
+    }
+    
     if (!token) {
       console.log('No token found, redirecting to forgot-password');
       navigate('/forgot-password');
