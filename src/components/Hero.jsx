@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination } from 'swiper/modules';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGetHeroQuery } from '../redux/api/heroApi';
 import { Link } from 'react-router-dom';
 import Container from './ui/Container';
@@ -9,6 +10,7 @@ import '../assets/css/HeroSection.css';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 const CountdownBox = ({ value, label }) => (
   <div className="bg-white rounded-md p-1.5 w-12 h-12 text-center shadow-sm flex flex-col items-center justify-center">
@@ -65,6 +67,8 @@ const CountdownTimer = ({ endDate }) => {
 export default function ProductBanners() {
   const { data, isLoading, error } = useGetHeroQuery();
   const hero = data?.hero;
+  const swiperRef = useRef(null);
+  const [swiperInstance, setSwiperInstance] = useState(null);
 
   // Default değerler (hero yoksa veya yükleniyorsa)
   if (isLoading) {
@@ -97,7 +101,7 @@ export default function ProductBanners() {
           <div className="lg:w-[680px] w-full">
             <div className="relative rounded-lg overflow-hidden h-full min-h-[420px] group">
               <Swiper
-                modules={[Autoplay, Pagination]}
+                modules={[Autoplay, Pagination, Navigation]}
                 spaceBetween={0}
                 slidesPerView={1}
                 autoplay={{
@@ -112,11 +116,15 @@ export default function ProductBanners() {
                 }}
                 loop={slides.length > 1}
                 className="h-full"
+                onSwiper={(swiper) => {
+                  swiperRef.current = swiper;
+                  setSwiperInstance(swiper);
+                }}
               >
                 {slides.map((slide, index) => (
                   <SwiperSlide key={index}>
                     <div 
-                      className="text-white p-6 md:p-10 h-full flex flex-col justify-between min-h-[420px] relative"
+                      className="text-white p-6 md:p-10 h-full flex flex-col justify-between min-h-[420px] relative hero-image-zoom-bg"
                       style={{
                         backgroundImage: slide.image?.url ? `url(${slide.image.url})` : 'none',
                         backgroundRepeat: 'no-repeat',
@@ -153,6 +161,36 @@ export default function ProductBanners() {
                   <div className="custom-pagination flex gap-2 bg-white rounded-full p-1 shadow-md w-auto px-3"></div>
                 </div>
               )}
+
+              {/* Custom Navigation Buttons */}
+              {slides.length > 1 && (
+                <>
+                  <button 
+                    className="swiper-button-prev-custom absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg opacity-0 group-hover:opacity-100 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (swiperInstance) {
+                        swiperInstance.slidePrev();
+                      }
+                    }}
+                  >
+                    <ChevronLeft className="w-6 h-6 text-gray-800" />
+                  </button>
+                  <button 
+                    className="swiper-button-next-custom absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg opacity-0 group-hover:opacity-100 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (swiperInstance) {
+                        swiperInstance.slideNext();
+                      }
+                    }}
+                  >
+                    <ChevronRight className="w-6 h-6 text-gray-800" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -163,7 +201,7 @@ export default function ProductBanners() {
           {/* Card 2.1: Right Top */}
           {rightTop.image?.url && (
             <div 
-              className="relative p-5 rounded-xl overflow-hidden h-[250px] group"
+              className="relative p-5 rounded-xl overflow-hidden h-[250px] group hero-image-zoom-bg"
               style={{
                 backgroundImage: `url(${rightTop.image.url})`,
                 backgroundRepeat: 'no-repeat',
@@ -196,7 +234,7 @@ export default function ProductBanners() {
               {bottomBlocks.slice(0, 2).map((block, index) => (
                 <div 
                   key={index}
-                  className={`${index === 0 ? 'bg-ps4 text-white' : 'bg-cam text-gray-900'} p-5 rounded-xl flex-1 h-[170px] relative overflow-hidden group`}
+                  className={`${index === 0 ? 'bg-ps4 text-white' : 'bg-cam text-gray-900'} p-5 rounded-xl flex-1 h-[170px] relative overflow-hidden group hero-image-zoom-bg`}
                   style={{
                     backgroundImage: block.image?.url ? `url(${block.image.url})` : 'none',
                     backgroundRepeat: 'no-repeat',
