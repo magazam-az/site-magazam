@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import MainSlider from "../components/MainSlider";
+import Hero from "../components/Hero";
 import FAQPage from "../components/FAQ";
 import ShoppingEvent from "../components/ShoppingEvent";
 import Categories from "../components/Categories";
@@ -45,7 +45,7 @@ const Home = () => {
             {/* <Products2/> */}
 
       <Navbar />
-      <MainSlider />
+      <Hero />
       <Categories />
       <Products 
         title="The Best Offers"
