@@ -291,12 +291,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                         <span>Məhsullar:</span>
                         <span>{validCartItems.length} ədəd</span>
                       </div>
-                      <div className="flex justify-between text-gray-600">
-                        <span>Çatdırılma:</span>
-                        <span className="text-green-600 font-semibold">
-                          {remainingForFreeShipping === 0 ? 'Pulsuz' : 'Hesablanacaq'}
-                        </span>
-                      </div>
+                 
                       <div className="pt-4 border-t-2 border-gray-200">
                         <div className="flex justify-between items-center">
                           <span className="text-lg font-semibold text-gray-900">Yekun:</span>

@@ -74,7 +74,7 @@ const MetashopPromotions = () => {
               to={`/promotions/${promotion.slug || promotion._id}`}
               className="inline-flex items-center bg-[#5C4977] text-white px-3 py-1.5 rounded text-base font-medium hover:bg-[#4a3d62] transition-colors"
             >
-              <span>Read More</span>
+              <span>Ətraflı</span>
             </Link>
           </div>
         </div>

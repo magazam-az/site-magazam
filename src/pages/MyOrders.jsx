@@ -62,7 +62,7 @@ const MyOrders = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-14 md:pb-0">
       <Navbar />
-      <section className="flex-1 py-8">
+      <section className="flex-1 py-6">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
           <div className="mb-6">

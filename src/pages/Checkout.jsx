@@ -67,7 +67,9 @@ const Checkout = () => {
         },
       };
 
+      console.log("Sifariş göndərilir:", orderData);
       const result = await createOrder(orderData).unwrap();
+      console.log("Sifariş cavabı:", result);
       
       // Response kontrolü - başarılı ise devam et
       if (result?.success || result?.order) {
@@ -75,7 +77,7 @@ const Checkout = () => {
         try {
           await refetchCart();
         } catch (refetchError) {
-          console.error("Sepet güncellenirken hata:", refetchError);
+          console.error("Səbət yenilənərkən xəta:", refetchError);
         }
         
         toast.success("Sifarişiniz uğurla verildi!");
@@ -83,34 +85,26 @@ const Checkout = () => {
         // Kısa bir gecikme sonra ana sayfaya yönlendir
         setTimeout(() => {
           navigate("/");
-        }, 500);
+        }, 1000);
       } else {
+        console.error("Gözlənilməz cavab formatı:", result);
         toast.error("Sifariş verilərkən xəta baş verdi");
       }
     } catch (error) {
-      // Hata durumunda response'u kontrol et
-      const errorData = error?.data || error;
+      // Hata mesajını al
+      const errorMessage = 
+        error?.data?.message || 
+        error?.message || 
+        "Sifariş verilərkən xəta baş verdi";
       
-      // Eğer response'da success: true veya order varsa, başarılı say
-      if (errorData?.success === true || errorData?.order) {
-        // Sepeti UI'da güncelle
-        try {
-          await refetchCart();
-        } catch (refetchError) {
-          console.error("Sepet güncellenirken hata:", refetchError);
-        }
-        
-        toast.success("Sifarişiniz uğurla verildi!");
-        
-        setTimeout(() => {
-          navigate("/");
-        }, 500);
-      } else {
-        // Gerçek hata durumu
-        const errorMessage = errorData?.error || errorData?.message || error?.message || "Sifariş verilərkən xəta baş verdi";
-        toast.error(errorMessage);
-        console.error("Sifariş hatası:", error);
-      }
+      console.error("Sifariş xətası detalları:", {
+        error,
+        errorData: error?.data,
+        errorMessage,
+        status: error?.status,
+      });
+      
+      toast.error(errorMessage);
     }
   };
 
