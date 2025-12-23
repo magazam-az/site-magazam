@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 // Proxy target URL-i - buradan API URL-ləri alınır
 const API_TARGET = 'https://api.magazam.az';
 
+
 export default defineConfig({
   plugins: [
     tailwindcss(),
