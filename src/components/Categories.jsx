@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import Container from "../components/ui/Container";
 import { useGetProductsQuery } from "../redux/api/productsApi";
 import { useGetCategoriesQuery } from "../redux/api/categoryApi"; // 🔥 Category API
+import { useGetPopularCategoriesQuery } from "../redux/api/popularCategoriesApi"; // PopularCategories API
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -75,6 +76,13 @@ export default function Categories() {
     isLoading: isCategoriesLoading,
     isError: isCategoriesError,
   } = useGetCategoriesQuery();
+
+  // PopularCategories (dinamik başlıq və visibility üçün)
+  const {
+    data: popularCategoriesData,
+    isLoading: isPopularCategoriesLoading,
+    isError: isPopularCategoriesError,
+  } = useGetPopularCategoriesQuery();
 
   const categories = useMemo(() => {
     const products = productsData?.products || [];
@@ -191,8 +199,38 @@ export default function Categories() {
     return result;
   }, [productsData, categoriesData]);
 
+  // PopularCategories-dən gələn məlumatlar
+  const popularCategories = popularCategoriesData?.popularCategories;
+  const title = popularCategories?.title || "Popular Categories";
+  const isActive = popularCategories?.isActive !== undefined ? popularCategories.isActive : true;
+  const visibleCategoryIds = useMemo(() => {
+    // Əgər PopularCategories yoxdursa, bütün kateqoriyaları göstər (fallback)
+    if (!popularCategories?.visibleCategories) {
+      return new Set(categories.map((cat) => cat._id));
+    }
+    return new Set(
+      popularCategories.visibleCategories
+        .filter((vc) => vc.isVisible !== false)
+        .map((vc) => vc.categoryId)
+    );
+  }, [popularCategories, categories]);
+
+  // Yalnız görünən kateqoriyaları filtr et
+  const visibleCategories = useMemo(() => {
+    // Əgər PopularCategories yüklənməyibsə, bütün kateqoriyaları göstər
+    if (isPopularCategoriesLoading || !popularCategories) {
+      return categories;
+    }
+    return categories.filter((cat) => visibleCategoryIds.has(cat._id));
+  }, [categories, visibleCategoryIds, isPopularCategoriesLoading, popularCategories]);
+
   const isLoading = isProductsLoading || isCategoriesLoading;
   const isError = isProductsError || isCategoriesError;
+
+  // Əgər bölmə deaktivdirsə, heç nə göstərmə (yalnız PopularCategories yüklənibsə)
+  if (!isPopularCategoriesLoading && popularCategories && !isActive) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -204,7 +242,7 @@ export default function Categories() {
     );
   }
 
-  if (isError || !categories.length) {
+  if (isError || !visibleCategories.length) {
     return (
       <Container>
         <div className="w-full py-8 sm:py-12 flex justify-center items-center">
@@ -219,14 +257,14 @@ export default function Categories() {
   return (
     <Container>
       <div className="w-full py-8 sm:py-12">
-        {/* Başlıq */}
+        {/* Başlıq - settings-dən gəlir */}
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-5 tracking-tight text-center sm:text-left">
-          Popular Categories
+          {title}
         </h2>
 
         {/* Categories Grid */}
         <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-          {categories.map((category) => (
+          {visibleCategories.map((category) => (
             <div
               key={category._id || category.name}
               className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-15px)] lg:w-[calc(20%-24px)] xl:w-[calc(16.666%-20px)]"

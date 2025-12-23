@@ -44,6 +44,9 @@ import EditSpec from './components/admin/EditSpec'
 import AdminHero from './components/admin/AdminHero'
 import AddHero from './components/admin/AddHero'
 import EditHero from './components/admin/EditHero'
+import AdminPopularCategories from './components/admin/AdminPopularCategories'
+import AddPopularCategories from './components/admin/AddPopularCategories'
+import EditPopularCategories from './components/admin/EditPopularCategories'
 
 import PrivateRoute from './components/PrivateRoute'
 import PublicRoute from './components/PublicRoute'
@@ -313,6 +316,24 @@ function App() {
           <Route path='/admin/edit-hero/:id' element={
             <AdminRoute>
               <EditHero />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/popular-categories' element={
+            <AdminRoute>
+              <AdminPopularCategories />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/add-popular-categories' element={
+            <AdminRoute>
+              <AddPopularCategories />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/edit-popular-categories/:id' element={
+            <AdminRoute>
+              <EditPopularCategories />
             </AdminRoute>
           } />
         </Routes>
