@@ -41,12 +41,8 @@ import EditBrand from './components/admin/EditBrand'
 import SpecsManagement from './components/admin/SpecsManagement'
 import CreateSpec from './components/admin/CreateSpec'
 import EditSpec from './components/admin/EditSpec'
-import AdminHero from './components/admin/AdminHero'
-import AddHero from './components/admin/AddHero'
-import EditHero from './components/admin/EditHero'
-import AdminPopularCategories from './components/admin/AdminPopularCategories'
-import AddPopularCategories from './components/admin/AddPopularCategories'
-import EditPopularCategories from './components/admin/EditPopularCategories'
+import AdminContents from './components/admin/AdminContents'
+import EditPageContent from './components/admin/EditPageContent'
 
 import PrivateRoute from './components/PrivateRoute'
 import PublicRoute from './components/PublicRoute'
@@ -301,39 +297,15 @@ function App() {
             </AdminRoute>
           } />
 
-          <Route path='/admin/heroes' element={
+          <Route path='/admin/contents' element={
             <AdminRoute>
-              <AdminHero />
+              <AdminContents />
             </AdminRoute>
           } />
 
-          <Route path='/admin/add-hero' element={
+          <Route path='/admin/contents/home/edit' element={
             <AdminRoute>
-              <AddHero />
-            </AdminRoute>
-          } />
-
-          <Route path='/admin/edit-hero/:id' element={
-            <AdminRoute>
-              <EditHero />
-            </AdminRoute>
-          } />
-
-          <Route path='/admin/popular-categories' element={
-            <AdminRoute>
-              <AdminPopularCategories />
-            </AdminRoute>
-          } />
-
-          <Route path='/admin/add-popular-categories' element={
-            <AdminRoute>
-              <AddPopularCategories />
-            </AdminRoute>
-          } />
-
-          <Route path='/admin/edit-popular-categories/:id' element={
-            <AdminRoute>
-              <EditPopularCategories />
+              <EditPageContent />
             </AdminRoute>
           } />
         </Routes>

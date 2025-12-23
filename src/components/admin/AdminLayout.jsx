@@ -13,8 +13,7 @@ import {
   Award,
   Sliders,
   Percent,
-  Image,
-  Star // Yeni icon əlavə edildi
+  FolderOpen
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/features/userSlice';
@@ -158,28 +157,15 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
             </Link>
 
             <Link
-              to="/admin/heroes"
+              to="/admin/contents"
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                isActive('/admin/heroes')
+                isActive('/admin/contents')
                   ? 'bg-[#5C4977] text-white shadow-sm'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
               }`}
             >
-              <Image size={20} />
-              <span className="font-medium">Hero</span>
-            </Link>
-
-            {/* Popular Categories linki əlavə edildi */}
-            <Link
-              to="/admin/popular-categories"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                isActive('/admin/popular-categories')
-                  ? 'bg-[#5C4977] text-white shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
-              }`}
-            >
-              <Star size={20} />
-              <span className="font-medium">Popular Kateqoriyalar</span>
+              <FolderOpen size={20} />
+              <span className="font-medium">Kontentlər</span>
             </Link>
 
             <Link

@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import Hero from "../components/Hero";
+import DefaultSlider from "../components/DefaultSlider";
+import DynamicCategories from "../components/DynamicCategories";
 import FAQPage from "../components/FAQ";
 import ShoppingEvent from "../components/ShoppingEvent";
-import Categories from "../components/Categories";
 import Products from "../components/Products";
 import Container from "../components/ui/Container";
 import Accessory from "../components/Accessory";
@@ -14,10 +14,16 @@ import RegisterForm from "../components/Register";
 import LoginForm from "../components/Login";
 import Products2 from "../components/Products2";
 import { useGetProductsQuery } from "../redux/api/productsApi";
+import { useGetPageContentQuery } from "../redux/api/pageContentApi";
 
 const Home = () => {
   // API'den ürünleri getir
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+  
+  // Ana səhifə kontentini gətir
+  const { data: pageContentData, isLoading: pageContentLoading } = useGetPageContentQuery("home");
+  const pageContent = pageContentData?.pageContent;
+  const blocks = pageContent?.blocks || [];
   
   // Ürünleri Product component'in beklediği formata dönüştür
   const bestOffersProducts = useMemo(() => {
@@ -45,8 +51,21 @@ const Home = () => {
             {/* <Products2/> */}
 
       <Navbar />
-      <Hero />
-      <Categories />
+      
+      {/* Dinamik blokları render et */}
+      {!pageContentLoading && blocks.map((block, index) => {
+        if (!block.isActive) return null;
+        
+        if (block.type === "DefaultSlider" && block.sliderData) {
+          return <DefaultSlider key={block._id || index} sliderData={block.sliderData} />;
+        }
+        
+        if (block.type === "Categories" && block.categoriesData) {
+          return <DynamicCategories key={block._id || index} categoriesData={block.categoriesData} />;
+        }
+        
+        return null;
+      })}
       <Products 
         title="The Best Offers"
         products={bestOffersProducts}
