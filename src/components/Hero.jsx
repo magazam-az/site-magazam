@@ -62,6 +62,27 @@ export default function ProductBanners() {
   const swiperRef = useRef(null);
   const [swiperInstance, setSwiperInstance] = useState(null);
 
+  // Debug: məlumatı yoxla
+  useEffect(() => {
+    if (hero) {
+      console.log("=== HERO DATA DEBUG ===");
+      console.log("Full hero object:", hero);
+      console.log("Hero ID:", hero._id);
+      console.log("Hero isActive:", hero.isActive);
+      console.log("Hero type:", hero.type);
+      console.log("LeftSide:", hero.leftSide);
+      console.log("Slides array:", hero.leftSide?.slides);
+      console.log("Slides count:", hero.leftSide?.slides?.length || 0);
+      console.log("RightTop:", hero.rightTop);
+      console.log("RightTop image:", hero.rightTop?.image);
+      console.log("BottomBlocks:", hero.bottomBlocks);
+      console.log("BottomBlocks count:", hero.bottomBlocks?.length || 0);
+      console.log("=====================");
+    } else {
+      console.log("Hero is null or undefined");
+    }
+  }, [hero]);
+
   if (isLoading) {
     return (
       <Container>
@@ -74,11 +95,61 @@ export default function ProductBanners() {
     );
   }
 
-  if (error || !hero) return null;
+  if (error) {
+    console.error("Hero error:", error);
+    return null;
+  }
+
+  if (!hero) {
+    console.log("Hero not found or not active");
+    return (
+      <Container>
+        <div className="w-full my-5">
+          <div className="text-center py-8 text-gray-500">
+            Hero məlumatı tapılmadı
+          </div>
+        </div>
+      </Container>
+    );
+  }
 
   const slides = hero.leftSide?.slides || [];
   const rightTop = hero.rightTop || {};
   const bottomBlocks = hero.bottomBlocks || [];
+
+  console.log("=== RENDERING HERO ===");
+  console.log("Hero object:", hero);
+  console.log("Hero leftSide:", hero.leftSide);
+  console.log("Slides array:", slides);
+  console.log("Slides count:", slides.length);
+  if (slides.length > 0) {
+    console.log("First slide:", slides[0]);
+    console.log("First slide image:", slides[0].image);
+  }
+  console.log("RightTop object:", rightTop);
+  console.log("RightTop image:", rightTop.image);
+  console.log("RightTop image URL:", rightTop.image?.url);
+  console.log("BottomBlocks array:", bottomBlocks);
+  console.log("BottomBlocks count:", bottomBlocks.length);
+  if (bottomBlocks.length > 0) {
+    console.log("First bottomBlock:", bottomBlocks[0]);
+    console.log("First bottomBlock image:", bottomBlocks[0].image);
+  }
+  console.log("=====================");
+
+  // Əgər heç bir məlumat yoxdursa, göstərmə
+  if (slides.length === 0 && !rightTop.image?.url && bottomBlocks.length === 0) {
+    console.log("No hero content available - all sections are empty");
+    return (
+      <Container>
+        <div className="w-full my-5">
+          <div className="text-center py-8 text-gray-500">
+            Hero məlumatı boşdur
+          </div>
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -175,11 +246,11 @@ export default function ProductBanners() {
           {/* --- 2. Right Column --- */}
           <div className="lg:flex-1 flex flex-col gap-6">
             {/* Right Top */}
-            {rightTop.image?.url && (
+            {rightTop && rightTop.image && rightTop.image.url ? (
               <div
                 className="relative p-5 rounded-xl overflow-hidden h-[250px] group hero-image-zoom-bg"
                 style={{
-                  "--bg": rightTop.image?.url ? `url(${rightTop.image.url})` : "none",
+                  "--bg": rightTop.image.url ? `url(${rightTop.image.url})` : "none",
                 }}
               >
                 <div className="relative z-10 px-1">
@@ -199,44 +270,55 @@ export default function ProductBanners() {
                   )}
                 </div>
               </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                RightTop məlumatı yoxdur
+              </div>
             )}
 
             {/* Bottom blocks */}
-            {bottomBlocks.length > 0 && (
+            {bottomBlocks && bottomBlocks.length > 0 ? (
               <div className="flex flex-col sm:flex-row gap-6">
-                {bottomBlocks.slice(0, 2).map((block, index) => (
-                  <div
-                    key={index}
-                    className={`${index === 0 ? "bg-ps4 text-white" : "bg-cam text-gray-900"} p-5 rounded-xl flex-1 h-[170px] relative overflow-hidden group hero-image-zoom-bg`}
-                    style={{
-                      "--bg": block.image?.url ? `url(${block.image.url})` : "none",
-                    }}
-                  >
-                    <div className="flex items-center justify-between space-x-4 h-full relative z-10">
-                      <div className="flex flex-col justify-between h-full">
-                        <div>
-                          {block.title && <h3 className="text-lg font-bold">{block.title}</h3>}
-                          {block.description && (
-                            <p className={`text-xs ${index === 0 ? "text-blue-100" : "text-gray-700"} mb-3`}>
-                              {block.description}
-                            </p>
+                {bottomBlocks.slice(0, 2).map((block, index) => {
+                  console.log(`Rendering bottom block ${index}:`, block);
+                  return (
+                    <div
+                      key={index}
+                      className={`${index === 0 ? "bg-ps4 text-white" : "bg-cam text-gray-900"} p-5 rounded-xl flex-1 h-[170px] relative overflow-hidden group hero-image-zoom-bg`}
+                      style={{
+                        "--bg": block.image?.url ? `url(${block.image.url})` : "none",
+                      }}
+                    >
+                      <div className="flex items-center justify-between space-x-4 h-full relative z-10">
+                        <div className="flex flex-col justify-between h-full">
+                          <div>
+                            {block.title && <h3 className="text-lg font-bold">{block.title}</h3>}
+                            {block.description && (
+                              <p className={`text-xs ${index === 0 ? "text-blue-100" : "text-gray-700"} mb-3`}>
+                                {block.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {block.buttonLink && block.buttonText && (
+                            <Link
+                              to={block.buttonLink}
+                              className={`bg-white ${index === 0 ? "text-blue-500" : "text-yellow-800"} font-semibold py-2 text-center rounded-md text-xs hover:bg-gray-100 transition-colors cursor-pointer`}
+                            >
+                              {block.buttonText}
+                            </Link>
                           )}
                         </div>
 
-                        {block.buttonLink && block.buttonText && (
-                          <Link
-                            to={block.buttonLink}
-                            className={`bg-white ${index === 0 ? "text-blue-500" : "text-yellow-800"} font-semibold py-2 text-center rounded-md text-xs hover:bg-gray-100 transition-colors cursor-pointer`}
-                          >
-                            {block.buttonText}
-                          </Link>
-                        )}
+                        <div className="flex-shrink-0">{/* Image placeholder */}</div>
                       </div>
-
-                      <div className="flex-shrink-0">{/* Image placeholder */}</div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                BottomBlocks məlumatı yoxdur
               </div>
             )}
           </div>

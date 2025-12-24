@@ -15,6 +15,7 @@ import LoginForm from "../components/Login";
 import Products2 from "../components/Products2";
 import { useGetProductsQuery } from "../redux/api/productsApi";
 import { useGetPageContentQuery } from "../redux/api/pageContentApi";
+import ProductBanners from "../components/Hero";
 
 const Home = () => {
   // API'den ürünleri getir
@@ -51,6 +52,7 @@ const Home = () => {
             {/* <Products2/> */}
 
       <Navbar />
+      <ProductBanners/>
       
       {/* Dinamik blokları render et */}
       {!pageContentLoading && blocks.map((block, index) => {

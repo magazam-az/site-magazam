@@ -8,8 +8,9 @@ import {
   useUpdateBlocksOrderMutation,
 } from "../../redux/api/pageContentApi";
 import { useGetCategoriesQuery } from "../../redux/api/categoryApi";
+import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation } from "../../redux/api/heroApi";
 import Swal from "sweetalert2";
-import { FaPlus, FaTrash, FaEdit, FaImage } from "react-icons/fa";
+import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
@@ -17,53 +18,44 @@ const EditPageContent = () => {
   const navigate = useNavigate();
   const { data, isLoading, refetch } = useGetOrCreateHomePageContentQuery();
   const { data: categoriesApiData } = useGetCategoriesQuery();
+  const { data: heroesData, isLoading: isLoadingHeroes, refetch: refetchHeroes } = useGetAllHeroesQuery();
   const [addBlock, { isLoading: isAdding }] = useAddBlockMutation();
   const [updateBlock, { isLoading: isUpdating }] = useUpdateBlockMutation();
   const [deleteBlock, { isLoading: isDeleting }] = useDeleteBlockMutation();
   const [updateBlocksOrder, { isLoading: isUpdatingOrder }] = useUpdateBlocksOrderMutation();
+  const [deleteHero] = useDeleteHeroMutation();
+  const [createHero, { isLoading: isCreatingHero }] = useCreateHeroMutation();
 
   const pageContent = data?.pageContent;
   const pageContentId = pageContent?._id;
   const blocks = pageContent?.blocks || [];
   const categories = categoriesApiData?.categories || [];
+  const heroes = heroesData?.heroes || [];
 
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [selectedBlockType, setSelectedBlockType] = useState("");
   const [editingBlock, setEditingBlock] = useState(null);
   const [draggedBlock, setDraggedBlock] = useState(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState(null);
-
-  // DefaultSlider state
-  const [sliderData, setSliderData] = useState({
-    slides: [
-      {
-        image: null,
-        imagePreview: null,
-        title: "",
-        description: "",
-        buttonText: "",
-        buttonLink: "",
-      },
-    ],
-    rightTop: {
-      image: null,
-      imagePreview: null,
-      title: "",
-      buttonText: "",
-      buttonLink: "",
-      endDate: "",
-    },
-    bottomBlocks: [
-      {
-        image: null,
-        imagePreview: null,
-        title: "",
-        description: "",
-        buttonText: "",
-        buttonLink: "",
-      },
-    ],
+  const [showAddHeroModal, setShowAddHeroModal] = useState(false);
+  
+  // Hero form state
+  const [heroType, setHeroType] = useState("DefaultSlider");
+  const [slides, setSlides] = useState([
+    { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" }
+  ]);
+  const [rightTop, setRightTop] = useState({
+    image: null,
+    imagePreview: null,
+    title: "",
+    buttonText: "",
+    buttonLink: "",
+    endDate: "",
   });
+  const [bottomBlocks, setBottomBlocks] = useState([
+    { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" },
+    { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" }
+  ]);
 
   // Categories state
   const [categoriesData, setCategoriesData] = useState({
@@ -71,121 +63,309 @@ const EditPageContent = () => {
     visibleCategories: [],
   });
 
-  const handleAddSlide = () => {
-    setSliderData({
-      ...sliderData,
-      slides: [
-        ...sliderData.slides,
-        {
-          image: null,
-          imagePreview: null,
-          title: "",
-          description: "",
-          buttonText: "",
-          buttonLink: "",
-        },
-      ],
+  const handleDeleteHero = async (id) => {
+    const result = await Swal.fire({
+      title: "Əminsiniz?",
+      text: "Bu hero-nu silmək istədiyinizə əminsiniz?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Bəli, sil!",
+      cancelButtonText: "Ləğv et",
     });
-  };
 
-  const handleRemoveSlide = (index) => {
-    if (sliderData.slides.length > 1) {
-      setSliderData({
-        ...sliderData,
-        slides: sliderData.slides.filter((_, i) => i !== index),
-      });
+    if (result.isConfirmed) {
+      try {
+        await deleteHero(id).unwrap();
+        Swal.fire({
+          title: "Silindi!",
+          text: "Hero uğurla silindi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+        refetchHeroes();
+      } catch (error) {
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || "Hero silinərkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
     }
   };
 
-  const handleSlideChange = (index, field, value) => {
-    const newSlides = [...sliderData.slides];
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('az-AZ');
+  };
+
+  // Hero form handlers
+  const addSlide = () => {
+    setSlides([...slides, { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" }]);
+  };
+
+  const removeSlide = (index) => {
+    if (slides.length > 1) {
+      setSlides(slides.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateSlide = (index, field, value) => {
+    const newSlides = [...slides];
     newSlides[index][field] = value;
-    setSliderData({ ...sliderData, slides: newSlides });
+    setSlides(newSlides);
   };
 
   const handleSlideImageChange = (index, e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const newSlides = [...sliderData.slides];
+      const newSlides = [...slides];
       newSlides[index].image = file;
-      newSlides[index].imageFile = file;
       const reader = new FileReader();
       reader.onloadend = () => {
         newSlides[index].imagePreview = reader.result;
-        setSliderData({ ...sliderData, slides: newSlides });
+        setSlides(newSlides);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleRightTopChange = (field, value) => {
-    setSliderData({
-      ...sliderData,
-      rightTop: { ...sliderData.rightTop, [field]: value },
-    });
+  const updateRightTop = (field, value) => {
+    setRightTop({ ...rightTop, [field]: value });
   };
 
   const handleRightTopImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      setRightTop({ ...rightTop, image: file });
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSliderData({
-          ...sliderData,
-          rightTop: {
-            ...sliderData.rightTop,
-            image: file,
-            imageFile: file,
-            imagePreview: reader.result,
-          },
-        });
+        setRightTop({ ...rightTop, image: file, imagePreview: reader.result });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleAddBottomBlock = () => {
-    setSliderData({
-      ...sliderData,
-      bottomBlocks: [
-        ...sliderData.bottomBlocks,
-        {
-          image: null,
-          imagePreview: null,
-          title: "",
-          description: "",
-          buttonText: "",
-          buttonLink: "",
-        },
-      ],
-    });
-  };
-
-  const handleRemoveBottomBlock = (index) => {
-    setSliderData({
-      ...sliderData,
-      bottomBlocks: sliderData.bottomBlocks.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleBottomBlockChange = (index, field, value) => {
-    const newBlocks = [...sliderData.bottomBlocks];
+  const updateBottomBlock = (index, field, value) => {
+    const newBlocks = [...bottomBlocks];
     newBlocks[index][field] = value;
-    setSliderData({ ...sliderData, bottomBlocks: newBlocks });
+    setBottomBlocks(newBlocks);
   };
 
   const handleBottomBlockImageChange = (index, e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const newBlocks = [...sliderData.bottomBlocks];
+      const newBlocks = [...bottomBlocks];
       newBlocks[index].image = file;
-      newBlocks[index].imageFile = file;
       const reader = new FileReader();
       reader.onloadend = () => {
         newBlocks[index].imagePreview = reader.result;
-        setSliderData({ ...sliderData, bottomBlocks: newBlocks });
+        setBottomBlocks(newBlocks);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const resetHeroForm = () => {
+    setHeroType("DefaultSlider");
+    setSlides([
+      { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" }
+    ]);
+    setRightTop({
+      image: null,
+      imagePreview: null,
+      title: "",
+      buttonText: "",
+      buttonLink: "",
+      endDate: "",
+    });
+    setBottomBlocks([
+      { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" },
+      { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" }
+    ]);
+  };
+
+  const handleCreateHero = async (e) => {
+    e.preventDefault();
+
+    console.log("=== HERO CREATE START ===");
+    console.log("Slides:", slides);
+    console.log("RightTop:", rightTop);
+    console.log("BottomBlocks:", bottomBlocks);
+
+    // Validation
+    if (slides.length === 0) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Ən azı bir slide əlavə edin",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    for (let i = 0; i < slides.length; i++) {
+      const slide = slides[i];
+      console.log(`Validating slide ${i}:`, {
+        hasImage: !!slide.image,
+        title: slide.title,
+        description: slide.description,
+        buttonText: slide.buttonText,
+        buttonLink: slide.buttonLink,
+      });
+      
+      if (!slide.image || !slide.title || !slide.description || !slide.buttonText || !slide.buttonLink) {
+        Swal.fire({
+          title: "Xəta!",
+          text: `Slide ${i + 1} üçün bütün sahələr doldurulmalıdır`,
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+    }
+
+    if (!rightTop.image || !rightTop.title || !rightTop.buttonText || !rightTop.buttonLink || !rightTop.endDate) {
+      console.error("RightTop validation failed:", rightTop);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Sağ üst hissə üçün bütün sahələr doldurulmalıdır",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    for (let i = 0; i < bottomBlocks.length; i++) {
+      const block = bottomBlocks[i];
+      console.log(`Validating bottom block ${i}:`, {
+        hasImage: !!block.image,
+        title: block.title,
+        description: block.description,
+        buttonText: block.buttonText,
+        buttonLink: block.buttonLink,
+      });
+      
+      if (!block.image || !block.title || !block.description || !block.buttonText || !block.buttonLink) {
+        Swal.fire({
+          title: "Xəta!",
+          text: `Alt blok ${i + 1} üçün bütün sahələr doldurulmalıdır`,
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+    }
+
+    const form = new FormData();
+    form.append("type", heroType);
+    console.log("Hero type:", heroType);
+
+    // Slide şəkilləri
+    let slideImageCount = 0;
+    slides.forEach((slide, index) => {
+      if (slide.image) {
+        form.append(`slideImage_${index}`, slide.image);
+        slideImageCount++;
+        console.log(`Added slide image ${index}:`, slide.image.name);
+      } else {
+        console.warn(`Slide ${index} has no image!`);
+      }
+    });
+    console.log(`Total slide images: ${slideImageCount}`);
+
+    // RightTop şəkli
+    if (rightTop.image) {
+      form.append("rightTopImage", rightTop.image);
+      console.log("Added rightTop image:", rightTop.image.name);
+    } else {
+      console.warn("RightTop has no image!");
+    }
+
+    // BottomBlocks şəkilləri
+    let bottomBlockImageCount = 0;
+    bottomBlocks.forEach((block, index) => {
+      if (block.image) {
+        form.append(`bottomBlockImage_${index}`, block.image);
+        bottomBlockImageCount++;
+        console.log(`Added bottom block image ${index}:`, block.image.name);
+      } else {
+        console.warn(`Bottom block ${index} has no image!`);
+      }
+    });
+    console.log(`Total bottom block images: ${bottomBlockImageCount}`);
+
+    // JSON məlumatları
+    const leftSideData = {
+      slides: slides.map(slide => ({
+        title: slide.title,
+        description: slide.description,
+        buttonText: slide.buttonText,
+        buttonLink: slide.buttonLink,
+      }))
+    };
+    form.append("leftSide", JSON.stringify(leftSideData));
+    console.log("LeftSide data:", leftSideData);
+
+    const rightTopData = {
+      title: rightTop.title,
+      buttonText: rightTop.buttonText,
+      buttonLink: rightTop.buttonLink,
+      endDate: new Date(rightTop.endDate).toISOString(),
+    };
+    form.append("rightTop", JSON.stringify(rightTopData));
+    console.log("RightTop data:", rightTopData);
+
+    const bottomBlocksData = bottomBlocks.map(block => ({
+      title: block.title,
+      description: block.description,
+      buttonText: block.buttonText,
+      buttonLink: block.buttonLink,
+    }));
+    form.append("bottomBlocks", JSON.stringify(bottomBlocksData));
+    console.log("BottomBlocks data:", bottomBlocksData);
+
+    // FormData məzmununu yoxla
+    console.log("FormData entries:");
+    for (let pair of form.entries()) {
+      if (pair[1] instanceof File) {
+        console.log(`${pair[0]}: [File] ${pair[1].name} (${pair[1].size} bytes)`);
+      } else {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+    }
+
+    try {
+      console.log("Sending createHero request...");
+      const result = await createHero(form).unwrap();
+      console.log("CreateHero success:", result);
+
+      Swal.fire({
+        title: "Uğur!",
+        text: "Hero uğurla əlavə edildi",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+        confirmButtonColor: "#5C4977",
+      });
+
+      setShowAddHeroModal(false);
+      resetHeroForm();
+      refetchHeroes();
+    } catch (error) {
+      console.error("CreateHero error:", error);
+      console.error("Error data:", error?.data);
+      console.error("Error message:", error?.data?.error || error?.message);
+      
+      Swal.fire({
+        title: "Xəta!",
+        text: error?.data?.error || error?.message || "Hero əlavə edilərkən xəta baş verdi.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     }
   };
 
@@ -222,134 +402,7 @@ const EditPageContent = () => {
       return;
     }
 
-    if (selectedBlockType === "DefaultSlider") {
-      // Validation
-      if (sliderData.slides.length === 0) {
-        Swal.fire({
-          title: "Xəta!",
-          text: "Ən azı bir slide əlavə edin",
-          icon: "error",
-          confirmButtonColor: "#5C4977",
-        });
-        return;
-      }
-
-      for (let i = 0; i < sliderData.slides.length; i++) {
-        const slide = sliderData.slides[i];
-        if (!slide.title || !slide.description || !slide.buttonText || !slide.buttonLink) {
-          Swal.fire({
-            title: "Xəta!",
-            text: `Slide ${i + 1} üçün bütün sahələr doldurulmalıdır`,
-            icon: "error",
-            confirmButtonColor: "#5C4977",
-          });
-          return;
-        }
-      }
-
-      if (!sliderData.rightTop.title || !sliderData.rightTop.buttonText || !sliderData.rightTop.buttonLink || !sliderData.rightTop.endDate) {
-        Swal.fire({
-          title: "Xəta!",
-          text: "Sağ üst hissə üçün bütün sahələr doldurulmalıdır",
-          icon: "error",
-          confirmButtonColor: "#5C4977",
-        });
-        return;
-      }
-
-      for (let i = 0; i < sliderData.bottomBlocks.length; i++) {
-        const block = sliderData.bottomBlocks[i];
-        if (!block.title || !block.description || !block.buttonText || !block.buttonLink) {
-          Swal.fire({
-            title: "Xəta!",
-            text: `Alt blok ${i + 1} üçün bütün sahələr doldurulmalıdır`,
-            icon: "error",
-            confirmButtonColor: "#5C4977",
-          });
-          return;
-        }
-      }
-
-      const formData = new FormData();
-      formData.append("pageType", "home");
-      formData.append("blockType", "DefaultSlider");
-      
-      // Prepare slider data without image files
-      const sliderDataForJson = {
-        slides: sliderData.slides.map(slide => ({
-          title: slide.title,
-          description: slide.description,
-          buttonText: slide.buttonText,
-          buttonLink: slide.buttonLink,
-        })),
-        rightTop: {
-          title: sliderData.rightTop.title,
-          buttonText: sliderData.rightTop.buttonText,
-          buttonLink: sliderData.rightTop.buttonLink,
-          endDate: sliderData.rightTop.endDate,
-        },
-        bottomBlocks: sliderData.bottomBlocks.map(block => ({
-          title: block.title,
-          description: block.description,
-          buttonText: block.buttonText,
-          buttonLink: block.buttonLink,
-        })),
-      };
-      
-      formData.append("blockData", JSON.stringify({ sliderData: sliderDataForJson }));
-
-      // Add images
-      sliderData.slides.forEach((slide, index) => {
-        if (slide.imageFile) {
-          formData.append(`slideImage_${index}`, slide.imageFile);
-        }
-      });
-
-      if (sliderData.rightTop.imageFile) {
-        formData.append("rightTopImage", sliderData.rightTop.imageFile);
-      }
-
-      sliderData.bottomBlocks.forEach((block, index) => {
-        if (block.imageFile) {
-          formData.append(`bottomBlockImage_${index}`, block.imageFile);
-        }
-      });
-
-      try {
-        if (editingBlock) {
-          await updateBlock({
-            pageContentId,
-            blockId: editingBlock._id,
-            formData,
-          }).unwrap();
-        } else {
-          await addBlock({
-            pageContentId,
-            formData,
-          }).unwrap();
-        }
-
-        Swal.fire({
-          title: "Uğurlu!",
-          text: editingBlock ? "Blok yeniləndi" : "Blok əlavə edildi",
-          icon: "success",
-          confirmButtonColor: "#5C4977",
-        });
-
-        setShowAddBlockModal(false);
-        setEditingBlock(null);
-        setSelectedBlockType("");
-        resetForm();
-        refetch();
-      } catch (error) {
-        Swal.fire({
-          title: "Xəta!",
-          text: error?.data?.error || "Blok saxlanarkən xəta baş verdi",
-          icon: "error",
-          confirmButtonColor: "#5C4977",
-        });
-      }
-    } else if (selectedBlockType === "Categories") {
+    if (selectedBlockType === "Categories") {
       const formData = new FormData();
       formData.append("pageType", "home");
       formData.append("blockType", "Categories");
@@ -429,22 +482,7 @@ const EditPageContent = () => {
     setEditingBlock(block);
     setSelectedBlockType(block.type);
 
-    if (block.type === "DefaultSlider" && block.sliderData) {
-      setSliderData({
-        slides: block.sliderData.slides?.map((slide) => ({
-          ...slide,
-          imagePreview: slide.image?.url,
-        })) || [],
-        rightTop: {
-          ...block.sliderData.rightTop,
-          imagePreview: block.sliderData.rightTop?.image?.url,
-        },
-        bottomBlocks: block.sliderData.bottomBlocks?.map((block) => ({
-          ...block,
-          imagePreview: block.image?.url,
-        })) || [],
-      });
-    } else if (block.type === "Categories" && block.categoriesData) {
+    if (block.type === "Categories" && block.categoriesData) {
       setCategoriesData(block.categoriesData);
     }
 
@@ -452,36 +490,6 @@ const EditPageContent = () => {
   };
 
   const resetForm = () => {
-    setSliderData({
-      slides: [
-        {
-          image: null,
-          imagePreview: null,
-          title: "",
-          description: "",
-          buttonText: "",
-          buttonLink: "",
-        },
-      ],
-      rightTop: {
-        image: null,
-        imagePreview: null,
-        title: "",
-        buttonText: "",
-        buttonLink: "",
-        endDate: "",
-      },
-      bottomBlocks: [
-        {
-          image: null,
-          imagePreview: null,
-          title: "",
-          description: "",
-          buttonText: "",
-          buttonLink: "",
-        },
-      ],
-    });
     setCategoriesData({
       title: "Popular Kateqoriyalar",
       visibleCategories: [],
@@ -491,7 +499,7 @@ const EditPageContent = () => {
   const getBlockTypeLabel = (type) => {
     switch (type) {
       case "DefaultSlider":
-        return "Slider";
+        return "Hero";
       case "Categories":
         return "Kateqoriyalar";
       default:
@@ -765,9 +773,9 @@ const EditPageContent = () => {
                         onClick={() => setSelectedBlockType("DefaultSlider")}
                         className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
                       >
-                        <h4 className="font-semibold text-gray-800">Slider</h4>
+                        <h4 className="font-semibold text-gray-800">Hero</h4>
                         <p className="text-sm text-gray-500">
-                          Ana səhifə üçün slider bloku
+                          Ana səhifə üçün hero idarəetməsi
                         </p>
                       </button>
                       <button
@@ -784,332 +792,101 @@ const EditPageContent = () => {
                     </div>
                   ) : selectedBlockType === "DefaultSlider" ? (
                     <div className="space-y-6">
-                      <h3 className="text-lg font-semibold">Slider Məlumatları</h3>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold">Hero İdarəetməsi</h3>
+                        <button
+                          onClick={() => {
+                            resetHeroForm();
+                            setShowAddHeroModal(true);
+                          }}
+                          className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer"
+                        >
+                          <FaPlus className="h-5 w-5" />
+                          Yeni Hero
+                        </button>
+                      </div>
 
-                      {/* Slides */}
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="font-semibold">Slides</h4>
-                          <button
-                            onClick={handleAddSlide}
-                            className="bg-[#5C4977] text-white py-1 px-3 rounded-lg text-sm hover:bg-[#5C4977]/90 cursor-pointer"
-                          >
-                            <FaPlus className="inline mr-1" />
-                            Slide Əlavə Et
-                          </button>
+                      {isLoadingHeroes ? (
+                        <div className="flex items-center justify-center py-12">
+                          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
                         </div>
-                        {sliderData.slides.map((slide, index) => (
-                          <div
-                            key={index}
-                            className="border border-gray-200 rounded-lg p-4 mb-4"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <h5 className="font-medium">Slide {index + 1}</h5>
-                              {sliderData.slides.length > 1 && (
-                                <button
-                                  onClick={() => handleRemoveSlide(index)}
-                                  className="text-red-500 hover:text-red-700 cursor-pointer"
-                                >
-                                  <FaTrash />
-                                </button>
-                              )}
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Şəkil
-                                </label>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) =>
-                                    handleSlideImageChange(index, e)
-                                  }
-                                  className="w-full"
-                                />
-                                {slide.imagePreview && (
-                                  <img
-                                    src={slide.imagePreview}
-                                    alt="Preview"
-                                    className="mt-2 w-full h-32 object-cover rounded"
-                                  />
+                      ) : (
+                        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-[#5C4977]/10 bg-gray-50">
+                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Tip</th>
+                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Status</th>
+                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Slide Sayı</th>
+                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Yaradılma Tarixi</th>
+                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {heroes.length === 0 ? (
+                                  <tr>
+                                    <td colSpan="5" className="text-center py-8 text-gray-500">
+                                      Heç bir hero tapılmadı
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  heroes.map((hero) => (
+                                    <tr
+                                      key={hero._id}
+                                      className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
+                                    >
+                                      <td className="py-4 px-4">
+                                        <div className="font-medium text-gray-800">{hero.type || "DefaultSlider"}</div>
+                                      </td>
+                                      <td className="py-4 px-4">
+                                        <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                                          hero.isActive 
+                                            ? 'bg-green-100 text-green-800' 
+                                            : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                          {hero.isActive ? 'Aktiv' : 'Deaktiv'}
+                                        </span>
+                                      </td>
+                                      <td className="py-4 px-4">
+                                        <span className="text-gray-600 text-sm">
+                                          {hero.leftSide?.slides?.length || 0} slide
+                                        </span>
+                                      </td>
+                                      <td className="py-4 px-4">
+                                        <span className="text-gray-600 text-sm">
+                                          {formatDate(hero.createdAt)}
+                                        </span>
+                                      </td>
+                                      <td className="py-4 px-4">
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() => {
+                                              setShowAddBlockModal(false);
+                                              navigate(`/admin/edit-hero/${hero._id}`);
+                                            }}
+                                            className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
+                                            title="Redaktə et"
+                                          >
+                                            <FaEdit className="h-5 w-5" />
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteHero(hero._id)}
+                                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                            title="Sil"
+                                          >
+                                            <FaTrash className="h-5 w-5" />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))
                                 )}
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Başlıq
-                                </label>
-                                <input
-                                  type="text"
-                                  value={slide.title}
-                                  onChange={(e) =>
-                                    handleSlideChange(
-                                      index,
-                                      "title",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Təsvir
-                                </label>
-                                <textarea
-                                  value={slide.description}
-                                  onChange={(e) =>
-                                    handleSlideChange(
-                                      index,
-                                      "description",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                  rows="2"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Düymə Mətni
-                                </label>
-                                <input
-                                  type="text"
-                                  value={slide.buttonText}
-                                  onChange={(e) =>
-                                    handleSlideChange(
-                                      index,
-                                      "buttonText",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Düymə Linki
-                                </label>
-                                <input
-                                  type="text"
-                                  value={slide.buttonLink}
-                                  onChange={(e) =>
-                                    handleSlideChange(
-                                      index,
-                                      "buttonLink",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Right Top */}
-                      <div className="border border-gray-200 rounded-lg p-4">
-                        <h4 className="font-semibold mb-4">Sağ Üst Hissə</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Şəkil
-                            </label>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleRightTopImageChange}
-                              className="w-full"
-                            />
-                            {sliderData.rightTop.imagePreview && (
-                              <img
-                                src={sliderData.rightTop.imagePreview}
-                                alt="Preview"
-                                className="mt-2 w-full h-32 object-cover rounded"
-                              />
-                            )}
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Başlıq
-                            </label>
-                            <input
-                              type="text"
-                              value={sliderData.rightTop.title}
-                              onChange={(e) =>
-                                handleRightTopChange("title", e.target.value)
-                              }
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Düymə Mətni
-                            </label>
-                            <input
-                              type="text"
-                              value={sliderData.rightTop.buttonText}
-                              onChange={(e) =>
-                                handleRightTopChange(
-                                  "buttonText",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Düymə Linki
-                            </label>
-                            <input
-                              type="text"
-                              value={sliderData.rightTop.buttonLink}
-                              onChange={(e) =>
-                                handleRightTopChange(
-                                  "buttonLink",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Bitmə Tarixi
-                            </label>
-                            <input
-                              type="datetime-local"
-                              value={sliderData.rightTop.endDate}
-                              onChange={(e) =>
-                                handleRightTopChange("endDate", e.target.value)
-                              }
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                            />
+                              </tbody>
+                            </table>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Bottom Blocks */}
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="font-semibold">Alt Bloklar</h4>
-                          <button
-                            onClick={handleAddBottomBlock}
-                            className="bg-[#5C4977] text-white py-1 px-3 rounded-lg text-sm hover:bg-[#5C4977]/90 cursor-pointer"
-                          >
-                            <FaPlus className="inline mr-1" />
-                            Blok Əlavə Et
-                          </button>
-                        </div>
-                        {sliderData.bottomBlocks.map((block, index) => (
-                          <div
-                            key={index}
-                            className="border border-gray-200 rounded-lg p-4 mb-4"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <h5 className="font-medium">Blok {index + 1}</h5>
-                              <button
-                                onClick={() => handleRemoveBottomBlock(index)}
-                                className="text-red-500 hover:text-red-700 cursor-pointer"
-                              >
-                                <FaTrash />
-                              </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Şəkil
-                                </label>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) =>
-                                    handleBottomBlockImageChange(index, e)
-                                  }
-                                  className="w-full"
-                                />
-                                {block.imagePreview && (
-                                  <img
-                                    src={block.imagePreview}
-                                    alt="Preview"
-                                    className="mt-2 w-full h-32 object-cover rounded"
-                                  />
-                                )}
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Başlıq
-                                </label>
-                                <input
-                                  type="text"
-                                  value={block.title}
-                                  onChange={(e) =>
-                                    handleBottomBlockChange(
-                                      index,
-                                      "title",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Təsvir
-                                </label>
-                                <textarea
-                                  value={block.description}
-                                  onChange={(e) =>
-                                    handleBottomBlockChange(
-                                      index,
-                                      "description",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                  rows="2"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Düymə Mətni
-                                </label>
-                                <input
-                                  type="text"
-                                  value={block.buttonText}
-                                  onChange={(e) =>
-                                    handleBottomBlockChange(
-                                      index,
-                                      "buttonText",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Düymə Linki
-                                </label>
-                                <input
-                                  type="text"
-                                  value={block.buttonLink}
-                                  onChange={(e) =>
-                                    handleBottomBlockChange(
-                                      index,
-                                      "buttonLink",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -1171,33 +948,420 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
+                  {selectedBlockType !== "DefaultSlider" && (
+                    <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
+                      <button
+                        onClick={() => {
+                          setShowAddBlockModal(false);
+                          setEditingBlock(null);
+                          setSelectedBlockType("");
+                          resetForm();
+                        }}
+                        className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all cursor-pointer"
+                      >
+                        Ləğv Et
+                      </button>
+                      <button
+                        onClick={handleSaveBlock}
+                        disabled={isAdding || isUpdating}
+                        className="px-6 py-2 bg-[#5C4977] text-white rounded-lg hover:bg-[#5C4977]/90 transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        {isAdding || isUpdating ? (
+                          <Loader2 className="h-5 w-5 animate-spin inline" />
+                        ) : editingBlock ? (
+                          "Yenilə"
+                        ) : (
+                          "Yadda Saxla"
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  {selectedBlockType === "DefaultSlider" && (
+                    <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
+                      <button
+                        onClick={() => {
+                          setShowAddBlockModal(false);
+                          setEditingBlock(null);
+                          setSelectedBlockType("");
+                          resetForm();
+                        }}
+                        className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all cursor-pointer"
+                      >
+                        Bağla
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add Hero Modal */}
+          {showAddHeroModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200 sticky top-0 bg-white">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-[#5C4977]">Yeni Hero Əlavə Et</h2>
                     <button
                       onClick={() => {
-                        setShowAddBlockModal(false);
-                        setEditingBlock(null);
-                        setSelectedBlockType("");
-                        resetForm();
+                        setShowAddHeroModal(false);
+                        resetHeroForm();
+                      }}
+                      className="text-gray-500 hover:text-gray-700 text-2xl cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+
+                <form onSubmit={handleCreateHero} className="p-6 space-y-8" encType="multipart/form-data">
+                  {/* Hero Type */}
+                  <div className="border-b border-[#5C4977]/10 pb-6">
+                    <h2 className="text-xl font-bold text-[#5C4977] mb-6">Hero Tipi</h2>
+                    <div>
+                      <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                        Tip *
+                      </label>
+                      <select
+                        value={heroType}
+                        onChange={(e) => setHeroType(e.target.value)}
+                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                        required
+                      >
+                        <option value="DefaultSlider">DefaultSlider</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Sol Tərəf - Slider */}
+                  <div className="border-b border-[#5C4977]/10 pb-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-bold text-[#5C4977]">Sol Tərəf - Slider</h2>
+                      <button
+                        type="button"
+                        onClick={addSlide}
+                        className="bg-[#5C4977] text-white px-4 py-2 rounded-lg hover:bg-[#5C4977]/90 transition-colors flex items-center gap-2 cursor-pointer"
+                      >
+                        <FaPlus className="h-4 w-4" />
+                        Slide Əlavə Et
+                      </button>
+                    </div>
+
+                    {slides.map((slide, index) => (
+                      <div key={index} className="mb-6 p-6 border border-[#5C4977]/20 rounded-xl">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-[#5C4977]">Slide {index + 1}</h3>
+                          {slides.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeSlide(index)}
+                              className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <FaTrash className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                              Şəkil *
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleSlideImageChange(index, e)}
+                              className="w-full p-3 border-2 border-dashed border-[#5C4977]/30 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5C4977]/10 file:text-[#5C4977] hover:file:bg-[#5C4977]/20 cursor-pointer"
+                              required
+                            />
+                            {slide.imagePreview && (
+                              <div className="mt-4 relative inline-block">
+                                <div className="w-64 h-48 overflow-hidden rounded-lg border-2 border-[#5C4977]/20">
+                                  <img
+                                    src={slide.imagePreview}
+                                    alt={`Slide ${index + 1} preview`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                Başlıq *
+                              </label>
+                              <input
+                                type="text"
+                                value={slide.title}
+                                onChange={(e) => updateSlide(index, "title", e.target.value)}
+                                placeholder="Slide başlığı"
+                                className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                Yazı *
+                              </label>
+                              <textarea
+                                value={slide.description}
+                                onChange={(e) => updateSlide(index, "description", e.target.value)}
+                                placeholder="Slide yazısı"
+                                rows="3"
+                                className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                required
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                  Button Yazısı *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={slide.buttonText}
+                                  onChange={(e) => updateSlide(index, "buttonText", e.target.value)}
+                                  placeholder="Shop Now"
+                                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                  required
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                  Button Linki *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={slide.buttonLink}
+                                  onChange={(e) => updateSlide(index, "buttonLink", e.target.value)}
+                                  placeholder="/catalog"
+                                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sağ Tərəf - Üst Hissə */}
+                  <div className="border-b border-[#5C4977]/10 pb-6">
+                    <h2 className="text-xl font-bold text-[#5C4977] mb-6">Sağ Tərəf - Üst Hissə</h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                          Şəkil *
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleRightTopImageChange}
+                          className="w-full p-3 border-2 border-dashed border-[#5C4977]/30 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5C4977]/10 file:text-[#5C4977] hover:file:bg-[#5C4977]/20 cursor-pointer"
+                          required
+                        />
+                        {rightTop.imagePreview && (
+                          <div className="mt-4 relative inline-block">
+                            <div className="w-64 h-48 overflow-hidden rounded-lg border-2 border-[#5C4977]/20">
+                              <img
+                                src={rightTop.imagePreview}
+                                alt="Right top preview"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                            Başlıq *
+                          </label>
+                          <input
+                            type="text"
+                            value={rightTop.title}
+                            onChange={(e) => updateRightTop("title", e.target.value)}
+                            placeholder="Başlıq"
+                            className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                            Button Yazısı *
+                          </label>
+                          <input
+                            type="text"
+                            value={rightTop.buttonText}
+                            onChange={(e) => updateRightTop("buttonText", e.target.value)}
+                            placeholder="Buy Now"
+                            className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                            Button Linki *
+                          </label>
+                          <input
+                            type="text"
+                            value={rightTop.buttonLink}
+                            onChange={(e) => updateRightTop("buttonLink", e.target.value)}
+                            placeholder="/product/123"
+                            className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                            Bitmə Tarixi *
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={rightTop.endDate}
+                            onChange={(e) => updateRightTop("endDate", e.target.value)}
+                            className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alt Hissə - İki Blok */}
+                  <div>
+                    <h2 className="text-xl font-bold text-[#5C4977] mb-6">Alt Hissə - İki Blok</h2>
+
+                    {bottomBlocks.map((block, index) => (
+                      <div key={index} className="mb-6 p-6 border border-[#5C4977]/20 rounded-xl">
+                        <h3 className="text-lg font-semibold text-[#5C4977] mb-4">Alt Blok {index + 1}</h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                              Şəkil *
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleBottomBlockImageChange(index, e)}
+                              className="w-full p-3 border-2 border-dashed border-[#5C4977]/30 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5C4977]/10 file:text-[#5C4977] hover:file:bg-[#5C4977]/20 cursor-pointer"
+                              required
+                            />
+                            {block.imagePreview && (
+                              <div className="mt-4 relative inline-block">
+                                <div className="w-64 h-48 overflow-hidden rounded-lg border-2 border-[#5C4977]/20">
+                                  <img
+                                    src={block.imagePreview}
+                                    alt={`Bottom block ${index + 1} preview`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                Başlıq *
+                              </label>
+                              <input
+                                type="text"
+                                value={block.title}
+                                onChange={(e) => updateBottomBlock(index, "title", e.target.value)}
+                                placeholder="Başlıq"
+                                className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                Yazı *
+                              </label>
+                              <textarea
+                                value={block.description}
+                                onChange={(e) => updateBottomBlock(index, "description", e.target.value)}
+                                placeholder="Yazı"
+                                rows="3"
+                                className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                required
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                  Button Yazısı *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={block.buttonText}
+                                  onChange={(e) => updateBottomBlock(index, "buttonText", e.target.value)}
+                                  placeholder="View Details"
+                                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                  required
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                  Button Linki *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={block.buttonLink}
+                                  onChange={(e) => updateBottomBlock(index, "buttonLink", e.target.value)}
+                                  placeholder="/product/123"
+                                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddHeroModal(false);
+                        resetHeroForm();
                       }}
                       className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all cursor-pointer"
                     >
                       Ləğv Et
                     </button>
                     <button
-                      onClick={handleSaveBlock}
-                      disabled={isAdding || isUpdating}
+                      type="submit"
+                      disabled={isCreatingHero}
                       className="px-6 py-2 bg-[#5C4977] text-white rounded-lg hover:bg-[#5C4977]/90 transition-all disabled:opacity-50 cursor-pointer"
                     >
-                      {isAdding || isUpdating ? (
+                      {isCreatingHero ? (
                         <Loader2 className="h-5 w-5 animate-spin inline" />
-                      ) : editingBlock ? (
-                        "Yenilə"
                       ) : (
-                        "Yadda Saxla"
+                        "Hero Əlavə Et"
                       )}
                     </button>
                   </div>
-                </div>
+                </form>
               </div>
             </div>
           )}

@@ -76,7 +76,7 @@ const AdminHero = () => {
 
               <div className="flex flex-wrap items-center gap-3">
                 <button
-                  onClick={() => navigate("/admin/add-hero")}
+                  onClick={() => navigate("/admin/contents/home/edit")}
                   className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20 cursor-pointer"
                 >
                   <FaPlus className="h-5 w-5" />
