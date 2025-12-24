@@ -97,9 +97,20 @@ const EditPageContent = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('az-AZ');
+    if (!dateString) return "Tarix yoxdur";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Tarix yoxdur";
+      return date.toLocaleDateString('az-AZ', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return "Tarix yoxdur";
+    }
   };
 
   // Hero form handlers
@@ -659,83 +670,136 @@ const EditPageContent = () => {
               ) : (
                 [...blocks]
                   .sort((a, b) => a.order - b.order)
-                  .map((block, index) => (
-                    <div
-                      key={block._id}
-                      draggable={!isUpdatingOrder}
-                      onDragStart={(e) => handleDragStart(e, block._id)}
-                      onDragEnd={handleDragEnd}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, index)}
-                      className={`flex items-center justify-between p-4 bg-gray-50 rounded-lg border transition-all ${
-                        isUpdatingOrder
-                          ? "cursor-not-allowed opacity-60"
-                          : "cursor-move"
-                      } ${
-                        draggedBlock === block._id
-                          ? "opacity-50 border-[#5C4977]"
-                          : draggedOverIndex === index
-                          ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
-                          : "border-gray-200 hover:border-[#5C4977]/30"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="text-gray-400 cursor-move">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <line x1="9" y1="11" x2="9" y2="17"></line>
-                              <line x1="15" y1="11" x2="15" y2="17"></line>
-                              <line x1="9" y1="7" x2="9" y2="13"></line>
-                              <line x1="15" y1="7" x2="15" y2="13"></line>
-                            </svg>
-                          </div>
-                          <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
-                            {index + 1}
+                  .map((block, index) => {
+                    // Blok məlumatlarını hazırla
+                    let blockDetails = [];
+                    
+                    if (block.type === "DefaultSlider" && block.sliderData) {
+                      const slides = block.sliderData?.slides || [];
+                      const rightTop = block.sliderData?.rightTop;
+                      const bottomBlocks = block.sliderData?.bottomBlocks || [];
+                      const totalImages = slides.length + (rightTop ? 1 : 0) + bottomBlocks.length;
+                      
+                      blockDetails = [
+                        { label: "Slide sayı", value: `${slides.length} slide` },
+                        { label: "Şəkil sayı", value: `${totalImages} şəkil` },
+                        { label: "Sağ üst", value: rightTop ? "Var" : "Yoxdur" },
+                        { label: "Alt bloklar", value: `${bottomBlocks.length} blok` },
+                      ];
+                    } else if (block.type === "Categories" && block.categoriesData) {
+                      const visibleCategories = block.categoriesData?.visibleCategories || [];
+                      blockDetails = [
+                        { label: "Başlıq", value: block.categoriesData?.title || "Yoxdur" },
+                        { label: "Kateqoriya sayı", value: `${visibleCategories.length} kateqoriya` },
+                      ];
+                    }
+                    
+                    return (
+                      <div
+                        key={block._id}
+                        draggable={!isUpdatingOrder}
+                        onDragStart={(e) => handleDragStart(e, block._id)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, index)}
+                        className={`bg-white rounded-xl border transition-all overflow-hidden ${
+                          isUpdatingOrder
+                            ? "cursor-not-allowed opacity-60"
+                            : "cursor-move"
+                        } ${
+                          draggedBlock === block._id
+                            ? "opacity-50 border-[#5C4977]"
+                            : draggedOverIndex === index
+                            ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
+                            : "border-gray-200 hover:border-[#5C4977]/30 hover:shadow-md"
+                        }`}
+                      >
+                        <div className="p-4">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-4 flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className="text-gray-400 cursor-move">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <line x1="9" y1="11" x2="9" y2="17"></line>
+                                    <line x1="15" y1="11" x2="15" y2="17"></line>
+                                    <line x1="9" y1="7" x2="9" y2="13"></line>
+                                    <line x1="15" y1="7" x2="15" y2="13"></line>
+                                  </svg>
+                                </div>
+                                <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
+                                  {index + 1}
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h3 className="font-bold text-gray-800 text-lg">
+                                    {getBlockTypeLabel(block.type)}
+                                  </h3>
+                                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                    block.isActive 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {block.isActive ? 'Aktiv' : 'Deaktiv'}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-500 mb-3">
+                                  Sıra: {block.order}
+                                </p>
+                                
+                                {/* Blok detalları */}
+                                {blockDetails.length > 0 && (
+                                  <div className="space-y-2">
+                                    {blockDetails.map((detail, idx) => (
+                                      <div key={idx} className="flex items-center gap-2 text-sm">
+                                        <span className="text-gray-500 font-medium min-w-[100px]">
+                                          {detail.label}:
+                                        </span>
+                                        <span className="text-gray-800">
+                                          {detail.value}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              <button
+                                onClick={() => handleEditBlock(block)}
+                                disabled={isUpdatingOrder}
+                                className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <FaEdit className="h-4 w-4" />
+                                Redaktə
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBlock(block._id)}
+                                disabled={isUpdatingOrder}
+                                className="bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <FaTrash className="h-4 w-4" />
+                                Sil
+                              </button>
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">
-                            {getBlockTypeLabel(block.type)}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            Sıra: {block.order} |{" "}
-                            {block.isActive ? "Aktiv" : "Deaktiv"}
-                          </p>
-                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEditBlock(block)}
-                          disabled={isUpdatingOrder}
-                          className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          onMouseDown={(e) => e.stopPropagation()}
-                        >
-                          <FaEdit className="h-4 w-4" />
-                          Redaktə
-                        </button>
-                        <button
-                          onClick={() => handleDeleteBlock(block._id)}
-                          disabled={isUpdatingOrder}
-                          className="bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          onMouseDown={(e) => e.stopPropagation()}
-                        >
-                          <FaTrash className="h-4 w-4" />
-                          Sil
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
               )}
             </div>
           </div>
@@ -811,80 +875,172 @@ const EditPageContent = () => {
                           <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
                         </div>
                       ) : (
-                        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                          <div className="overflow-x-auto">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="border-b border-[#5C4977]/10 bg-gray-50">
-                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Tip</th>
-                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Status</th>
-                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Slide Sayı</th>
-                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Yaradılma Tarixi</th>
-                                  <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {heroes.length === 0 ? (
-                                  <tr>
-                                    <td colSpan="5" className="text-center py-8 text-gray-500">
-                                      Heç bir hero tapılmadı
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  heroes.map((hero) => (
-                                    <tr
-                                      key={hero._id}
-                                      className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
-                                    >
-                                      <td className="py-4 px-4">
-                                        <div className="font-medium text-gray-800">{hero.type || "DefaultSlider"}</div>
-                                      </td>
-                                      <td className="py-4 px-4">
-                                        <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                        <div className="space-y-4">
+                          {heroes.length === 0 ? (
+                            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                              <p className="text-gray-500">Heç bir hero tapılmadı</p>
+                            </div>
+                          ) : (
+                            heroes.map((hero) => {
+                              const slidesCount = hero.leftSide?.slides?.length || 0;
+                              const totalImages = slidesCount + (hero.rightTop?.image ? 1 : 0) + (hero.bottomBlocks?.length || 0);
+                              const bottomBlocksCount = hero.bottomBlocks?.length || 0;
+                              
+                              return (
+                                <div
+                                  key={hero._id}
+                                  className="bg-white rounded-xl border border-[#5C4977]/10 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                                >
+                                  <div className="p-6">
+                                    <div className="flex items-start justify-between mb-4">
+                                      <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center font-bold text-white ${
                                           hero.isActive 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-gray-100 text-gray-800'
+                                            ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                                            : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                                        }`}>
+                                          {hero.isActive ? '✓' : '○'}
+                                        </div>
+                                        <div>
+                                          <h4 className="text-lg font-bold text-gray-800">
+                                            {hero.type || "DefaultSlider"}
+                                          </h4>
+                                          <p className="text-sm text-gray-500">
+                                            ID: {hero._id?.slice(-8)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() => {
+                                            setShowAddBlockModal(false);
+                                            navigate(`/admin/edit-hero/${hero._id}`);
+                                          }}
+                                          className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
+                                          title="Redaktə et"
+                                        >
+                                          <FaEdit className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteHero(hero._id)}
+                                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                          title="Sil"
+                                        >
+                                          <FaTrash className="h-5 w-5" />
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                      <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="text-xs text-gray-500 mb-1">Status</div>
+                                        <div className={`text-sm font-semibold ${
+                                          hero.isActive ? 'text-green-600' : 'text-gray-600'
                                         }`}>
                                           {hero.isActive ? 'Aktiv' : 'Deaktiv'}
-                                        </span>
-                                      </td>
-                                      <td className="py-4 px-4">
-                                        <span className="text-gray-600 text-sm">
-                                          {hero.leftSide?.slides?.length || 0} slide
-                                        </span>
-                                      </td>
-                                      <td className="py-4 px-4">
-                                        <span className="text-gray-600 text-sm">
-                                          {formatDate(hero.createdAt)}
-                                        </span>
-                                      </td>
-                                      <td className="py-4 px-4">
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            onClick={() => {
-                                              setShowAddBlockModal(false);
-                                              navigate(`/admin/edit-hero/${hero._id}`);
-                                            }}
-                                            className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
-                                            title="Redaktə et"
-                                          >
-                                            <FaEdit className="h-5 w-5" />
-                                          </button>
-                                          <button
-                                            onClick={() => handleDeleteHero(hero._id)}
-                                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                            title="Sil"
-                                          >
-                                            <FaTrash className="h-5 w-5" />
-                                          </button>
                                         </div>
-                                      </td>
-                                    </tr>
-                                  ))
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
+                                      </div>
+                                      
+                                      <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="text-xs text-gray-500 mb-1">Slide Sayı</div>
+                                        <div className="text-sm font-semibold text-gray-800">
+                                          {slidesCount} slide
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="text-xs text-gray-500 mb-1">Şəkil Sayı</div>
+                                        <div className="text-sm font-semibold text-gray-800">
+                                          {totalImages} şəkil
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="text-xs text-gray-500 mb-1">Alt Bloklar</div>
+                                        <div className="text-sm font-semibold text-gray-800">
+                                          {bottomBlocksCount} blok
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                      <div className="flex items-center gap-2 text-gray-600">
+                                        <span className="font-medium">Yaradılma Tarixi:</span>
+                                        <span>{formatDate(hero.createdAt)}</span>
+                                      </div>
+                                      {hero.updatedAt && (
+                                        <div className="flex items-center gap-2 text-gray-600">
+                                          <span className="font-medium">Yenilənmə Tarixi:</span>
+                                          <span>{formatDate(hero.updatedAt)}</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Detallı məlumat */}
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">
+                                        <div>
+                                          <span className="font-medium">Sol Tərəf:</span>
+                                          <div className="mt-1">
+                                            {slidesCount > 0 ? (
+                                              <div className="space-y-1">
+                                                {hero.leftSide?.slides?.slice(0, 2).map((slide, idx) => (
+                                                  <div key={idx} className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-[#5C4977]"></div>
+                                                    <span className="truncate">{slide.title || `Slide ${idx + 1}`}</span>
+                                                  </div>
+                                                ))}
+                                                {slidesCount > 2 && (
+                                                  <div className="text-gray-400">+{slidesCount - 2} daha</div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <span className="text-gray-400">Slide yoxdur</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        
+                                        <div>
+                                          <span className="font-medium">Sağ Üst:</span>
+                                          <div className="mt-1">
+                                            {hero.rightTop?.title ? (
+                                              <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-[#5C4977]"></div>
+                                                <span className="truncate">{hero.rightTop.title}</span>
+                                              </div>
+                                            ) : (
+                                              <span className="text-gray-400">Məlumat yoxdur</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        
+                                        <div>
+                                          <span className="font-medium">Alt Bloklar:</span>
+                                          <div className="mt-1">
+                                            {bottomBlocksCount > 0 ? (
+                                              <div className="space-y-1">
+                                                {hero.bottomBlocks?.slice(0, 2).map((block, idx) => (
+                                                  <div key={idx} className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-[#5C4977]"></div>
+                                                    <span className="truncate">{block.title || `Blok ${idx + 1}`}</span>
+                                                  </div>
+                                                ))}
+                                                {bottomBlocksCount > 2 && (
+                                                  <div className="text-gray-400">+{bottomBlocksCount - 2} daha</div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <span className="text-gray-400">Blok yoxdur</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
                       )}
                     </div>
