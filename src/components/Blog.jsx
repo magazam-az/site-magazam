@@ -9,7 +9,7 @@ import { useGetBlogsQuery } from '../redux/api/blogApi';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-const Blog = ({ variant = "slider" }) => {
+const Blog = ({ variant = "slider", blogData }) => {
   const { data, error, isLoading } = useGetBlogsQuery();
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -19,7 +19,16 @@ const Blog = ({ variant = "slider" }) => {
   const scrollLeftRef = useRef(0);
 
   // Blog verilerini articles formatına çevir
-  const articles = data?.blogs?.map((blog) => ({
+  // Əgər blogData varsa, yalnız seçilmiş bloqları göstər
+  const allBlogs = data?.blogs || [];
+  const selectedBlogIds = blogData?.selectedBlogs || [];
+  const title = blogData?.title || "Məqalələrimiz";
+  
+  const filteredBlogs = selectedBlogIds.length > 0
+    ? allBlogs.filter(blog => selectedBlogIds.includes(blog._id?.toString() || blog._id))
+    : allBlogs; // Əgər heç bir seçim yoxdursa, bütün bloqları göstər
+
+  const articles = filteredBlogs.map((blog) => ({
     id: blog._id,
     slug: blog.slug || blog._id,
     image: blog.images?.[0]?.url || "https://via.placeholder.com/400x250",
@@ -27,7 +36,7 @@ const Blog = ({ variant = "slider" }) => {
     date: blog.date ? new Date(blog.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
     title: blog.title,
     description: blog.shortContent || blog.content?.substring(0, 100) || "",
-  })) || [];
+  }));
 
   // Mobil/tablet kontrolü (768px altında)
   useEffect(() => {
@@ -146,7 +155,7 @@ const Blog = ({ variant = "slider" }) => {
     <section className="bg-gray-100">
       <Container>
       <div className="w-full py-4 sm:py-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-5 tracking-tight text-center sm:text-left">Məqalələrimiz</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-5 tracking-tight text-center sm:text-left">{title}</h2>
         
         {/* Mobil/Tablet: Horizontal Scroll, Desktop: Grid */}
         {isMobile ? (

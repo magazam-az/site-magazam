@@ -1,8 +1,8 @@
 import React from "react";
 import Blog from "./Blog";
 
-const Blogs = () => {
-  return <Blog variant="grid" />;
+const Blogs = ({ blogData }) => {
+  return <Blog variant="grid" blogData={blogData} />;
 };
 
 export default Blogs;

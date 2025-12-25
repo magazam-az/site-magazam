@@ -11,6 +11,7 @@ import { useGetCategoriesQuery } from "../../redux/api/categoryApi";
 import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation } from "../../redux/api/heroApi";
 import { useGetProductsQuery } from "../../redux/api/productsApi";
 import { useGetHomeAppliancesAdminQuery, useUpdateHomeAppliancesMutation } from "../../redux/api/homeAppliancesApi";
+import { useGetBlogsQuery } from "../../redux/api/blogApi";
 import Swal from "sweetalert2";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -140,6 +141,15 @@ const EditPageContent = () => {
         buttonLink: "",
       },
     ],
+  });
+
+  // Blogs state
+  const { data: blogsData } = useGetBlogsQuery();
+  const allBlogs = blogsData?.blogs || [];
+  const [blogSearchTerm, setBlogSearchTerm] = useState("");
+  const [blogData, setBlogData] = useState({
+    title: "Məqalələrimiz",
+    selectedBlogs: [],
   });
 
   // Load HomeAppliances data when available
@@ -507,6 +517,23 @@ const EditPageContent = () => {
       setAccessoryData({
         ...accessoryData,
         selectedCategories: [...accessoryData.selectedCategories, categoryIdStr],
+      });
+    }
+  };
+
+  const handleBlogToggle = (blogId) => {
+    const blogIdStr = blogId.toString();
+    if (blogData.selectedBlogs.includes(blogIdStr)) {
+      setBlogData({
+        ...blogData,
+        selectedBlogs: blogData.selectedBlogs.filter(
+          (id) => id !== blogIdStr
+        ),
+      });
+    } else {
+      setBlogData({
+        ...blogData,
+        selectedBlogs: [...blogData.selectedBlogs, blogIdStr],
       });
     }
   };
@@ -1123,6 +1150,64 @@ const EditPageContent = () => {
           confirmButtonColor: "#5C4977",
         });
       }
+    } else if (selectedBlockType === "Blogs") {
+      if (!blogData.title || blogData.title.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Başlıq doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", "Blogs");
+      
+      const blogDataForJson = {
+        title: blogData.title,
+        selectedBlogs: blogData.selectedBlogs,
+      };
+      
+      const blockDataString = JSON.stringify({ blogData: blogDataForJson });
+      formData.append("blockData", blockDataString);
+      
+      try {
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Blok yeniləndi" : "Blok əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+      } catch (error) {
+        console.error("Save Blogs block error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
     }
   };
 
@@ -1236,6 +1321,13 @@ const EditPageContent = () => {
       });
     }
 
+    if (block.type === "Blogs" && block.blogData) {
+      setBlogData({
+        title: block.blogData.title || "Məqalələrimiz",
+        selectedBlogs: block.blogData.selectedBlogs?.map(id => id.toString()) || [],
+      });
+    }
+
     setShowAddBlockModal(true);
   };
 
@@ -1306,6 +1398,11 @@ const EditPageContent = () => {
         },
       ],
     });
+    setBlogData({
+      title: "Məqalələrimiz",
+      selectedBlogs: [],
+    });
+    setBlogSearchTerm("");
   };
 
   const getBlockTypeLabel = (type) => {
@@ -1324,6 +1421,8 @@ const EditPageContent = () => {
         return "Home Appliances";
       case "Accessories":
         return "Accessories";
+      case "Blogs":
+        return "Blogs";
       default:
         return type;
     }
@@ -1630,8 +1729,8 @@ const EditPageContent = () => {
           {/* Add/Edit Block Modal */}
           {showAddBlockModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-200 sticky top-0 bg-white">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col">
+                <div className="p-6 border-b border-gray-200 flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-[#5C4977]">
                       {editingBlock ? "Blok Redaktə Et" : "Yeni Blok Əlavə Et"}
@@ -1650,87 +1749,101 @@ const EditPageContent = () => {
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(95vh - 120px)' }}>
                   {!selectedBlockType ? (
-                    <div className="space-y-4">
+                    <div className="space-y-4 pb-8">
                       <h3 className="text-lg font-semibold mb-4">
                         Blok Tipini Seçin
                       </h3>
-                      <button
-                        onClick={() => setSelectedBlockType("DefaultSlider")}
-                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-gray-800">Hero</h4>
-                        <p className="text-sm text-gray-500">
-                          Ana səhifə üçün hero idarəetməsi
-                        </p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedBlockType("Categories")}
-                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          Kateqoriyalar
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Kateqoriyalar bloku
-                        </p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedBlockType("BestOffers")}
-                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          Ən Yaxşı Təkliflər
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Seçilmiş məhsullar bloku
-                        </p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedBlockType("NewGoods")}
-                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          Yeni Məhsullar
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Yeni məhsullar bloku
-                        </p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedBlockType("ShoppingEvent")}
-                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          Shopping Event
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Shopping event bloku
-                        </p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedBlockType("HomeAppliances")}
-                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          Home Appliances
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Home appliances bloku
-                        </p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedBlockType("Accessories")}
-                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          Accessories
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Accessories bloku
-                        </p>
-                      </button>
+                      <div className="space-y-4">
+                        <button
+                          onClick={() => setSelectedBlockType("DefaultSlider")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                        >
+                          <h4 className="font-semibold text-gray-800">Hero</h4>
+                          <p className="text-sm text-gray-500">
+                            Ana səhifə üçün hero idarəetməsi
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("Categories")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            Kateqoriyalar
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Kateqoriyalar bloku
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("BestOffers")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            Ən Yaxşı Təkliflər
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Seçilmiş məhsullar bloku
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("NewGoods")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            Yeni Məhsullar
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Yeni məhsullar bloku
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("ShoppingEvent")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            Shopping Event
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Shopping event bloku
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("HomeAppliances")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            Home Appliances
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Home appliances bloku
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("Accessories")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            Accessories
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Accessories bloku
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("Blogs")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer bg-white"
+                          style={{ zIndex: 1 }}
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            Blogs
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Blog seçimi bloku
+                          </p>
+                        </button>
+                      </div>
                     </div>
                   ) : selectedBlockType === "ShoppingEvent" ? (
                     <div className="space-y-6">
@@ -2924,6 +3037,118 @@ const EditPageContent = () => {
                         </div>
                       </div>
                     </div>
+                  ) : selectedBlockType === "Blogs" ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">
+                        Blogs Məlumatları
+                      </h3>
+                      
+                      {/* Title */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Başlıq *
+                        </label>
+                        <input
+                          type="text"
+                          value={blogData.title}
+                          onChange={(e) =>
+                            setBlogData({
+                              ...blogData,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="Məqalələrimiz"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+
+                      {/* Blog Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Görünən Bloqlar
+                        </label>
+                        <div className="mb-4">
+                          <input
+                            type="text"
+                            value={blogSearchTerm}
+                            onChange={(e) => setBlogSearchTerm(e.target.value)}
+                            placeholder="Blog axtar..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          />
+                        </div>
+                        <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                          {allBlogs.length === 0 ? (
+                            <p className="text-gray-500">Blog yoxdur</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {allBlogs
+                                .filter((blog) => {
+                                  if (!blogSearchTerm) return true;
+                                  const searchLower = blogSearchTerm.toLowerCase();
+                                  return (
+                                    blog.title?.toLowerCase().includes(searchLower) ||
+                                    blog.shortContent?.toLowerCase().includes(searchLower) ||
+                                    blog.content?.toLowerCase().includes(searchLower)
+                                  );
+                                })
+                                .map((blog) => {
+                                  const isSelected = blogData.selectedBlogs.includes(
+                                    blog._id?.toString() || blog._id
+                                  );
+                                  return (
+                                    <label
+                                      key={blog._id}
+                                      className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleBlogToggle(blog._id)}
+                                        className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                                      />
+                                      <div className="flex items-center gap-3 flex-1">
+                                        {blog.images?.[0]?.url && (
+                                          <img
+                                            src={blog.images[0].url}
+                                            alt={blog.title}
+                                            className="w-16 h-16 object-cover rounded-lg"
+                                            onError={(e) => {
+                                              e.target.onerror = null;
+                                              e.target.src =
+                                                "https://placehold.co/64x64/6B7280/ffffff?text=No+Image";
+                                            }}
+                                          />
+                                        )}
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-800">
+                                            {blog.title}
+                                          </p>
+                                          <p className="text-sm text-gray-500 line-clamp-1">
+                                            {blog.shortContent || blog.content?.substring(0, 100) || ""}
+                                          </p>
+                                          {blog.date && (
+                                            <p className="text-xs text-gray-400 mt-1">
+                                              {new Date(blog.date).toLocaleDateString('az-AZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </div>
+                        {blogData.selectedBlogs.length > 0 && (
+                          <div className="mt-4 p-3 bg-[#5C4977]/10 rounded-lg">
+                            <p className="text-sm font-medium text-[#5C4977]">
+                              Seçilmiş blog sayı: {blogData.selectedBlogs.length}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">
@@ -2984,7 +3209,7 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances" || selectedBlockType === "Accessories") && (
+                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances" || selectedBlockType === "Accessories" || selectedBlockType === "Blogs") && (
                     <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
                       <button
                         onClick={() => {

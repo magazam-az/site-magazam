@@ -128,11 +128,19 @@ const Home = () => {
             return null;
           }
         }
+
+        if (block.type === "Blogs") {
+          if (block.blogData) {
+            return <Blogs key={block._id || index} blogData={block.blogData} />;
+          } else {
+            console.warn("Blogs block found but blogData is missing:", block);
+            return null;
+          }
+        }
         
         return null;
       })}
       {/* <FAQPage /> */}
-      <Blogs />
       <About/>
     
      
