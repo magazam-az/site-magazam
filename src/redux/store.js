@@ -12,6 +12,7 @@ import { orderApi } from "./api/orderApi";  // Order API import edilir
 import { heroApi } from "./api/heroApi";  // Hero API import edilir
 import { popularCategoriesApi } from "./api/popularCategoriesApi";  // PopularCategories API import edilir
 import { pageContentApi } from "./api/pageContentApi";  // PageContent API import edilir
+import { shoppingEventApi } from "./api/shoppingEventApi";  // ShoppingEvent API import edilir
 import userReducer from "./features/userSlice"; // userSlice default export -> userReducer adı ilə
 
 export const store = configureStore({
@@ -29,6 +30,7 @@ export const store = configureStore({
     [heroApi.reducerPath]: heroApi.reducer, // heroApi reducer əlavə edildi
     [popularCategoriesApi.reducerPath]: popularCategoriesApi.reducer, // popularCategoriesApi reducer əlavə edildi
     [pageContentApi.reducerPath]: pageContentApi.reducer, // pageContentApi reducer əlavə edildi
+    [shoppingEventApi.reducerPath]: shoppingEventApi.reducer, // shoppingEventApi reducer əlavə edildi
     user: userReducer,                            // ✅ Artıq state.user mövcuddur
   },
   middleware: (getDefaultMiddleware) =>
@@ -46,5 +48,6 @@ export const store = configureStore({
       heroApi.middleware,  // heroApi middleware əlavə edildi
       popularCategoriesApi.middleware,  // popularCategoriesApi middleware əlavə edildi
       pageContentApi.middleware,  // pageContentApi middleware əlavə edildi
+      shoppingEventApi.middleware,  // shoppingEventApi middleware əlavə edildi
     ]),
 });

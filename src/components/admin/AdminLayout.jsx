@@ -13,7 +13,8 @@ import {
   Award,
   Sliders,
   Percent,
-  FolderOpen
+  FolderOpen,
+  Calendar
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/features/userSlice';
@@ -166,6 +167,18 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
             >
               <FolderOpen size={20} />
               <span className="font-medium">Kontentlər</span>
+            </Link>
+
+            <Link
+              to="/admin/shopping-event"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                isActive('/admin/shopping-event')
+                  ? 'bg-[#5C4977] text-white shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
+              }`}
+            >
+              <Calendar size={20} />
+              <span className="font-medium">Shopping Event</span>
             </Link>
 
             <Link

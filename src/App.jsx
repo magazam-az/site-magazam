@@ -45,6 +45,7 @@ import AdminContents from './components/admin/AdminContents'
 import EditPageContent from './components/admin/EditPageContent'
 import AdminHero from './components/admin/AdminHero'
 import EditHero from './components/admin/EditHero'
+import AdminShoppingEvent from './components/admin/AdminShoppingEvent'
 
 import PrivateRoute from './components/PrivateRoute'
 import PublicRoute from './components/PublicRoute'
@@ -320,6 +321,12 @@ function App() {
           <Route path='/admin/edit-hero/:id' element={
             <AdminRoute>
               <EditHero />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/shopping-event' element={
+            <AdminRoute>
+              <AdminShoppingEvent />
             </AdminRoute>
           } />
         </Routes>
