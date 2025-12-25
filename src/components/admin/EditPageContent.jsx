@@ -9,6 +9,7 @@ import {
 } from "../../redux/api/pageContentApi";
 import { useGetCategoriesQuery } from "../../redux/api/categoryApi";
 import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation } from "../../redux/api/heroApi";
+import { useGetProductsQuery } from "../../redux/api/productsApi";
 import Swal from "sweetalert2";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -62,6 +63,17 @@ const EditPageContent = () => {
     title: "Popular Kateqoriyalar",
     visibleCategories: [],
   });
+
+  // BestOffers state
+  const [bestOffersData, setBestOffersData] = useState({
+    title: "The Best Offers",
+    selectedProducts: [],
+  });
+
+  // Products for BestOffers selection
+  const { data: productsData } = useGetProductsQuery();
+  const allProducts = productsData?.products || [];
+  const [productSearchTerm, setProductSearchTerm] = useState("");
 
   const handleDeleteHero = async (id) => {
     const result = await Swal.fire({
@@ -446,9 +458,80 @@ const EditPageContent = () => {
         resetForm();
         refetch();
       } catch (error) {
+        console.error("Save block error:", error);
         Swal.fire({
           title: "Xəta!",
-          text: error?.data?.error || "Blok saxlanarkən xəta baş verdi",
+          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
+    } else if (selectedBlockType === "BestOffers") {
+      if (!bestOffersData.title || bestOffersData.title.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Başlıq doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      if (bestOffersData.selectedProducts.length === 0) {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Ən azı bir məhsul seçilməlidir",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", "BestOffers");
+      const blockDataString = JSON.stringify({ bestOffersData });
+      formData.append("blockData", blockDataString);
+      
+      console.log("FormData being sent:");
+      console.log("- pageType: home");
+      console.log("- blockType: BestOffers");
+      console.log("- blockData:", blockDataString);
+      
+      try {
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Blok yeniləndi" : "Blok əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+      } catch (error) {
+        console.error("Save BestOffers block error:", error);
+        console.error("Error status:", error?.status);
+        console.error("Error data:", error?.data);
+        console.error("Error message:", error?.data?.error || error?.data?.message || error?.message);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
           icon: "error",
           confirmButtonColor: "#5C4977",
         });
@@ -497,6 +580,10 @@ const EditPageContent = () => {
       setCategoriesData(block.categoriesData);
     }
 
+    if (block.type === "BestOffers" && block.bestOffersData) {
+      setBestOffersData(block.bestOffersData);
+    }
+
     setShowAddBlockModal(true);
   };
 
@@ -505,6 +592,11 @@ const EditPageContent = () => {
       title: "Popular Kateqoriyalar",
       visibleCategories: [],
     });
+    setBestOffersData({
+      title: "The Best Offers",
+      selectedProducts: [],
+    });
+    setProductSearchTerm("");
   };
 
   const getBlockTypeLabel = (type) => {
@@ -513,6 +605,8 @@ const EditPageContent = () => {
         return "Hero";
       case "Categories":
         return "Kateqoriyalar";
+      case "BestOffers":
+        return "Ən Yaxşı Təkliflər";
       default:
         return type;
     }
@@ -692,6 +786,12 @@ const EditPageContent = () => {
                         { label: "Başlıq", value: block.categoriesData?.title || "Yoxdur" },
                         { label: "Kateqoriya sayı", value: `${visibleCategories.length} kateqoriya` },
                       ];
+                    } else if (block.type === "BestOffers" && block.bestOffersData) {
+                      const selectedProducts = block.bestOffersData?.selectedProducts || [];
+                      blockDetails = [
+                        { label: "Başlıq", value: block.bestOffersData?.title || "Yoxdur" },
+                        { label: "Məhsul sayı", value: `${selectedProducts.length} məhsul` },
+                      ];
                     }
                     
                     return (
@@ -851,6 +951,17 @@ const EditPageContent = () => {
                         </h4>
                         <p className="text-sm text-gray-500">
                           Kateqoriyalar bloku
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => setSelectedBlockType("BestOffers")}
+                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                      >
+                        <h4 className="font-semibold text-gray-800">
+                          Ən Yaxşı Təkliflər
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Seçilmiş məhsullar bloku
                         </p>
                       </button>
                     </div>
@@ -1044,6 +1155,132 @@ const EditPageContent = () => {
                         </div>
                       )}
                     </div>
+                  ) : selectedBlockType === "BestOffers" ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">
+                        Ən Yaxşı Təkliflər Məlumatları
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Başlıq *
+                        </label>
+                        <input
+                          type="text"
+                          value={bestOffersData.title}
+                          onChange={(e) =>
+                            setBestOffersData({
+                              ...bestOffersData,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="The Best Offers"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Məhsulları Seçin *
+                        </label>
+                        <div className="mb-4">
+                          <input
+                            type="text"
+                            value={productSearchTerm}
+                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            placeholder="Məhsul axtar..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          />
+                        </div>
+                        <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                          {allProducts.length === 0 ? (
+                            <p className="text-gray-500">Məhsul tapılmadı</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {allProducts
+                                .filter((product) => {
+                                  if (!productSearchTerm) return true;
+                                  const searchLower = productSearchTerm.toLowerCase();
+                                  return (
+                                    product.name?.toLowerCase().includes(searchLower) ||
+                                    product.brand?.toLowerCase().includes(searchLower) ||
+                                    product.model?.toLowerCase().includes(searchLower)
+                                  );
+                                })
+                                .map((product) => {
+                                  const isSelected = bestOffersData.selectedProducts.includes(
+                                    product._id
+                                  );
+                                  return (
+                                    <label
+                                      key={product._id}
+                                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          if (isSelected) {
+                                            setBestOffersData({
+                                              ...bestOffersData,
+                                              selectedProducts: bestOffersData.selectedProducts.filter(
+                                                (id) => id !== product._id
+                                              ),
+                                            });
+                                          } else {
+                                            setBestOffersData({
+                                              ...bestOffersData,
+                                              selectedProducts: [
+                                                ...bestOffersData.selectedProducts,
+                                                product._id,
+                                              ],
+                                            });
+                                          }
+                                        }}
+                                        className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                                      />
+                                      <div className="flex items-center gap-3 flex-1">
+                                        <img
+                                          src={
+                                            product.images?.[0]?.url ||
+                                            product.image ||
+                                            "https://placehold.co/60x60/6B7280/ffffff?text=No+Image"
+                                          }
+                                          alt={product.name}
+                                          className="w-12 h-12 object-contain rounded border border-gray-200"
+                                          onError={(e) => {
+                                            e.target.src =
+                                              "https://placehold.co/60x60/6B7280/ffffff?text=No+Image";
+                                          }}
+                                        />
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-800">
+                                            {product.name}
+                                          </p>
+                                          <p className="text-sm text-gray-500">
+                                            {product.brand} {product.model && `- ${product.model}`}
+                                          </p>
+                                          <p className="text-sm font-semibold text-[#5C4977]">
+                                            {typeof product.price === 'number'
+                                              ? `${product.price.toFixed(2)} ₼`
+                                              : product.price || '0.00 ₼'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </div>
+                        {bestOffersData.selectedProducts.length > 0 && (
+                          <div className="mt-4 p-3 bg-[#5C4977]/10 rounded-lg">
+                            <p className="text-sm font-medium text-[#5C4977]">
+                              Seçilmiş məhsul sayı: {bestOffersData.selectedProducts.length}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">
@@ -1104,7 +1341,7 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  {selectedBlockType !== "DefaultSlider" && (
+                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers") && (
                     <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
                       <button
                         onClick={() => {
