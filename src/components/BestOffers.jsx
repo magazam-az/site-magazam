@@ -86,6 +86,8 @@ export default function BestOffers({ bestOffersData }) {
     );
   }
 
-  return <Products title={title} products={filteredProducts} />;
+  const moreProductsLink = bestOffersData.moreProductsLink || null;
+
+  return <Products title={title} products={filteredProducts} moreProductsLink={moreProductsLink} />;
 }
 

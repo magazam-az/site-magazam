@@ -97,7 +97,8 @@ export default function NewGoods({ newGoodsData }) {
   } : null;
 
   const showBanner = !!bannerData;
+  const moreProductsLink = newGoodsData.moreProductsLink || null;
 
-  return <Products title={title} products={filteredProducts} showBanner={showBanner} bannerData={bannerData} />;
+  return <Products title={title} products={filteredProducts} showBanner={showBanner} bannerData={bannerData} moreProductsLink={moreProductsLink} />;
 }
 

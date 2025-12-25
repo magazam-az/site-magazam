@@ -68,12 +68,14 @@ const EditPageContent = () => {
   const [bestOffersData, setBestOffersData] = useState({
     title: "The Best Offers",
     selectedProducts: [],
+    moreProductsLink: "",
   });
 
   // NewGoods state
   const [newGoodsData, setNewGoodsData] = useState({
     title: "New Goods",
     selectedProducts: [],
+    moreProductsLink: "",
     banner: {
       image: null,
       imagePreview: null,
@@ -593,6 +595,7 @@ const EditPageContent = () => {
       const newGoodsDataForJson = {
         title: newGoodsData.title,
         selectedProducts: newGoodsData.selectedProducts,
+        moreProductsLink: newGoodsData.moreProductsLink || "",
         banner: bannerDataForJson,
       };
       
@@ -687,12 +690,16 @@ const EditPageContent = () => {
     }
 
     if (block.type === "BestOffers" && block.bestOffersData) {
-      setBestOffersData(block.bestOffersData);
+      setBestOffersData({
+        ...block.bestOffersData,
+        moreProductsLink: block.bestOffersData.moreProductsLink || "",
+      });
     }
 
     if (block.type === "NewGoods" && block.newGoodsData) {
       setNewGoodsData({
         ...block.newGoodsData,
+        moreProductsLink: block.newGoodsData.moreProductsLink || "",
         banner: {
           ...block.newGoodsData.banner,
           image: null, // Şəkil faylı yoxdur, yalnız URL var
@@ -716,6 +723,7 @@ const EditPageContent = () => {
     setNewGoodsData({
       title: "New Goods",
       selectedProducts: [],
+      moreProductsLink: "",
       banner: {
         image: null,
         imagePreview: null,
@@ -1429,6 +1437,26 @@ const EditPageContent = () => {
                           </div>
                         )}
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          More Products Button Linki
+                        </label>
+                        <input
+                          type="text"
+                          value={bestOffersData.moreProductsLink || ""}
+                          onChange={(e) =>
+                            setBestOffersData({
+                              ...bestOffersData,
+                              moreProductsLink: e.target.value,
+                            })
+                          }
+                          placeholder="/products veya https://example.com"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Boş buraxsanız, button göstərilməyəcək
+                        </p>
+                      </div>
                     </div>
                   ) : selectedBlockType === "NewGoods" ? (
                     <div className="space-y-6">
@@ -1699,6 +1727,26 @@ const EditPageContent = () => {
                             </p>
                           </div>
                         )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          More Products Button Linki
+                        </label>
+                        <input
+                          type="text"
+                          value={newGoodsData.moreProductsLink || ""}
+                          onChange={(e) =>
+                            setNewGoodsData({
+                              ...newGoodsData,
+                              moreProductsLink: e.target.value,
+                            })
+                          }
+                          placeholder="/products veya https://example.com"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Boş buraxsanız, button göstərilməyəcək
+                        </p>
                       </div>
                     </div>
                   ) : (

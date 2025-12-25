@@ -9,7 +9,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 
 // Əsas Products Komponenti
-const Products = ({ title = "Products", products = [], showBanner = false, bannerData = null }) => {
+const Products = ({ title = "Products", products = [], showBanner = false, bannerData = null, moreProductsLink = null }) => {
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -163,26 +163,29 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
             {title}
           </h2>
-          <button 
-            className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-3xl transition-all duration-200 cursor-pointer hover:shadow-md text-xs sm:text-sm"
-            style={{
-              backgroundColor: '#E1EBFF',
-              borderColor: '#E1EBFF',
-              color: '#1C61E7',
-              border: '1px solid #E1EBFF'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#D1DBFF';
-              e.currentTarget.style.borderColor = '#D1DBFF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#E1EBFF';
-              e.currentTarget.style.borderColor = '#E1EBFF';
-            }}
-          >
-            <span className="text-xs sm:text-sm font-medium">More Products</span>
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: '#1C61E7' }} />
-          </button>
+          {moreProductsLink && (
+            <a
+              href={moreProductsLink}
+              className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-3xl transition-all duration-200 cursor-pointer hover:shadow-md text-xs sm:text-sm"
+              style={{
+                backgroundColor: '#E1EBFF',
+                borderColor: '#E1EBFF',
+                color: '#1C61E7',
+                border: '1px solid #E1EBFF'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#D1DBFF';
+                e.currentTarget.style.borderColor = '#D1DBFF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#E1EBFF';
+                e.currentTarget.style.borderColor = '#E1EBFF';
+              }}
+            >
+              <span className="text-xs sm:text-sm font-medium">More Products</span>
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: '#1C61E7' }} />
+            </a>
+          )}
         </div>
 
         {/* Mobil/Tablet: Horizontal Scroll, Desktop: Swiper */}
