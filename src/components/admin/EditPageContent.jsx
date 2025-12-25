@@ -1887,10 +1887,6 @@ const EditPageContent = () => {
                           Button üzərində görünəcək mətn
                         </p>
                       </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Boş buraxsanız, button göstərilməyəcək
-                        </p>
-                      </div>
                     </div>
                   ) : (
                     <div className="space-y-6">
