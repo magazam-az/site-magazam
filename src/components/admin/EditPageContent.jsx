@@ -70,10 +70,25 @@ const EditPageContent = () => {
     selectedProducts: [],
   });
 
-  // Products for BestOffers selection
+  // NewGoods state
+  const [newGoodsData, setNewGoodsData] = useState({
+    title: "New Goods",
+    selectedProducts: [],
+    banner: {
+      image: null,
+      imagePreview: null,
+      subtitle: "",
+      title: "",
+      buttonText: "",
+      buttonLink: "",
+    },
+  });
+
+  // Products for BestOffers and NewGoods selection
   const { data: productsData } = useGetProductsQuery();
   const allProducts = productsData?.products || [];
   const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [newGoodsSearchTerm, setNewGoodsSearchTerm] = useState("");
 
   const handleDeleteHero = async (id) => {
     const result = await Swal.fire({
@@ -536,6 +551,97 @@ const EditPageContent = () => {
           confirmButtonColor: "#5C4977",
         });
       }
+    } else if (selectedBlockType === "NewGoods") {
+      if (!newGoodsData.title || newGoodsData.title.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Başlıq doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      if (newGoodsData.selectedProducts.length === 0) {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Ən azı bir məhsul seçilməlidir",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", "NewGoods");
+      
+      // Banner şəkil upload
+      if (newGoodsData.banner?.image) {
+        formData.append("newGoodsBannerImage", newGoodsData.banner.image);
+      }
+      
+      // Banner məlumatlarını JSON-a çevir (şəkil faylı və imagePreview olmadan)
+      const bannerDataForJson = {
+        subtitle: newGoodsData.banner?.subtitle || "",
+        title: newGoodsData.banner?.title || "",
+        buttonText: newGoodsData.banner?.buttonText || "",
+        buttonLink: newGoodsData.banner?.buttonLink || "",
+        // image və imagePreview JSON-a daxil edilmir - yalnız şəkil faylı FormData-ya göndərilir
+      };
+      
+      const newGoodsDataForJson = {
+        title: newGoodsData.title,
+        selectedProducts: newGoodsData.selectedProducts,
+        banner: bannerDataForJson,
+      };
+      
+      const blockDataString = JSON.stringify({ newGoodsData: newGoodsDataForJson });
+      formData.append("blockData", blockDataString);
+      
+      console.log("FormData being sent:");
+      console.log("- pageType: home");
+      console.log("- blockType: NewGoods");
+      console.log("- blockData:", blockDataString);
+      
+      try {
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Blok yeniləndi" : "Blok əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+      } catch (error) {
+        console.error("Save NewGoods block error:", error);
+        console.error("Error status:", error?.status);
+        console.error("Error data:", error?.data);
+        console.error("Error message:", error?.data?.error || error?.data?.message || error?.message);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
     }
   };
 
@@ -584,6 +690,17 @@ const EditPageContent = () => {
       setBestOffersData(block.bestOffersData);
     }
 
+    if (block.type === "NewGoods" && block.newGoodsData) {
+      setNewGoodsData({
+        ...block.newGoodsData,
+        banner: {
+          ...block.newGoodsData.banner,
+          image: null, // Şəkil faylı yoxdur, yalnız URL var
+          imagePreview: block.newGoodsData.banner?.image?.url || null,
+        },
+      });
+    }
+
     setShowAddBlockModal(true);
   };
 
@@ -596,7 +713,20 @@ const EditPageContent = () => {
       title: "The Best Offers",
       selectedProducts: [],
     });
+    setNewGoodsData({
+      title: "New Goods",
+      selectedProducts: [],
+      banner: {
+        image: null,
+        imagePreview: null,
+        subtitle: "",
+        title: "",
+        buttonText: "",
+        buttonLink: "",
+      },
+    });
     setProductSearchTerm("");
+    setNewGoodsSearchTerm("");
   };
 
   const getBlockTypeLabel = (type) => {
@@ -607,6 +737,8 @@ const EditPageContent = () => {
         return "Kateqoriyalar";
       case "BestOffers":
         return "Ən Yaxşı Təkliflər";
+      case "NewGoods":
+        return "Yeni Məhsullar";
       default:
         return type;
     }
@@ -792,6 +924,12 @@ const EditPageContent = () => {
                         { label: "Başlıq", value: block.bestOffersData?.title || "Yoxdur" },
                         { label: "Məhsul sayı", value: `${selectedProducts.length} məhsul` },
                       ];
+                    } else if (block.type === "NewGoods" && block.newGoodsData) {
+                      const selectedProducts = block.newGoodsData?.selectedProducts || [];
+                      blockDetails = [
+                        { label: "Başlıq", value: block.newGoodsData?.title || "Yoxdur" },
+                        { label: "Məhsul sayı", value: `${selectedProducts.length} məhsul` },
+                      ];
                     }
                     
                     return (
@@ -962,6 +1100,17 @@ const EditPageContent = () => {
                         </h4>
                         <p className="text-sm text-gray-500">
                           Seçilmiş məhsullar bloku
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => setSelectedBlockType("NewGoods")}
+                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                      >
+                        <h4 className="font-semibold text-gray-800">
+                          Yeni Məhsullar
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Yeni məhsullar bloku
                         </p>
                       </button>
                     </div>
@@ -1281,6 +1430,277 @@ const EditPageContent = () => {
                         )}
                       </div>
                     </div>
+                  ) : selectedBlockType === "NewGoods" ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">
+                        Yeni Məhsullar Məlumatları
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Başlıq *
+                        </label>
+                        <input
+                          type="text"
+                          value={newGoodsData.title}
+                          onChange={(e) =>
+                            setNewGoodsData({
+                              ...newGoodsData,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="New Goods"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+
+                      {/* Banner Section */}
+                      <div className="border-t border-gray-200 pt-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">
+                          Banner Məlumatları
+                        </h4>
+                        
+                        <div className="space-y-4">
+                          {/* Banner Şəkil */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Banner Şəkil
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setNewGoodsData({
+                                      ...newGoodsData,
+                                      banner: {
+                                        ...newGoodsData.banner,
+                                        image: file,
+                                        imagePreview: reader.result,
+                                      },
+                                    });
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                            {newGoodsData.banner?.imagePreview && (
+                              <div className="mt-4">
+                                <img
+                                  src={newGoodsData.banner.imagePreview}
+                                  alt="Banner preview"
+                                  className="w-full max-w-md h-64 object-cover rounded-lg border border-gray-200"
+                                />
+                              </div>
+                            )}
+                            {editingBlock?.newGoodsData?.banner?.image?.url && !newGoodsData.banner?.imagePreview && (
+                              <div className="mt-4">
+                                <p className="text-sm text-gray-500 mb-2">Mövcud şəkil:</p>
+                                <img
+                                  src={editingBlock.newGoodsData.banner.image.url}
+                                  alt="Current banner"
+                                  className="w-full max-w-md h-64 object-cover rounded-lg border border-gray-200"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Subtitle */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Subtitle (Məs: "AT A GOOD PRICE")
+                            </label>
+                            <input
+                              type="text"
+                              value={newGoodsData.banner?.subtitle || ""}
+                              onChange={(e) =>
+                                setNewGoodsData({
+                                  ...newGoodsData,
+                                  banner: {
+                                    ...newGoodsData.banner,
+                                    subtitle: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="AT A GOOD PRICE"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+
+                          {/* Title */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Banner Başlıq (Məs: "Nothing Phone 1")
+                            </label>
+                            <input
+                              type="text"
+                              value={newGoodsData.banner?.title || ""}
+                              onChange={(e) =>
+                                setNewGoodsData({
+                                  ...newGoodsData,
+                                  banner: {
+                                    ...newGoodsData.banner,
+                                    title: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Nothing Phone 1"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+
+                          {/* Button Text */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Button Yazısı (Məs: "Buy Now")
+                            </label>
+                            <input
+                              type="text"
+                              value={newGoodsData.banner?.buttonText || ""}
+                              onChange={(e) =>
+                                setNewGoodsData({
+                                  ...newGoodsData,
+                                  banner: {
+                                    ...newGoodsData.banner,
+                                    buttonText: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Buy Now"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+
+                          {/* Button Link */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Button Linki
+                            </label>
+                            <input
+                              type="text"
+                              value={newGoodsData.banner?.buttonLink || ""}
+                              onChange={(e) =>
+                                setNewGoodsData({
+                                  ...newGoodsData,
+                                  banner: {
+                                    ...newGoodsData.banner,
+                                    buttonLink: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="/product/123"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Məhsulları Seçin *
+                        </label>
+                        <div className="mb-4">
+                          <input
+                            type="text"
+                            value={newGoodsSearchTerm}
+                            onChange={(e) => setNewGoodsSearchTerm(e.target.value)}
+                            placeholder="Məhsul axtar..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          />
+                        </div>
+                        <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                          {allProducts.length === 0 ? (
+                            <p className="text-gray-500">Məhsul tapılmadı</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {allProducts
+                                .filter((product) => {
+                                  if (!newGoodsSearchTerm) return true;
+                                  const searchLower = newGoodsSearchTerm.toLowerCase();
+                                  return (
+                                    product.name?.toLowerCase().includes(searchLower) ||
+                                    product.brand?.toLowerCase().includes(searchLower) ||
+                                    product.model?.toLowerCase().includes(searchLower)
+                                  );
+                                })
+                                .map((product) => {
+                                  const isSelected = newGoodsData.selectedProducts.includes(
+                                    product._id
+                                  );
+                                  return (
+                                    <label
+                                      key={product._id}
+                                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          if (isSelected) {
+                                            setNewGoodsData({
+                                              ...newGoodsData,
+                                              selectedProducts: newGoodsData.selectedProducts.filter(
+                                                (id) => id !== product._id
+                                              ),
+                                            });
+                                          } else {
+                                            setNewGoodsData({
+                                              ...newGoodsData,
+                                              selectedProducts: [
+                                                ...newGoodsData.selectedProducts,
+                                                product._id,
+                                              ],
+                                            });
+                                          }
+                                        }}
+                                        className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                                      />
+                                      <div className="flex items-center gap-3 flex-1">
+                                        <img
+                                          src={
+                                            product.images?.[0]?.url ||
+                                            product.image ||
+                                            "https://placehold.co/60x60/6B7280/ffffff?text=No+Image"
+                                          }
+                                          alt={product.name}
+                                          className="w-12 h-12 object-contain rounded border border-gray-200"
+                                          onError={(e) => {
+                                            e.target.src =
+                                              "https://placehold.co/60x60/6B7280/ffffff?text=No+Image";
+                                          }}
+                                        />
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-800">
+                                            {product.name}
+                                          </p>
+                                          <p className="text-sm text-gray-500">
+                                            {product.brand} {product.model && `- ${product.model}`}
+                                          </p>
+                                          <p className="text-sm font-semibold text-[#5C4977]">
+                                            {typeof product.price === 'number'
+                                              ? `${product.price.toFixed(2)} ₼`
+                                              : product.price || '0.00 ₼'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </div>
+                        {newGoodsData.selectedProducts.length > 0 && (
+                          <div className="mt-4 p-3 bg-[#5C4977]/10 rounded-lg">
+                            <p className="text-sm font-medium text-[#5C4977]">
+                              Seçilmiş məhsul sayı: {newGoodsData.selectedProducts.length}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">
@@ -1341,7 +1761,7 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers") && (
+                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods") && (
                     <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
                       <button
                         onClick={() => {
