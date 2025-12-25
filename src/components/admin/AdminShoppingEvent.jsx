@@ -51,19 +51,6 @@ const AdminShoppingEvent = ({ withoutLayout = false, onClose = null }) => {
   const handleBackgroundImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Şəkil ölçüsünü yoxla (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        Swal.fire({
-          title: "Xəta!",
-          text: `Şəkil çox böyükdür. Maksimum ölçü: 10MB (cari: ${(file.size / 1024 / 1024).toFixed(2)}MB)`,
-          icon: "error",
-          confirmButtonColor: "#5C4977",
-        });
-        e.target.value = ""; // Reset input
-        return;
-      }
-      
       setBackgroundImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -77,19 +64,6 @@ const AdminShoppingEvent = ({ withoutLayout = false, onClose = null }) => {
   const handleDeviceImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Şəkil ölçüsünü yoxla (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        Swal.fire({
-          title: "Xəta!",
-          text: `Şəkil çox böyükdür. Maksimum ölçü: 10MB (cari: ${(file.size / 1024 / 1024).toFixed(2)}MB)`,
-          icon: "error",
-          confirmButtonColor: "#5C4977",
-        });
-        e.target.value = ""; // Reset input
-        return;
-      }
-      
       setDeviceImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
