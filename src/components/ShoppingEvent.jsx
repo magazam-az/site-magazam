@@ -58,10 +58,13 @@ const ShoppingEvent = () => {
     return null;
   }
 
+  const backgroundImageUrl = shoppingEvent.backgroundImage?.url || '/images/apple-shopping.jpg';
+  const deviceImageUrl = shoppingEvent.deviceImage?.url || '/images/ipad-section/iosmodels.webp';
+
   return (
     // Outer container: Apple shopping image background
     <div className="p-3 sm:p-6 md:p-8 font-lexend-deca relative" style={{
-      backgroundImage: 'url(/images/apple-shopping.jpg)',
+      backgroundImage: `url(${backgroundImageUrl})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat'
@@ -76,7 +79,7 @@ const ShoppingEvent = () => {
         <div className="mb-4 sm:mb-6 md:mb-0 md:mr-8 lg:mr-12 w-full md:w-auto flex justify-center">
           <div className="w-full max-w-[200px] sm:max-w-sm md:max-w-md lg:max-w-xl xl:max-w-2xl h-32 sm:h-40 md:h-64 lg:h-80 xl:h-96 flex items-center justify-center overflow-hidden">
             <img 
-              src="/images/ipad-section/iosmodels.webp" 
+              src={deviceImageUrl} 
               alt="Apple Devices" 
               className="object-contain w-full h-full" 
               onError={(e) => {

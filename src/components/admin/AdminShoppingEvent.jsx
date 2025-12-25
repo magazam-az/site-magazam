@@ -5,7 +5,7 @@ import AdminLayout from "./AdminLayout";
 import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 
-const AdminShoppingEvent = () => {
+const AdminShoppingEvent = ({ withoutLayout = false, onClose = null }) => {
   const { data: shoppingEventData, isLoading: isLoadingEvent, refetch } = useGetShoppingEventAdminQuery();
   const { data: productsData, isLoading: isLoadingProducts } = useGetProductsQuery();
   const [updateShoppingEvent, { isLoading: isUpdating }] = useUpdateShoppingEventMutation();
@@ -21,6 +21,10 @@ const AdminShoppingEvent = () => {
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [isActive, setIsActive] = useState(true);
   const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [backgroundImage, setBackgroundImage] = useState(null);
+  const [backgroundImagePreview, setBackgroundImagePreview] = useState(null);
+  const [deviceImage, setDeviceImage] = useState(null);
+  const [deviceImagePreview, setDeviceImagePreview] = useState(null);
 
   // ShoppingEvent data gəldikdə state-ləri doldur
   useEffect(() => {
@@ -38,8 +42,36 @@ const AdminShoppingEvent = () => {
       setButtonText(shoppingEvent.buttonText || "");
       setSelectedProductIds(shoppingEvent.selectedProductIds?.map(id => id.toString()) || []);
       setIsActive(shoppingEvent.isActive !== undefined ? shoppingEvent.isActive : true);
+      setBackgroundImagePreview(shoppingEvent.backgroundImage?.url || null);
+      setDeviceImagePreview(shoppingEvent.deviceImage?.url || null);
     }
   }, [shoppingEvent]);
+
+  // Background image handler
+  const handleBackgroundImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBackgroundImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBackgroundImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Device image handler
+  const handleDeviceImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setDeviceImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDeviceImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Toggle product selection
   const toggleProduct = (productId) => {
@@ -128,16 +160,25 @@ const AdminShoppingEvent = () => {
     }
 
     try {
-      const updateData = {
-        title: title.trim(),
-        description: description.trim(),
-        endDate: new Date(endDate).toISOString(),
-        buttonText: buttonText.trim(),
-        selectedProductIds: selectedProductIds,
-        isActive,
-      };
+      const formData = new FormData();
+      
+      // Text fields
+      formData.append("title", title.trim());
+      formData.append("description", description.trim());
+      formData.append("endDate", new Date(endDate).toISOString());
+      formData.append("buttonText", buttonText.trim());
+      formData.append("selectedProductIds", JSON.stringify(selectedProductIds));
+      formData.append("isActive", isActive.toString());
 
-      await updateShoppingEvent(updateData).unwrap();
+      // Images
+      if (backgroundImage) {
+        formData.append("backgroundImage", backgroundImage);
+      }
+      if (deviceImage) {
+        formData.append("deviceImage", deviceImage);
+      }
+
+      await updateShoppingEvent(formData).unwrap();
       
       Swal.fire({
         title: "Uğurlu!",
@@ -147,6 +188,11 @@ const AdminShoppingEvent = () => {
       });
       
       refetch();
+      
+      // If in modal mode (withoutLayout), close the modal after success
+      if (withoutLayout) {
+        handleSuccess();
+      }
     } catch (error) {
       Swal.fire({
         title: "Xəta!",
@@ -176,26 +222,15 @@ const AdminShoppingEvent = () => {
     return filteredProducts.every(product => selectedProductIds.includes(product._id.toString()));
   }, [filteredProducts, selectedProductIds]);
 
-  if (isLoadingEvent || isLoadingProducts) {
-    return (
-      <AdminLayout pageTitle="Shopping Event">
-        <div className="flex items-center justify-center p-12">
-          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
-        </div>
-      </AdminLayout>
-    );
-  }
+  // Handle close callback
+  const handleSuccess = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
 
-  return (
-    <AdminLayout pageTitle="Shopping Event">
-      <div className="bg-gray-50 min-h-full p-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Shopping Event İdarəetməsi</h1>
-            <p className="text-gray-600">Shopping Event məlumatlarını idarə edin</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6 space-y-6">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6 space-y-6">
             {/* Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -253,6 +288,50 @@ const AdminShoppingEvent = () => {
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
                 required
               />
+            </div>
+
+            {/* Background Image */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Background Şəkil
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundImageChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
+              />
+              {backgroundImagePreview && (
+                <div className="mt-4">
+                  <img
+                    src={backgroundImagePreview}
+                    alt="Background preview"
+                    className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Device Image */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Device Şəkil (Soldakı Şəkil)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleDeviceImageChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
+              />
+              {deviceImagePreview && (
+                <div className="mt-4">
+                  <img
+                    src={deviceImagePreview}
+                    alt="Device preview"
+                    className="w-full max-w-md h-48 object-contain rounded-lg border border-gray-200"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Product Selection */}
@@ -375,6 +454,39 @@ const AdminShoppingEvent = () => {
               </button>
             </div>
           </form>
+  );
+
+  if (isLoadingEvent || isLoadingProducts) {
+    const loadingContent = (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
+      </div>
+    );
+
+    if (withoutLayout) {
+      return loadingContent;
+    }
+
+    return (
+      <AdminLayout pageTitle="Shopping Event">
+        {loadingContent}
+      </AdminLayout>
+    );
+  }
+
+  if (withoutLayout) {
+    return formContent;
+  }
+
+  return (
+    <AdminLayout pageTitle="Shopping Event">
+      <div className="bg-gray-50 min-h-full p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[#5C4977] mb-2">Shopping Event İdarəetməsi</h1>
+            <p className="text-gray-600">Shopping Event məlumatlarını idarə edin</p>
+          </div>
+          {formContent}
         </div>
       </div>
     </AdminLayout>

@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
+import AdminShoppingEvent from "./AdminShoppingEvent";
 
 const EditPageContent = () => {
   const navigate = useNavigate();
@@ -658,6 +659,48 @@ const EditPageContent = () => {
           confirmButtonColor: "#5C4977",
         });
       }
+    } else if (selectedBlockType === "ShoppingEvent") {
+      // ShoppingEvent is managed separately via its own form
+      // This just adds the block type to the page content
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", "ShoppingEvent");
+
+      try {
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Shopping Event bloku yeniləndi" : "Shopping Event bloku əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+      } catch (error) {
+        console.error("Save ShoppingEvent block error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Shopping Event bloku saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
     }
   };
 
@@ -765,6 +808,8 @@ const EditPageContent = () => {
         return "Ən Yaxşı Təkliflər";
       case "NewGoods":
         return "Yeni Məhsullar";
+      case "ShoppingEvent":
+        return "Shopping Event";
       default:
         return type;
     }
@@ -1139,6 +1184,58 @@ const EditPageContent = () => {
                           Yeni məhsullar bloku
                         </p>
                       </button>
+                      <button
+                        onClick={() => setSelectedBlockType("ShoppingEvent")}
+                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                      >
+                        <h4 className="font-semibold text-gray-800">
+                          Shopping Event
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Shopping event bloku
+                        </p>
+                      </button>
+                    </div>
+                  ) : selectedBlockType === "ShoppingEvent" ? (
+                    <div className="space-y-6">
+                      <AdminShoppingEvent 
+                        withoutLayout={true}
+                        onClose={async () => {
+                          // After ShoppingEvent form is submitted, add the block to page content
+                          if (pageContentId) {
+                            try {
+                              const formData = new FormData();
+                              formData.append("pageType", "home");
+                              formData.append("blockType", "ShoppingEvent");
+
+                              if (editingBlock) {
+                                await updateBlock({
+                                  pageContentId,
+                                  blockId: editingBlock._id,
+                                  formData,
+                                }).unwrap();
+                              } else {
+                                await addBlock({
+                                  pageContentId,
+                                  formData,
+                                }).unwrap();
+                              }
+
+                              setShowAddBlockModal(false);
+                              setEditingBlock(null);
+                              setSelectedBlockType("");
+                              resetForm();
+                              refetch();
+                            } catch (error) {
+                              console.error("Save ShoppingEvent block error:", error);
+                            }
+                          } else {
+                            setShowAddBlockModal(false);
+                            setSelectedBlockType("");
+                            resetForm();
+                          }
+                        }}
+                      />
                     </div>
                   ) : selectedBlockType === "DefaultSlider" ? (
                     <div className="space-y-6">

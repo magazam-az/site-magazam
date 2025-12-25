@@ -170,18 +170,6 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
             </Link>
 
             <Link
-              to="/admin/shopping-event"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                isActive('/admin/shopping-event')
-                  ? 'bg-[#5C4977] text-white shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
-              }`}
-            >
-              <Calendar size={20} />
-              <span className="font-medium">Shopping Event</span>
-            </Link>
-
-            <Link
               to="/admin/orders"
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
                 isActive('/admin/orders')
