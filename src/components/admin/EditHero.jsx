@@ -102,17 +102,113 @@ const EditHero = () => {
     setSlides(newSlides);
   };
 
-  const handleSlideImageChange = (index, e) => {
+  // Şəkil kompress funksiyası
+  const compressImage = (file, maxWidth = 1200, maxHeight = 800, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Ölçüləri hesabla
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // JPEG formatına çevir (daha kiçik ölçü)
+          const outputType = 'image/jpeg';
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Blob yaradılmadı"));
+                return;
+              }
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                type: outputType,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            outputType,
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error("Şəkil yüklənmədi"));
+      };
+      reader.onerror = () => reject(new Error("Fayl oxunmadı"));
+    });
+  };
+
+  const handleSlideImageChange = async (index, e) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 1200, 800, 0.7);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1.5 * 1024 * 1024; // 1.5MB (hero slide üçün)
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 1000, 700, 0.6);
+      }
+      
+      // Final yoxlama
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 800, 600, 0.5);
+      }
+
+      console.log(`Kompress edilmiş slide ${index} şəkil ölçüsü:`, compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
       const newSlides = [...slides];
-      newSlides[index].image = file;
+      newSlides[index].image = compressedFile;
       const reader = new FileReader();
       reader.onloadend = () => {
         newSlides[index].imagePreview = reader.result;
         setSlides(newSlides);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -121,15 +217,54 @@ const EditHero = () => {
     setRightTop({ ...rightTop, [field]: value });
   };
 
-  const handleRightTopImageChange = (e) => {
+  const handleRightTopImageChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setRightTop({ ...rightTop, image: file });
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 1000, 800, 0.7);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1.5 * 1024 * 1024; // 1.5MB (rightTop üçün)
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 800, 600, 0.6);
+      }
+      
+      // Final yoxlama
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 600, 500, 0.5);
+      }
+
+      console.log(`Kompress edilmiş rightTop şəkil ölçüsü:`, compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setRightTop({ ...rightTop, image: file, imagePreview: reader.result });
+        setRightTop({ ...rightTop, image: compressedFile, imagePreview: reader.result });
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -140,17 +275,57 @@ const EditHero = () => {
     setBottomBlocks(newBlocks);
   };
 
-  const handleBottomBlockImageChange = (index, e) => {
+  const handleBottomBlockImageChange = async (index, e) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 800, 600, 0.7);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1 * 1024 * 1024; // 1MB (bottomBlock üçün)
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 600, 400, 0.6);
+      }
+      
+      // Final yoxlama
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 500, 350, 0.5);
+      }
+
+      console.log(`Kompress edilmiş bottom block ${index} şəkil ölçüsü:`, compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
       const newBlocks = [...bottomBlocks];
-      newBlocks[index].image = file;
+      newBlocks[index].image = compressedFile;
       const reader = new FileReader();
       reader.onloadend = () => {
         newBlocks[index].imagePreview = reader.result;
         setBottomBlocks(newBlocks);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -192,10 +367,23 @@ const EditHero = () => {
       }
     }
 
-    if (!rightTop.title || !rightTop.buttonText || !rightTop.buttonLink || !rightTop.endDate) {
+    // endDate validation - düzgün formatda olub-olmadığını yoxla
+    let isValidEndDate = false;
+    if (rightTop.endDate) {
+      try {
+        const date = new Date(rightTop.endDate);
+        isValidEndDate = !isNaN(date.getTime());
+      } catch (error) {
+        isValidEndDate = false;
+      }
+    }
+
+    if (!rightTop.title || !rightTop.buttonText || !rightTop.buttonLink || !rightTop.endDate || !isValidEndDate) {
       Swal.fire({
         title: "Xəta!",
-        text: "Sağ üst hissə üçün bütün sahələr doldurulmalıdır",
+        text: !isValidEndDate && rightTop.endDate 
+          ? "Bitmə tarixi düzgün formatda deyil" 
+          : "Sağ üst hissə üçün bütün sahələr doldurulmalıdır",
         icon: "error",
         confirmButtonColor: "#5C4977",
       });
@@ -267,11 +455,40 @@ const EditHero = () => {
     };
     form.append("leftSide", JSON.stringify(leftSideData));
 
+    // endDate-i düzgün formatla
+    let endDateISO = "";
+    if (rightTop.endDate) {
+      try {
+        const date = new Date(rightTop.endDate);
+        if (!isNaN(date.getTime())) {
+          endDateISO = date.toISOString();
+        } else {
+          console.error("Invalid endDate value:", rightTop.endDate);
+          Swal.fire({
+            title: "Xəta!",
+            text: "Bitmə tarixi düzgün formatda deyil",
+            icon: "error",
+            confirmButtonColor: "#5C4977",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Date parsing error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: "Bitmə tarixi işlənmədi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+    }
+
     const rightTopData = {
       title: rightTop.title,
       buttonText: rightTop.buttonText,
       buttonLink: rightTop.buttonLink,
-      endDate: new Date(rightTop.endDate).toISOString(),
+      endDate: endDateISO,
       image: rightTop.existingImage || null, // Mövcud şəkil varsa göndər
     };
     form.append("rightTop", JSON.stringify(rightTopData));
@@ -284,6 +501,23 @@ const EditHero = () => {
       image: block.existingImage || null, // Mövcud şəkil varsa göndər
     }));
     form.append("bottomBlocks", JSON.stringify(bottomBlocksData));
+
+    // FormData məzmununu yoxla
+    let totalFormDataSize = 0;
+    console.log("=== HERO UPDATE FORM DATA ===");
+    console.log("FormData entries:");
+    for (let pair of form.entries()) {
+      if (pair[1] instanceof File) {
+        totalFormDataSize += pair[1].size;
+        console.log(`${pair[0]}: [File] ${pair[1].name} (${(pair[1].size / 1024 / 1024).toFixed(2)}MB)`);
+      } else {
+        const textSize = new TextEncoder().encode(pair[1]).length;
+        totalFormDataSize += textSize;
+        console.log(`${pair[0]}: ${pair[1].substring(0, 100)}... (${textSize} bytes)`);
+      }
+    }
+    console.log("Total FormData size:", (totalFormDataSize / 1024 / 1024).toFixed(2), "MB");
+    console.log("=============================");
 
     try {
       await updateHero({ id, heroData: form }).unwrap();
