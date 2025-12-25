@@ -467,11 +467,24 @@ const EditPageContent = () => {
       }
     }
 
-    if (!rightTop.image || !rightTop.title || !rightTop.buttonText || !rightTop.buttonLink || !rightTop.endDate) {
+    // endDate validation - düzgün formatda olub-olmadığını yoxla
+    let isValidEndDate = false;
+    if (rightTop.endDate) {
+      try {
+        const date = new Date(rightTop.endDate);
+        isValidEndDate = !isNaN(date.getTime());
+      } catch (error) {
+        isValidEndDate = false;
+      }
+    }
+
+    if (!rightTop.image || !rightTop.title || !rightTop.buttonText || !rightTop.buttonLink || !rightTop.endDate || !isValidEndDate) {
       console.error("RightTop validation failed:", rightTop);
       Swal.fire({
         title: "Xəta!",
-        text: "Sağ üst hissə üçün bütün sahələr doldurulmalıdır",
+        text: !isValidEndDate && rightTop.endDate 
+          ? "Bitmə tarixi düzgün formatda deyil" 
+          : "Sağ üst hissə üçün bütün sahələr doldurulmalıdır",
         icon: "error",
         confirmButtonColor: "#5C4977",
       });
@@ -549,11 +562,40 @@ const EditPageContent = () => {
     form.append("leftSide", JSON.stringify(leftSideData));
     console.log("LeftSide data:", leftSideData);
 
+    // endDate-i düzgün formatla
+    let endDateISO = "";
+    if (rightTop.endDate) {
+      try {
+        const date = new Date(rightTop.endDate);
+        if (!isNaN(date.getTime())) {
+          endDateISO = date.toISOString();
+        } else {
+          console.error("Invalid endDate value:", rightTop.endDate);
+          Swal.fire({
+            title: "Xəta!",
+            text: "Bitmə tarixi düzgün formatda deyil",
+            icon: "error",
+            confirmButtonColor: "#5C4977",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Date parsing error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: "Bitmə tarixi işlənmədi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+    }
+
     const rightTopData = {
       title: rightTop.title,
       buttonText: rightTop.buttonText,
       buttonLink: rightTop.buttonLink,
-      endDate: new Date(rightTop.endDate).toISOString(),
+      endDate: endDateISO,
     };
     form.append("rightTop", JSON.stringify(rightTopData));
     console.log("RightTop data:", rightTopData);
