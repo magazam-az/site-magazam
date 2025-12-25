@@ -1497,21 +1497,112 @@ const EditPageContent = () => {
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0];
-                                if (file) {
+                                if (!file) return;
+
+                                // Şəkil ölçüsünü yoxla (max 5MB)
+                                const maxSize = 5 * 1024 * 1024; // 5MB
+                                if (file.size > maxSize) {
+                                  Swal.fire({
+                                    title: "Xəta!",
+                                    text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+                                    icon: "error",
+                                    confirmButtonColor: "#5C4977",
+                                  });
+                                  e.target.value = ""; // Reset input
+                                  return;
+                                }
+
+                                // Şəkil kompress et (daha kiçik ölçü və quality)
+                                const compressImage = (file, maxWidth = 1200, maxHeight = 800, quality = 0.7) => {
+                                  return new Promise((resolve, reject) => {
+                                    const reader = new FileReader();
+                                    reader.readAsDataURL(file);
+                                    reader.onload = (event) => {
+                                      const img = new Image();
+                                      img.src = event.target.result;
+                                      img.onload = () => {
+                                        const canvas = document.createElement('canvas');
+                                        let width = img.width;
+                                        let height = img.height;
+
+                                        // Ölçüləri hesabla
+                                        if (width > height) {
+                                          if (width > maxWidth) {
+                                            height = (height * maxWidth) / width;
+                                            width = maxWidth;
+                                          }
+                                        } else {
+                                          if (height > maxHeight) {
+                                            width = (width * maxHeight) / height;
+                                            height = maxHeight;
+                                          }
+                                        }
+
+                                        canvas.width = width;
+                                        canvas.height = height;
+
+                                        const ctx = canvas.getContext('2d');
+                                        ctx.drawImage(img, 0, 0, width, height);
+
+                                        canvas.toBlob(
+                                          (blob) => {
+                                            if (!blob) {
+                                              reject(new Error("Blob yaradılmadı"));
+                                              return;
+                                            }
+                                            const compressedFile = new File([blob], file.name, {
+                                              type: file.type,
+                                              lastModified: Date.now(),
+                                            });
+                                            resolve(compressedFile);
+                                          },
+                                          file.type,
+                                          quality
+                                        );
+                                      };
+                                      img.onerror = () => reject(new Error("Şəkil yüklənmədi"));
+                                    };
+                                    reader.onerror = () => reject(new Error("Fayl oxunmadı"));
+                                  });
+                                };
+
+                                try {
+                                  let compressedFile = await compressImage(file, 1200, 800, 0.7);
+                                  
+                                  // Əgər hələ də böyükdürsə, daha çox kompress et
+                                  const targetSize = 2 * 1024 * 1024; // 2MB
+                                  if (compressedFile.size > targetSize) {
+                                    compressedFile = await compressImage(file, 800, 600, 0.6);
+                                  }
+                                  
+                                  // Final yoxlama
+                                  if (compressedFile.size > targetSize) {
+                                    compressedFile = await compressImage(file, 600, 400, 0.5);
+                                  }
+
                                   const reader = new FileReader();
                                   reader.onloadend = () => {
                                     setNewGoodsData({
                                       ...newGoodsData,
                                       banner: {
                                         ...newGoodsData.banner,
-                                        image: file,
+                                        image: compressedFile,
                                         imagePreview: reader.result,
                                       },
                                     });
                                   };
-                                  reader.readAsDataURL(file);
+                                  reader.readAsDataURL(compressedFile);
+                                } catch (error) {
+                                  console.error("Şəkil kompress xətası:", error);
+                                  Swal.fire({
+                                    title: "Xəta!",
+                                    text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+                                    icon: "error",
+                                    confirmButtonColor: "#5C4977",
+                                  });
+                                  e.target.value = ""; // Reset input
                                 }
                               }}
                               className="w-full border border-gray-300 rounded-lg px-3 py-2"
