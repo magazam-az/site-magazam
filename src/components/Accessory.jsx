@@ -1,81 +1,36 @@
-import { Keyboard, PenTool, Mouse, Headphones } from "lucide-react";
+import { Package } from "lucide-react";
 import '../assets/css/Thumbnail.css';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Container from "../components/ui/Container"
 import Product from './Product';
+import { useGetCategoriesQuery } from "../redux/api/categoryApi";
 
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-// Məhsul məlumatları
-const products = [
-  {
-    name: "Acer SA100 SATAIII",
-    brand: "SSD Drive",
-    model: "Philips",
-    type: "SATA 2.5\" Solid State Drive",
-    price: "30,00 ₼",
-    inStock: true,
-    sku: "5334126",
-    imageUrl: "/images/thebestoffers/acer-sa100-sataiii-1.jpg",
-    imageAlt: "Acer SA100 SATA SSD Drive",
-    isHot: true
-  },
-  {
-    name: "Alogic Ultra Mini USB",
-    brand: "Card Readers",
-    model: "ASUS",
-    type: "SATA 2.5\" Solid State Drive",
-    price: "50,00 ₼",
-    inStock: true,
-    sku: "5334127",
-    imageUrl: "/images/thebestoffers/alogic1.jpg",
-    imageAlt: "Alogic Ultra Mini USB",
-    isHot: true
-  },
-  {
-    name: "AMD Ryzen 5 7600X",
-    brand: "Processors",
-    model: "HP",
-    type: "SATA 2.5\" Solid State Drive",
-    price: "299,00 ₼",
-    inStock: true,
-    sku: "5334128",
-    imageUrl: "/images/thebestoffers/amd-ryzen-5-7600x-1.jpg",
-    imageAlt: "AMD Ryzen 5 7600X",
-    isHot: true
-  },
-  {
-    name: "Apple iPad Mini 6 Wi-Fi",
-    brand: "Apple Ipad",
-    model: "Apple",
-    type: "SATA 2.5\" Solid State Drive",
-    price: "500,00 ₼ – 600,00 ₼",
-    inStock: true,
-    sku: "5334129",
-    imageUrl: "/images/thebestoffers/apple-ipad-mini-pink-1.jpg",
-    imageAlt: "Apple iPad Mini 6 Wi-Fi",
-    isHot: true
-  },
-  {
-    name: "Apple MacBook Pro 16″ M1",
-    brand: "Apple MacBook",
-    model: "Apple",
-    type: "SATA 2.5\" Solid State Drive",
-    price: "2.999,00 ₼",
-    inStock: true,
-    sku: "5334130",
-    imageUrl: "/images/thebestoffers/apple-macbook-pro-16.jpg",
-    imageAlt: "Apple MacBook Pro 16″ M1",
-    isHot: true
-  }
-];
+export default function Accessory({ accessoryData }) {
+  const { data: categoriesDataFromApi } = useGetCategoriesQuery();
+  
+  // Default values if accessoryData is not provided
+  const title = accessoryData?.title || "Microsoft Accessories";
+  const description = accessoryData?.description || "Personalize your Surface Pro with Microsoft branded accessories. In the presence of many colors for every taste.";
+  const heroImage = accessoryData?.heroImage?.url || accessoryData?.heroImage || "/images/microsoft-accessories.jpg";
+  const selectedCategoryIds = accessoryData?.selectedCategories || [];
+  const cards = accessoryData?.cards || [];
 
+  // Get all categories and filter selected ones
+  const allCategories = categoriesDataFromApi?.categories || [];
+  const selectedCategories = useMemo(() => {
+    return allCategories.filter(cat => 
+      selectedCategoryIds.includes(cat._id) || 
+      selectedCategoryIds.includes(cat._id?.toString())
+    );
+  }, [allCategories, selectedCategoryIds]);
 
-export default function Accessory() {
   return (
     <div className="w-full py-4 sm:py-6">
       <Container>
@@ -90,9 +45,13 @@ export default function Accessory() {
                 {/* Sol: Şəkil */}
                 <div className="relative flex items-center justify-center mx-auto md:mx-0">
                   <img
-                    src="/images/microsoft-accessories.jpg"
-                    alt="Microsoft Accessories collection with keyboard, headphones, tablet, mouse and stylus pen"
+                    src={heroImage}
+                    alt={title}
                     className="w-full h-auto max-w-md rounded-xl"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/microsoft-accessories.jpg";
+                    }}
                   />
                 </div>
 
@@ -100,70 +59,66 @@ export default function Accessory() {
                 <div className="space-y-3 sm:space-y-4 md:space-y-5 text-center md:text-left pb-0">
                   <div>
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
-                      Microsoft Accessories
+                      {title}
                     </h1>
                     <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                      Personalize your Surface Pro with Microsoft branded accessories. In the presence of many colors for every taste.
+                      {description}
                     </p>
                   </div>
 
                   {/* Kateqoriya düymələri */}
-                  <div className="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-2.5 pt-2 sm:pt-3 pb-0">
-                    <button className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium cursor-pointer">
-                      <Keyboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Keyboards</span>
-                    </button>
-                    <button className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium cursor-pointer">
-                      <PenTool className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Surface Pen</span>
-                    </button>
-                    <button className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium cursor-pointer">
-                      <Mouse className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Mice</span>
-                    </button>
-                    <button className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium cursor-pointer">
-                      <Headphones className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Headphones</span>
-                    </button>
-                  </div>
+                  {selectedCategories.length > 0 && (
+                    <div className="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-2.5 pt-2 sm:pt-3 pb-0">
+                      {selectedCategories.map((category) => (
+                        <Link
+                          key={category._id}
+                          to={`/catalog/${category.slug || category.name}`}
+                          className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium cursor-pointer"
+                        >
+                          <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+                          <span>{category.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
 
             {/* 3 Kart Section - Microsoft Accessories div'inin içine taşındı */}
-            <section className="pt-5 md:-mt-2 pb-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
-                {/* Kart 1 */}
-                <div className="bg-gradient-to-br h-[170px] raun rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
-                  <div className="relative z-10">
-                    <h3 className="text-xl font-bold mb-2">Xiaomi MI 11</h3>
-                    <p className="text-blue-100 text-sm">Discount up to 30%</p>
-                  </div>
-                  <button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold w-fit px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer">
-                    View Details
-                  </button>
+            {cards.length > 0 && (
+              <section className="pt-5 md:-mt-2 pb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {cards.map((card, index) => (
+                    <div 
+                      key={index}
+                      className="bg-gradient-to-br h-[170px] rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                      style={{
+                        backgroundImage: card.backgroundImage?.url ? `url(${card.backgroundImage.url})` : undefined,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    >
+                      {card.backgroundImage?.url && (
+                        <div className="absolute inset-0 bg-black/30 rounded-2xl"></div>
+                      )}
+                      <div className="relative z-10">
+                        <h3 className="text-xl font-bold mb-2">{card.title || ""}</h3>
+                        <p className="text-sm opacity-90">{card.description || ""}</p>
+                      </div>
+                      {card.buttonText && (
+                        <Link
+                          to={card.buttonLink || "#"}
+                          className="bg-white text-gray-900 hover:bg-gray-100 font-semibold w-fit px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer relative z-10"
+                        >
+                          {card.buttonText}
+                        </Link>
+                      )}
+                    </div>
+                  ))}
                 </div>
-
-                {/* Kart 2 */}
-                <div className="bg-gradient-to-br h-[170px] aypod rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
-                  <div className="relative z-10">
-                    <h3 className="text-xl font-bold mb-2">HP Laser Jet</h3>
-                    <p className="text-orange-100 text-sm">Personal printer</p>
-                  </div>
-                  <button className="bg-white text-red-500 hover:bg-gray-100 font-semibold w-fit px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer">
-                    View Details
-                  </button>
-                </div>
-
-                {/* Kart 3 */}
-                <div className="bg-gradient-to-br h-[170px] jops rounded-2xl p-6 text-white relative h-56 flex flex-col justify-between hover:shadow-lg transition-shadow">
-                  <div className="relative z-10">
-                    <h3 className="text-xl font-bold mb-2">White Joy Cons</h3>
-                    <p className="text-red-100 text-sm">Long-awaited novelty</p>
-                  </div>
-                  <button className="bg-white text-red-600 hover:bg-gray-100 font-semibold w-fit px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </section>
+              </section>
+            )}
           </div>
 
           {/* Swiper Kart - 1/4 genişlik */}
@@ -205,25 +160,7 @@ export default function Accessory() {
                       height: '100%'
                     }}
                   >
-                    {products.map((product, index) => (
-                      <SwiperSlide key={`${product.sku}-${index}`}>
-                        <div className="flex justify-center">
-                          <Product product={{
-                            name: product.name,
-                            brand: product.brand,
-                            model: product.model,
-                            type: product.type,
-                            price: product.price,
-                            inStock: product.inStock,
-                            sku: product.sku,
-                            imageUrl: product.imageUrl,
-                            imageAlt: product.imageAlt,
-                            isHot: product.isHot,
-                            rating: product.rating || 4.5
-                          }} />
-                        </div>
-                      </SwiperSlide>
-                    ))}
+                    {/* Products will be loaded from HomeAppliances component */}
                   </Swiper>
                 </div>
               </div>

@@ -119,11 +119,18 @@ const Home = () => {
         if (block.type === "HomeAppliances") {
           return <HomeAppliances key={block._id || index} />;
         }
+
+        if (block.type === "Accessories") {
+          if (block.accessoryData) {
+            return <Accessory key={block._id || index} accessoryData={block.accessoryData} />;
+          } else {
+            console.warn("Accessories block found but accessoryData is missing:", block);
+            return null;
+          }
+        }
         
         return null;
       })}
-    
-      <Accessory />
       {/* <FAQPage /> */}
       <Blogs />
       <About/>

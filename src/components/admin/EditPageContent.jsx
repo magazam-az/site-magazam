@@ -107,6 +107,41 @@ const EditPageContent = () => {
     isActive: true,
   });
 
+  // Accessories state
+  const [accessoryData, setAccessoryData] = useState({
+    title: "Microsoft Accessories",
+    description: "Personalize your Surface Pro with Microsoft branded accessories. In the presence of many colors for every taste.",
+    heroImage: null,
+    heroImagePreview: null,
+    selectedCategories: [],
+    cards: [
+      {
+        title: "",
+        description: "",
+        backgroundImage: null,
+        backgroundImagePreview: null,
+        buttonText: "",
+        buttonLink: "",
+      },
+      {
+        title: "",
+        description: "",
+        backgroundImage: null,
+        backgroundImagePreview: null,
+        buttonText: "",
+        buttonLink: "",
+      },
+      {
+        title: "",
+        description: "",
+        backgroundImage: null,
+        backgroundImagePreview: null,
+        buttonText: "",
+        buttonLink: "",
+      },
+    ],
+  });
+
   // Load HomeAppliances data when available
   useEffect(() => {
     if (homeAppliancesData?.homeAppliances) {
@@ -459,6 +494,200 @@ const EditPageContent = () => {
     }
   };
 
+  const handleAccessoryCategoryToggle = (categoryId) => {
+    const categoryIdStr = categoryId.toString();
+    if (accessoryData.selectedCategories.includes(categoryIdStr)) {
+      setAccessoryData({
+        ...accessoryData,
+        selectedCategories: accessoryData.selectedCategories.filter(
+          (id) => id !== categoryIdStr
+        ),
+      });
+    } else {
+      setAccessoryData({
+        ...accessoryData,
+        selectedCategories: [...accessoryData.selectedCategories, categoryIdStr],
+      });
+    }
+  };
+
+  const handleCardChange = (index, field, value) => {
+    const newCards = [...accessoryData.cards];
+    newCards[index] = {
+      ...newCards[index],
+      [field]: value,
+    };
+    setAccessoryData({
+      ...accessoryData,
+      cards: newCards,
+    });
+  };
+
+  // Şəkil kompress funksiyası
+  const compressImage = (file, maxWidth = 1200, maxHeight = 800, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Ölçüləri hesabla
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // JPEG formatına çevir (daha kiçik ölçü)
+          const outputType = 'image/jpeg';
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Blob yaradılmadı"));
+                return;
+              }
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                type: outputType,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            outputType,
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error("Şəkil yüklənmədi"));
+      };
+      reader.onerror = () => reject(new Error("Fayl oxunmadı"));
+    });
+  };
+
+  const handleCardImageChange = async (index, file) => {
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 800, 600, 0.6);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1 * 1024 * 1024; // 1MB
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 600, 400, 0.5);
+      }
+      
+      // Final yoxlama - ən kiçik ölçü
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 400, 300, 0.4);
+      }
+
+      console.log("Kompress edilmiş şəkil ölçüsü:", compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newCards = [...accessoryData.cards];
+        newCards[index] = {
+          ...newCards[index],
+          backgroundImage: compressedFile,
+          backgroundImagePreview: reader.result,
+        };
+        setAccessoryData({
+          ...accessoryData,
+          cards: newCards,
+        });
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+    }
+  };
+
+  const handleHeroImageChange = async (file) => {
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 1000, 800, 0.7);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1.5 * 1024 * 1024; // 1.5MB (hero image üçün bir az daha böyük)
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 800, 600, 0.6);
+      }
+      
+      // Final yoxlama
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 600, 400, 0.5);
+      }
+
+      console.log("Kompress edilmiş hero şəkil ölçüsü:", compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAccessoryData({
+          ...accessoryData,
+          heroImage: compressedFile,
+          heroImagePreview: reader.result,
+        });
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+    }
+  };
+
   const handleSaveBlock = async () => {
     if (!pageContentId) {
       Swal.fire({
@@ -797,6 +1026,103 @@ const EditPageContent = () => {
           confirmButtonColor: "#5C4977",
         });
       }
+    } else if (selectedBlockType === "Accessories") {
+      if (!accessoryData.title || accessoryData.title.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Başlıq doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", "Accessories");
+      
+      // Hero image upload
+      if (accessoryData.heroImage) {
+        console.log("Hero image being uploaded:", {
+          name: accessoryData.heroImage.name,
+          size: accessoryData.heroImage.size,
+          type: accessoryData.heroImage.type,
+        });
+        formData.append("accessoryHeroImage", accessoryData.heroImage);
+      }
+      
+      // Card images upload
+      accessoryData.cards.forEach((card, index) => {
+        if (card.backgroundImage) {
+          console.log(`Card ${index} image being uploaded:`, {
+            name: card.backgroundImage.name,
+            size: card.backgroundImage.size,
+            type: card.backgroundImage.type,
+          });
+          formData.append(`accessoryCardImage${index}`, card.backgroundImage);
+        }
+      });
+      
+      // Accessory data for JSON (without file objects)
+      const accessoryDataForJson = {
+        title: accessoryData.title,
+        description: accessoryData.description || "",
+        selectedCategories: accessoryData.selectedCategories,
+        cards: accessoryData.cards.map(card => ({
+          title: card.title || "",
+          description: card.description || "",
+          buttonText: card.buttonText || "",
+          buttonLink: card.buttonLink || "",
+        })),
+      };
+      
+      const blockDataString = JSON.stringify({ accessoryData: accessoryDataForJson });
+      formData.append("blockData", blockDataString);
+      
+      // Log FormData contents
+      console.log("=== Accessories FormData ===");
+      console.log("pageType: home");
+      console.log("blockType: Accessories");
+      console.log("blockData:", blockDataString);
+      console.log("Hero image:", accessoryData.heroImage ? "Yes" : "No");
+      console.log("Card images:", accessoryData.cards.filter(c => c.backgroundImage).length);
+      console.log("Total FormData entries:", Array.from(formData.entries()).length);
+      
+      try {
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Blok yeniləndi" : "Blok əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+      } catch (error) {
+        console.error("Save Accessories block error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
     }
   };
 
@@ -867,6 +1193,49 @@ const EditPageContent = () => {
       // The useEffect will populate the form data
     }
 
+    if (block.type === "Accessories" && block.accessoryData) {
+      setAccessoryData({
+        title: block.accessoryData.title || "Microsoft Accessories",
+        description: block.accessoryData.description || "",
+        heroImage: null,
+        heroImagePreview: block.accessoryData.heroImage?.url || null,
+        selectedCategories: block.accessoryData.selectedCategories?.map(id => id.toString()) || [],
+        cards: block.accessoryData.cards?.map(card => ({
+          title: card.title || "",
+          description: card.description || "",
+          backgroundImage: null,
+          backgroundImagePreview: card.backgroundImage?.url || null,
+          buttonText: card.buttonText || "",
+          buttonLink: card.buttonLink || "",
+        })) || [
+          {
+            title: "",
+            description: "",
+            backgroundImage: null,
+            backgroundImagePreview: null,
+            buttonText: "",
+            buttonLink: "",
+          },
+          {
+            title: "",
+            description: "",
+            backgroundImage: null,
+            backgroundImagePreview: null,
+            buttonText: "",
+            buttonLink: "",
+          },
+          {
+            title: "",
+            description: "",
+            backgroundImage: null,
+            backgroundImagePreview: null,
+            buttonText: "",
+            buttonLink: "",
+          },
+        ],
+      });
+    }
+
     setShowAddBlockModal(true);
   };
 
@@ -904,6 +1273,39 @@ const EditPageContent = () => {
       selectedProductIds: [],
       isActive: true,
     });
+    setAccessoryData({
+      title: "Microsoft Accessories",
+      description: "Personalize your Surface Pro with Microsoft branded accessories. In the presence of many colors for every taste.",
+      heroImage: null,
+      heroImagePreview: null,
+      selectedCategories: [],
+      cards: [
+        {
+          title: "",
+          description: "",
+          backgroundImage: null,
+          backgroundImagePreview: null,
+          buttonText: "",
+          buttonLink: "",
+        },
+        {
+          title: "",
+          description: "",
+          backgroundImage: null,
+          backgroundImagePreview: null,
+          buttonText: "",
+          buttonLink: "",
+        },
+        {
+          title: "",
+          description: "",
+          backgroundImage: null,
+          backgroundImagePreview: null,
+          buttonText: "",
+          buttonLink: "",
+        },
+      ],
+    });
   };
 
   const getBlockTypeLabel = (type) => {
@@ -920,6 +1322,8 @@ const EditPageContent = () => {
         return "Shopping Event";
       case "HomeAppliances":
         return "Home Appliances";
+      case "Accessories":
+        return "Accessories";
       default:
         return type;
     }
@@ -1314,6 +1718,17 @@ const EditPageContent = () => {
                         </h4>
                         <p className="text-sm text-gray-500">
                           Home appliances bloku
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => setSelectedBlockType("Accessories")}
+                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                      >
+                        <h4 className="font-semibold text-gray-800">
+                          Accessories
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Accessories bloku
                         </p>
                       </button>
                     </div>
@@ -2294,6 +2709,221 @@ const EditPageContent = () => {
                         </label>
                       </div>
                     </div>
+                  ) : selectedBlockType === "Accessories" ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">
+                        Accessories Məlumatları
+                      </h3>
+                      
+                      {/* Title */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Başlıq *
+                        </label>
+                        <input
+                          type="text"
+                          value={accessoryData.title}
+                          onChange={(e) =>
+                            setAccessoryData({
+                              ...accessoryData,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="Microsoft Accessories"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Təsvir
+                        </label>
+                        <textarea
+                          value={accessoryData.description}
+                          onChange={(e) =>
+                            setAccessoryData({
+                              ...accessoryData,
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Personalize your Surface Pro with Microsoft branded accessories..."
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          rows="3"
+                        />
+                      </div>
+
+                      {/* Hero Image */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Hero Şəkli
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleHeroImageChange(e.target.files[0]);
+                            }
+                          }}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                        {accessoryData.heroImagePreview && (
+                          <div className="mt-2">
+                            <img
+                              src={accessoryData.heroImagePreview}
+                              alt="Hero preview"
+                              className="w-48 h-48 object-cover rounded-lg"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Categories Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Kateqoriyaları Seçin
+                        </label>
+                        <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
+                          {categories.length === 0 ? (
+                            <p className="text-gray-500">Kateqoriya yoxdur</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {categories.map((category) => {
+                                const isSelected = accessoryData.selectedCategories.includes(
+                                  category._id?.toString() || category._id
+                                );
+                                return (
+                                  <label
+                                    key={category._id}
+                                    className="flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() =>
+                                        handleAccessoryCategoryToggle(category._id)
+                                      }
+                                      className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                                    />
+                                    <span>{category.name}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        {accessoryData.selectedCategories.length > 0 && (
+                          <div className="mt-2 p-3 bg-[#5C4977]/10 rounded-lg">
+                            <p className="text-sm font-medium text-[#5C4977]">
+                              Seçilmiş kateqoriya sayı: {accessoryData.selectedCategories.length}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Cards */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Kartlar (3 kart)
+                        </label>
+                        <div className="space-y-4">
+                          {accessoryData.cards.map((card, index) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-4"
+                            >
+                              <h4 className="font-semibold text-gray-800 mb-3">
+                                Kart {index + 1}
+                              </h4>
+                              <div className="space-y-3">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Başlıq
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={card.title}
+                                    onChange={(e) =>
+                                      handleCardChange(index, "title", e.target.value)
+                                    }
+                                    placeholder="Xiaomi MI 11"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Təsvir
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={card.description}
+                                    onChange={(e) =>
+                                      handleCardChange(index, "description", e.target.value)
+                                    }
+                                    placeholder="Discount up to 30%"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Arxa Plan Şəkli
+                                  </label>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        handleCardImageChange(index, e.target.files[0]);
+                                      }
+                                    }}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                  />
+                                  {card.backgroundImagePreview && (
+                                    <div className="mt-2">
+                                      <img
+                                        src={card.backgroundImagePreview}
+                                        alt={`Card ${index + 1} preview`}
+                                        className="w-32 h-32 object-cover rounded-lg"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Düymə Mətni
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={card.buttonText}
+                                    onChange={(e) =>
+                                      handleCardChange(index, "buttonText", e.target.value)
+                                    }
+                                    placeholder="View Details"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Düymə Linki
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={card.buttonLink}
+                                    onChange={(e) =>
+                                      handleCardChange(index, "buttonLink", e.target.value)
+                                    }
+                                    placeholder="/products/xiaomi-mi-11"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">
@@ -2354,7 +2984,7 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances") && (
+                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances" || selectedBlockType === "Accessories") && (
                     <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
                       <button
                         onClick={() => {
