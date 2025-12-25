@@ -152,6 +152,13 @@ const EditPageContent = () => {
     selectedBlogs: [],
   });
 
+  // About state
+  const [aboutData, setAboutData] = useState({
+    title: "Online store of household appliances and electronics",
+    description: "Then the question arises: where's the content? Not there yet? That's not so bad, there's dummy copy to the rescue. But worse, what if the fish doesn't fit in the can, the foot's to big for the boot? Or to small? To short sentences, to many headings, images too large for the proposed design, or too small, or they fit in but it looks iffy for reasons.",
+    buttonText: "Read More",
+  });
+
   // Load HomeAppliances data when available
   useEffect(() => {
     if (homeAppliancesData?.homeAppliances) {
@@ -1208,6 +1215,75 @@ const EditPageContent = () => {
           confirmButtonColor: "#5C4977",
         });
       }
+    } else if (selectedBlockType === "About") {
+      if (!aboutData.title || aboutData.title.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Başlıq doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      if (!aboutData.description || aboutData.description.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Təsvir doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", "About");
+      
+      const aboutDataForJson = {
+        title: aboutData.title,
+        description: aboutData.description,
+        buttonText: aboutData.buttonText || "Read More",
+      };
+      
+      const blockDataString = JSON.stringify({ aboutData: aboutDataForJson });
+      formData.append("blockData", blockDataString);
+      
+      try {
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Blok yeniləndi" : "Blok əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+      } catch (error) {
+        console.error("Save About block error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
     }
   };
 
@@ -1328,6 +1404,14 @@ const EditPageContent = () => {
       });
     }
 
+    if (block.type === "About" && block.aboutData) {
+      setAboutData({
+        title: block.aboutData.title || "Online store of household appliances and electronics",
+        description: block.aboutData.description || "",
+        buttonText: block.aboutData.buttonText || "Read More",
+      });
+    }
+
     setShowAddBlockModal(true);
   };
 
@@ -1403,6 +1487,11 @@ const EditPageContent = () => {
       selectedBlogs: [],
     });
     setBlogSearchTerm("");
+    setAboutData({
+      title: "Online store of household appliances and electronics",
+      description: "Then the question arises: where's the content? Not there yet? That's not so bad, there's dummy copy to the rescue. But worse, what if the fish doesn't fit in the can, the foot's to big for the boot? Or to small? To short sentences, to many headings, images too large for the proposed design, or too small, or they fit in but it looks iffy for reasons.",
+      buttonText: "Read More",
+    });
   };
 
   const getBlockTypeLabel = (type) => {
@@ -1423,6 +1512,8 @@ const EditPageContent = () => {
         return "Accessories";
       case "Blogs":
         return "Blogs";
+      case "About":
+        return "About";
       default:
         return type;
     }
@@ -1841,6 +1932,18 @@ const EditPageContent = () => {
                           </h4>
                           <p className="text-sm text-gray-500">
                             Blog seçimi bloku
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => setSelectedBlockType("About")}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer bg-white"
+                          style={{ zIndex: 1 }}
+                        >
+                          <h4 className="font-semibold text-gray-800">
+                            About
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            About bloku
                           </p>
                         </button>
                       </div>
@@ -3149,6 +3252,71 @@ const EditPageContent = () => {
                         )}
                       </div>
                     </div>
+                  ) : selectedBlockType === "About" ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">
+                        About Məlumatları
+                      </h3>
+                      
+                      {/* Title */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Başlıq *
+                        </label>
+                        <input
+                          type="text"
+                          value={aboutData.title}
+                          onChange={(e) =>
+                            setAboutData({
+                              ...aboutData,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="Online store of household appliances and electronics"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Təsvir *
+                        </label>
+                        <textarea
+                          value={aboutData.description}
+                          onChange={(e) =>
+                            setAboutData({
+                              ...aboutData,
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Then the question arises: where's the content?..."
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          rows="6"
+                          required
+                        />
+                      </div>
+
+                      {/* Button Text */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Düymə Mətni
+                        </label>
+                        <input
+                          type="text"
+                          value={aboutData.buttonText}
+                          onChange={(e) =>
+                            setAboutData({
+                              ...aboutData,
+                              buttonText: e.target.value,
+                            })
+                          }
+                          placeholder="Read More"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">
@@ -3209,7 +3377,7 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances" || selectedBlockType === "Accessories" || selectedBlockType === "Blogs") && (
+                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances" || selectedBlockType === "Accessories" || selectedBlockType === "Blogs" || selectedBlockType === "About") && (
                     <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
                       <button
                         onClick={() => {

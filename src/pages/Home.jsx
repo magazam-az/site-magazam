@@ -137,11 +137,19 @@ const Home = () => {
             return null;
           }
         }
+
+        if (block.type === "About") {
+          if (block.aboutData) {
+            return <About key={block._id || index} aboutData={block.aboutData} />;
+          } else {
+            console.warn("About block found but aboutData is missing:", block);
+            return null;
+          }
+        }
         
         return null;
       })}
       {/* <FAQPage /> */}
-      <About/>
     
      
       <Footer />

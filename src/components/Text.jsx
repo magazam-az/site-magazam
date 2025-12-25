@@ -18,7 +18,6 @@ export default function ContentCard() {
         <div className="w-full bg-white rounded-lg shadow-sm p-8 md:p-12">
       {/* Heading */}
       <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 text-balance">
-        Online store of household appliances and electronics
       </h1>
 
       {/* First paragraph */}
