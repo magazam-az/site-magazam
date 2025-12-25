@@ -87,7 +87,8 @@ export default function BestOffers({ bestOffersData }) {
   }
 
   const moreProductsLink = bestOffersData.moreProductsLink || null;
+  const moreProductsButtonText = bestOffersData.moreProductsButtonText || "More Products";
 
-  return <Products title={title} products={filteredProducts} moreProductsLink={moreProductsLink} />;
+  return <Products title={title} products={filteredProducts} moreProductsLink={moreProductsLink} moreProductsButtonText={moreProductsButtonText} />;
 }
 

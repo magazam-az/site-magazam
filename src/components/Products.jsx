@@ -9,7 +9,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 
 // Əsas Products Komponenti
-const Products = ({ title = "Products", products = [], showBanner = false, bannerData = null, moreProductsLink = null }) => {
+const Products = ({ title = "Products", products = [], showBanner = false, bannerData = null, moreProductsLink = null, moreProductsButtonText = "More Products" }) => {
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -182,7 +182,7 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
                 e.currentTarget.style.borderColor = '#E1EBFF';
               }}
             >
-              <span className="text-xs sm:text-sm font-medium">More Products</span>
+              <span className="text-xs sm:text-sm font-medium">{moreProductsButtonText}</span>
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: '#1C61E7' }} />
             </a>
           )}

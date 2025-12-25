@@ -98,7 +98,13 @@ export default function NewGoods({ newGoodsData }) {
 
   const showBanner = !!bannerData;
   const moreProductsLink = newGoodsData.moreProductsLink || null;
+  const moreProductsButtonText = newGoodsData.moreProductsButtonText || "More Products";
 
-  return <Products title={title} products={filteredProducts} showBanner={showBanner} bannerData={bannerData} moreProductsLink={moreProductsLink} />;
+  console.log("NewGoods - Banner data:", bannerData);
+  console.log("NewGoods - Show banner:", showBanner);
+  console.log("NewGoods - Filtered products count:", filteredProducts.length);
+  console.log("NewGoods - More products link:", moreProductsLink);
+
+  return <Products title={title} products={filteredProducts} showBanner={showBanner} bannerData={bannerData} moreProductsLink={moreProductsLink} moreProductsButtonText={moreProductsButtonText} />;
 }
 

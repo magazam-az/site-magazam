@@ -69,6 +69,7 @@ const EditPageContent = () => {
     title: "The Best Offers",
     selectedProducts: [],
     moreProductsLink: "",
+    moreProductsButtonText: "More Products",
   });
 
   // NewGoods state
@@ -76,6 +77,7 @@ const EditPageContent = () => {
     title: "New Goods",
     selectedProducts: [],
     moreProductsLink: "",
+    moreProductsButtonText: "More Products",
     banner: {
       image: null,
       imagePreview: null,
@@ -596,6 +598,7 @@ const EditPageContent = () => {
         title: newGoodsData.title,
         selectedProducts: newGoodsData.selectedProducts,
         moreProductsLink: newGoodsData.moreProductsLink || "",
+        moreProductsButtonText: newGoodsData.moreProductsButtonText || "More Products",
         banner: bannerDataForJson,
       };
       
@@ -693,6 +696,7 @@ const EditPageContent = () => {
       setBestOffersData({
         ...block.bestOffersData,
         moreProductsLink: block.bestOffersData.moreProductsLink || "",
+        moreProductsButtonText: block.bestOffersData.moreProductsButtonText || "More Products",
       });
     }
 
@@ -700,6 +704,7 @@ const EditPageContent = () => {
       setNewGoodsData({
         ...block.newGoodsData,
         moreProductsLink: block.newGoodsData.moreProductsLink || "",
+        moreProductsButtonText: block.newGoodsData.moreProductsButtonText || "More Products",
         banner: {
           ...block.newGoodsData.banner,
           image: null, // Şəkil faylı yoxdur, yalnız URL var
@@ -719,11 +724,14 @@ const EditPageContent = () => {
     setBestOffersData({
       title: "The Best Offers",
       selectedProducts: [],
+      moreProductsLink: "",
+      moreProductsButtonText: "More Products",
     });
     setNewGoodsData({
       title: "New Goods",
       selectedProducts: [],
       moreProductsLink: "",
+      moreProductsButtonText: "More Products",
       banner: {
         image: null,
         imagePreview: null,
@@ -1457,6 +1465,26 @@ const EditPageContent = () => {
                           Boş buraxsanız, button göstərilməyəcək
                         </p>
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          More Products Button Text
+                        </label>
+                        <input
+                          type="text"
+                          value={bestOffersData.moreProductsButtonText || "More Products"}
+                          onChange={(e) =>
+                            setBestOffersData({
+                              ...bestOffersData,
+                              moreProductsButtonText: e.target.value,
+                            })
+                          }
+                          placeholder="More Products"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Button üzərində görünəcək mətn
+                        </p>
+                      </div>
                     </div>
                   ) : selectedBlockType === "NewGoods" ? (
                     <div className="space-y-6">
@@ -1835,6 +1863,30 @@ const EditPageContent = () => {
                           placeholder="/products veya https://example.com"
                           className="w-full border border-gray-300 rounded-lg px-3 py-2"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Boş buraxsanız, button göstərilməyəcək
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          More Products Button Text
+                        </label>
+                        <input
+                          type="text"
+                          value={newGoodsData.moreProductsButtonText || "More Products"}
+                          onChange={(e) =>
+                            setNewGoodsData({
+                              ...newGoodsData,
+                              moreProductsButtonText: e.target.value,
+                            })
+                          }
+                          placeholder="More Products"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Button üzərində görünəcək mətn
+                        </p>
+                      </div>
                         <p className="text-xs text-gray-500 mt-1">
                           Boş buraxsanız, button göstərilməyəcək
                         </p>
