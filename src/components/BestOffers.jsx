@@ -89,6 +89,9 @@ export default function BestOffers({ bestOffersData }) {
   const moreProductsLink = bestOffersData.moreProductsLink || null;
   const moreProductsButtonText = bestOffersData.moreProductsButtonText || "More Products";
 
+  console.log("BestOffers - More Products Link:", moreProductsLink);
+  console.log("BestOffers - More Products Button Text:", moreProductsButtonText);
+
   return <Products title={title} products={filteredProducts} moreProductsLink={moreProductsLink} moreProductsButtonText={moreProductsButtonText} />;
 }
 
