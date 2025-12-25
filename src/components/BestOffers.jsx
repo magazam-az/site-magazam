@@ -87,7 +87,7 @@ export default function BestOffers({ bestOffersData }) {
   }
 
   const moreProductsLink = bestOffersData.moreProductsLink || null;
-  const moreProductsButtonText = bestOffersData.moreProductsButtonText || "More Products";
+  const moreProductsButtonText = bestOffersData.moreProductsButtonText || (moreProductsLink ? "More Products" : null);
 
   console.log("BestOffers - More Products Link:", moreProductsLink);
   console.log("BestOffers - More Products Button Text:", moreProductsButtonText);

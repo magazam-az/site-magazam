@@ -98,7 +98,7 @@ export default function NewGoods({ newGoodsData }) {
 
   const showBanner = !!bannerData;
   const moreProductsLink = newGoodsData.moreProductsLink || null;
-  const moreProductsButtonText = newGoodsData.moreProductsButtonText || "More Products";
+  const moreProductsButtonText = newGoodsData.moreProductsButtonText || (moreProductsLink ? "More Products" : null);
 
   console.log("NewGoods - Banner data:", bannerData);
   console.log("NewGoods - Show banner:", showBanner);

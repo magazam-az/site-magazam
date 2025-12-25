@@ -69,7 +69,7 @@ const EditPageContent = () => {
     title: "The Best Offers",
     selectedProducts: [],
     moreProductsLink: "",
-    moreProductsButtonText: "More Products",
+    moreProductsButtonText: "",
   });
 
   // NewGoods state
@@ -77,7 +77,7 @@ const EditPageContent = () => {
     title: "New Goods",
     selectedProducts: [],
     moreProductsLink: "",
-    moreProductsButtonText: "More Products",
+    moreProductsButtonText: "",
     banner: {
       image: null,
       imagePreview: null,
@@ -582,6 +582,7 @@ const EditPageContent = () => {
       
       // Banner şəkil upload
       if (newGoodsData.banner?.image) {
+        console.log("Banner şəkil ölçüsü:", newGoodsData.banner.image.size, "bytes", `(${(newGoodsData.banner.image.size / 1024 / 1024).toFixed(2)}MB)`);
         formData.append("newGoodsBannerImage", newGoodsData.banner.image);
       }
       
@@ -598,16 +599,25 @@ const EditPageContent = () => {
         title: newGoodsData.title,
         selectedProducts: newGoodsData.selectedProducts,
         moreProductsLink: newGoodsData.moreProductsLink || "",
-        moreProductsButtonText: newGoodsData.moreProductsButtonText || "More Products",
+        moreProductsButtonText: newGoodsData.moreProductsButtonText || "",
         banner: bannerDataForJson,
       };
       
       const blockDataString = JSON.stringify({ newGoodsData: newGoodsDataForJson });
       formData.append("blockData", blockDataString);
       
+      // FormData ölçüsünü yoxla
+      let formDataSize = blockDataString.length;
+      if (newGoodsData.banner?.image) {
+        formDataSize += newGoodsData.banner.image.size;
+      }
+      
       console.log("FormData being sent:");
       console.log("- pageType: home");
       console.log("- blockType: NewGoods");
+      console.log("- blockData size:", blockDataString.length, "bytes");
+      console.log("- Image size:", newGoodsData.banner?.image?.size || 0, "bytes");
+      console.log("- Total FormData size:", formDataSize, "bytes", `(${(formDataSize / 1024 / 1024).toFixed(2)}MB)`);
       console.log("- blockData:", blockDataString);
       
       try {
@@ -696,7 +706,7 @@ const EditPageContent = () => {
       setBestOffersData({
         ...block.bestOffersData,
         moreProductsLink: block.bestOffersData.moreProductsLink || "",
-        moreProductsButtonText: block.bestOffersData.moreProductsButtonText || "More Products",
+        moreProductsButtonText: block.bestOffersData.moreProductsButtonText || "",
       });
     }
 
@@ -704,7 +714,7 @@ const EditPageContent = () => {
       setNewGoodsData({
         ...block.newGoodsData,
         moreProductsLink: block.newGoodsData.moreProductsLink || "",
-        moreProductsButtonText: block.newGoodsData.moreProductsButtonText || "More Products",
+        moreProductsButtonText: block.newGoodsData.moreProductsButtonText || "",
         banner: {
           ...block.newGoodsData.banner,
           image: null, // Şəkil faylı yoxdur, yalnız URL var
@@ -725,13 +735,13 @@ const EditPageContent = () => {
       title: "The Best Offers",
       selectedProducts: [],
       moreProductsLink: "",
-      moreProductsButtonText: "More Products",
+      moreProductsButtonText: "",
     });
     setNewGoodsData({
       title: "New Goods",
       selectedProducts: [],
       moreProductsLink: "",
-      moreProductsButtonText: "More Products",
+      moreProductsButtonText: "",
       banner: {
         image: null,
         imagePreview: null,
@@ -1471,18 +1481,18 @@ const EditPageContent = () => {
                         </label>
                         <input
                           type="text"
-                          value={bestOffersData.moreProductsButtonText || "More Products"}
+                          value={bestOffersData.moreProductsButtonText ?? ""}
                           onChange={(e) =>
                             setBestOffersData({
                               ...bestOffersData,
                               moreProductsButtonText: e.target.value,
                             })
                           }
-                          placeholder="More Products"
+                          placeholder="More Products (boş buraxsanız, default 'More Products' istifadə olunacaq)"
                           className="w-full border border-gray-300 rounded-lg px-3 py-2"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Button üzərində görünəcək mətn
+                          Button üzərində görünəcək mətn. Boş buraxsanız, "More Products" istifadə olunacaq.
                         </p>
                       </div>
                     </div>
@@ -1574,19 +1584,21 @@ const EditPageContent = () => {
                                         const ctx = canvas.getContext('2d');
                                         ctx.drawImage(img, 0, 0, width, height);
 
+                                        // JPEG formatına çevir (daha kiçik ölçü)
+                                        const outputType = 'image/jpeg';
                                         canvas.toBlob(
                                           (blob) => {
                                             if (!blob) {
                                               reject(new Error("Blob yaradılmadı"));
                                               return;
                                             }
-                                            const compressedFile = new File([blob], file.name, {
-                                              type: file.type,
+                                            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                                              type: outputType,
                                               lastModified: Date.now(),
                                             });
                                             resolve(compressedFile);
                                           },
-                                          file.type,
+                                          outputType,
                                           quality
                                         );
                                       };
@@ -1597,18 +1609,32 @@ const EditPageContent = () => {
                                 };
 
                                 try {
-                                  let compressedFile = await compressImage(file, 1200, 800, 0.7);
+                                  // Daha aqressiv kompress - daha kiçik ölçü ilə başla
+                                  let compressedFile = await compressImage(file, 800, 600, 0.6);
                                   
                                   // Əgər hələ də böyükdürsə, daha çox kompress et
-                                  const targetSize = 2 * 1024 * 1024; // 2MB
-                                  if (compressedFile.size > targetSize) {
-                                    compressedFile = await compressImage(file, 800, 600, 0.6);
-                                  }
-                                  
-                                  // Final yoxlama
+                                  const targetSize = 1 * 1024 * 1024; // 1MB (daha kiçik limit)
                                   if (compressedFile.size > targetSize) {
                                     compressedFile = await compressImage(file, 600, 400, 0.5);
                                   }
+                                  
+                                  // Final yoxlama - ən kiçik ölçü
+                                  if (compressedFile.size > targetSize) {
+                                    compressedFile = await compressImage(file, 400, 300, 0.4);
+                                  }
+
+                                  // Final yoxlama - əgər hələ də böyükdürsə, xəbərdarlıq göster
+                                  if (compressedFile.size > targetSize) {
+                                    console.warn("Şəkil hələ də böyükdür:", compressedFile.size, "bytes");
+                                    Swal.fire({
+                                      title: "Xəbərdarlıq!",
+                                      text: `Şəkil ölçüsü ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB-dır. Daha kiçik şəkil seçməyi tövsiyə edirik.`,
+                                      icon: "warning",
+                                      confirmButtonColor: "#5C4977",
+                                    });
+                                  }
+
+                                  console.log("Kompress edilmiş şəkil ölçüsü:", compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
 
                                   const reader = new FileReader();
                                   reader.onloadend = () => {
@@ -1873,18 +1899,18 @@ const EditPageContent = () => {
                         </label>
                         <input
                           type="text"
-                          value={newGoodsData.moreProductsButtonText || "More Products"}
+                          value={newGoodsData.moreProductsButtonText ?? ""}
                           onChange={(e) =>
                             setNewGoodsData({
                               ...newGoodsData,
                               moreProductsButtonText: e.target.value,
                             })
                           }
-                          placeholder="More Products"
+                          placeholder="More Products (boş buraxsanız, default 'More Products' istifadə olunacaq)"
                           className="w-full border border-gray-300 rounded-lg px-3 py-2"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Button üzərində görünəcək mətn
+                          Button üzərində görünəcək mətn. Boş buraxsanız, "More Products" istifadə olunacaq.
                         </p>
                       </div>
                     </div>
