@@ -8,6 +8,7 @@ import NewGoods from "../components/NewGoods";
 import FAQPage from "../components/FAQ";
 import ShoppingEvent from "../components/ShoppingEvent";
 import Products from "../components/Products";
+import HomeAppliances from "../components/HomeAppliances";
 import Container from "../components/ui/Container";
 import Accessory from "../components/Accessory";
 import Blogs from "../components/Blogs";
@@ -111,81 +112,17 @@ const Home = () => {
           }
         }
         
+        if (block.type === "ShoppingEvent") {
+          return <ShoppingEvent key={block._id || index} />;
+        }
+
+        if (block.type === "HomeAppliances") {
+          return <HomeAppliances key={block._id || index} />;
+        }
+        
         return null;
       })}
     
-     
-      <ShoppingEvent />
-      <Products 
-        title="Home Appliance"
-        products={[
-          {
-            name: "Acer SA100 SATAIII",
-            brand: "SSD Drive",
-            model: "Philips",
-            type: "SATA 2.5\" Solid State Drive",
-            price: "30,00 ₼",
-            inStock: true,
-            sku: "5334126",
-            imageUrl: "/images/thebestoffers/acer-sa100-sataiii-1.jpg",
-            imageAlt: "Acer SA100 SATA SSD Drive",
-            isHot: true,
-            rating: 4.2
-          },
-          {
-            name: "Alogic Ultra Mini USB",
-            brand: "Card Readers",
-            model: "ASUS",
-            type: "SATA 2.5\" Solid State Drive",
-            price: "50,00 ₼",
-            inStock: true,
-            sku: "5334127",
-            imageUrl: "/images/thebestoffers/alogic1.jpg",
-            imageAlt: "Alogic Ultra Mini USB",
-            isHot: true,
-            rating: 3.5
-          },
-          {
-            name: "AMD Ryzen 5 7600X",
-            brand: "Processors",
-            model: "HP",
-            type: "SATA 2.5\" Solid State Drive",
-            price: "299,00 ₼",
-            inStock: true,
-            sku: "5334128",
-            imageUrl: "/images/thebestoffers/amd-ryzen-5-7600x-1.jpg",
-            imageAlt: "AMD Ryzen 5 7600X",
-            isHot: true,
-            rating: 2.7
-          },
-          {
-            name: "Apple iPad Mini 6 Wi-Fi",
-            brand: "Apple Ipad",
-            model: "Apple",
-            type: "SATA 2.5\" Solid State Drive",
-            price: "500,00 ₼ – 600,00 ₼",
-            inStock: true,
-            sku: "5334129",
-            imageUrl: "/images/thebestoffers/apple-ipad-mini-pink-1.jpg",
-            imageAlt: "Apple iPad Mini 6 Wi-Fi",
-            isHot: true,
-            rating: 4.8
-          },
-          {
-            name: "Apple MacBook Pro 16″ M1",
-            brand: "Apple MacBook",
-            model: "Apple",
-            type: "SATA 2.5\" Solid State Drive",
-            price: "2.999,00 ₼",
-            inStock: true,
-            sku: "5334130",
-            imageUrl: "/images/thebestoffers/apple-macbook-pro-16.jpg",
-            imageAlt: "Apple MacBook Pro 16″ M1",
-            isHot: true,
-            rating: 5.0
-          }
-        ]}
-      />
       <Accessory />
       {/* <FAQPage /> */}
       <Blogs />

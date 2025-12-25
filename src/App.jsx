@@ -46,6 +46,7 @@ import EditPageContent from './components/admin/EditPageContent'
 import AdminHero from './components/admin/AdminHero'
 import EditHero from './components/admin/EditHero'
 import AdminShoppingEvent from './components/admin/AdminShoppingEvent'
+import HomeAppliances from './components/HomeAppliances'
 
 import PrivateRoute from './components/PrivateRoute'
 import PublicRoute from './components/PublicRoute'

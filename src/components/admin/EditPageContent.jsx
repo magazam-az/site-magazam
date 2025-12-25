@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useGetOrCreateHomePageContentQuery,
@@ -10,6 +10,7 @@ import {
 import { useGetCategoriesQuery } from "../../redux/api/categoryApi";
 import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation } from "../../redux/api/heroApi";
 import { useGetProductsQuery } from "../../redux/api/productsApi";
+import { useGetHomeAppliancesAdminQuery, useUpdateHomeAppliancesMutation } from "../../redux/api/homeAppliancesApi";
 import Swal from "sweetalert2";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -94,6 +95,30 @@ const EditPageContent = () => {
   const allProducts = productsData?.products || [];
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [newGoodsSearchTerm, setNewGoodsSearchTerm] = useState("");
+  const [homeAppliancesSearchTerm, setHomeAppliancesSearchTerm] = useState("");
+
+  // HomeAppliances state
+  const { data: homeAppliancesData, refetch: refetchHomeAppliances } = useGetHomeAppliancesAdminQuery();
+  const [updateHomeAppliances, { isLoading: isUpdatingHomeAppliances }] = useUpdateHomeAppliancesMutation();
+  const [homeAppliancesFormData, setHomeAppliancesFormData] = useState({
+    title: "Home Appliance",
+    hotLabel: "Hot",
+    selectedProductIds: [],
+    isActive: true,
+  });
+
+  // Load HomeAppliances data when available
+  useEffect(() => {
+    if (homeAppliancesData?.homeAppliances) {
+      const data = homeAppliancesData.homeAppliances;
+      setHomeAppliancesFormData({
+        title: data.title || "Home Appliance",
+        hotLabel: data.hotLabel || "Hot",
+        selectedProductIds: data.selectedProductIds?.map(id => id.toString()) || [],
+        isActive: data.isActive !== undefined ? data.isActive : true,
+      });
+    }
+  }, [homeAppliancesData]);
 
   const handleDeleteHero = async (id) => {
     const result = await Swal.fire({
@@ -701,6 +726,77 @@ const EditPageContent = () => {
           confirmButtonColor: "#5C4977",
         });
       }
+    } else if (selectedBlockType === "HomeAppliances") {
+      // HomeAppliances is managed via its own API, but also saved as PageContent block
+      if (!homeAppliancesFormData.title || homeAppliancesFormData.title.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Başlıq doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      if (!homeAppliancesFormData.hotLabel || homeAppliancesFormData.hotLabel.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Hot etiketi doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      try {
+        // Update HomeAppliances API
+        await updateHomeAppliances({
+          title: homeAppliancesFormData.title.trim(),
+          hotLabel: homeAppliancesFormData.hotLabel.trim(),
+          selectedProductIds: homeAppliancesFormData.selectedProductIds,
+          isActive: homeAppliancesFormData.isActive,
+        }).unwrap();
+
+        // Also add/update as PageContent block
+        const formData = new FormData();
+        formData.append("pageType", "home");
+        formData.append("blockType", "HomeAppliances");
+
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Home Appliances yeniləndi" : "Home Appliances əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+        refetchHomeAppliances();
+      } catch (error) {
+        console.error("Save HomeAppliances error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Home Appliances saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
     }
   };
 
@@ -766,6 +862,11 @@ const EditPageContent = () => {
       });
     }
 
+    if (block.type === "HomeAppliances") {
+      // HomeAppliances data is loaded from API via useEffect, so we just open the modal
+      // The useEffect will populate the form data
+    }
+
     setShowAddBlockModal(true);
   };
 
@@ -796,6 +897,13 @@ const EditPageContent = () => {
     });
     setProductSearchTerm("");
     setNewGoodsSearchTerm("");
+    setHomeAppliancesSearchTerm("");
+    setHomeAppliancesFormData({
+      title: "Home Appliance",
+      hotLabel: "Hot",
+      selectedProductIds: [],
+      isActive: true,
+    });
   };
 
   const getBlockTypeLabel = (type) => {
@@ -810,6 +918,8 @@ const EditPageContent = () => {
         return "Yeni Məhsullar";
       case "ShoppingEvent":
         return "Shopping Event";
+      case "HomeAppliances":
+        return "Home Appliances";
       default:
         return type;
     }
@@ -1193,6 +1303,17 @@ const EditPageContent = () => {
                         </h4>
                         <p className="text-sm text-gray-500">
                           Shopping event bloku
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => setSelectedBlockType("HomeAppliances")}
+                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
+                      >
+                        <h4 className="font-semibold text-gray-800">
+                          Home Appliances
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Home appliances bloku
                         </p>
                       </button>
                     </div>
@@ -2011,6 +2132,168 @@ const EditPageContent = () => {
                         </p>
                       </div>
                     </div>
+                  ) : selectedBlockType === "HomeAppliances" ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">
+                        Home Appliances Məlumatları
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Başlıq *
+                        </label>
+                        <input
+                          type="text"
+                          value={homeAppliancesFormData.title}
+                          onChange={(e) =>
+                            setHomeAppliancesFormData({
+                              ...homeAppliancesFormData,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="Home Appliance"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Hot Etiketi *
+                        </label>
+                        <input
+                          type="text"
+                          value={homeAppliancesFormData.hotLabel}
+                          onChange={(e) =>
+                            setHomeAppliancesFormData({
+                              ...homeAppliancesFormData,
+                              hotLabel: e.target.value,
+                            })
+                          }
+                          placeholder="Hot"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Məhsulları Seçin *
+                        </label>
+                        <div className="mb-4">
+                          <input
+                            type="text"
+                            value={homeAppliancesSearchTerm}
+                            onChange={(e) => setHomeAppliancesSearchTerm(e.target.value)}
+                            placeholder="Məhsul axtar..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          />
+                        </div>
+                        <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                          {allProducts.length === 0 ? (
+                            <p className="text-gray-500">Məhsul tapılmadı</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {allProducts
+                                .filter((product) => {
+                                  if (!homeAppliancesSearchTerm) return true;
+                                  const searchLower = homeAppliancesSearchTerm.toLowerCase();
+                                  return (
+                                    product.name?.toLowerCase().includes(searchLower) ||
+                                    product.brand?.toLowerCase().includes(searchLower) ||
+                                    product.model?.toLowerCase().includes(searchLower)
+                                  );
+                                })
+                                .map((product) => {
+                                  const isSelected = homeAppliancesFormData.selectedProductIds.includes(
+                                    product._id.toString()
+                                  );
+                                  return (
+                                    <label
+                                      key={product._id}
+                                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          const productIdStr = product._id.toString();
+                                          if (isSelected) {
+                                            setHomeAppliancesFormData({
+                                              ...homeAppliancesFormData,
+                                              selectedProductIds: homeAppliancesFormData.selectedProductIds.filter(
+                                                (id) => id !== productIdStr
+                                              ),
+                                            });
+                                          } else {
+                                            setHomeAppliancesFormData({
+                                              ...homeAppliancesFormData,
+                                              selectedProductIds: [
+                                                ...homeAppliancesFormData.selectedProductIds,
+                                                productIdStr,
+                                              ],
+                                            });
+                                          }
+                                        }}
+                                        className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                                      />
+                                      <div className="flex items-center gap-3 flex-1">
+                                        <img
+                                          src={
+                                            product.images?.[0]?.url ||
+                                            product.image ||
+                                            "https://placehold.co/60x60/6B7280/ffffff?text=No+Image"
+                                          }
+                                          alt={product.name}
+                                          className="w-12 h-12 object-contain rounded border border-gray-200"
+                                          onError={(e) => {
+                                            e.target.src =
+                                              "https://placehold.co/60x60/6B7280/ffffff?text=No+Image";
+                                          }}
+                                        />
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-800">
+                                            {product.name}
+                                          </p>
+                                          <p className="text-sm text-gray-500">
+                                            {product.brand} {product.model && `- ${product.model}`}
+                                          </p>
+                                          <p className="text-sm font-semibold text-[#5C4977]">
+                                            {typeof product.price === 'number'
+                                              ? `${product.price.toFixed(2)} ₼`
+                                              : product.price || '0.00 ₼'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </div>
+                        {homeAppliancesFormData.selectedProductIds.length > 0 && (
+                          <div className="mt-4 p-3 bg-[#5C4977]/10 rounded-lg">
+                            <p className="text-sm font-medium text-[#5C4977]">
+                              Seçilmiş məhsul sayı: {homeAppliancesFormData.selectedProductIds.length}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="homeAppliancesIsActive"
+                          checked={homeAppliancesFormData.isActive}
+                          onChange={(e) =>
+                            setHomeAppliancesFormData({
+                              ...homeAppliancesFormData,
+                              isActive: e.target.checked,
+                            })
+                          }
+                          className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                        />
+                        <label htmlFor="homeAppliancesIsActive" className="text-sm font-medium text-gray-700">
+                          Aktiv olsun
+                        </label>
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">
@@ -2071,7 +2354,7 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods") && (
+                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances") && (
                     <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
                       <button
                         onClick={() => {
@@ -2086,7 +2369,7 @@ const EditPageContent = () => {
                       </button>
                       <button
                         onClick={handleSaveBlock}
-                        disabled={isAdding || isUpdating}
+                        disabled={isAdding || isUpdating || isUpdatingHomeAppliances}
                         className="px-6 py-2 bg-[#5C4977] text-white rounded-lg hover:bg-[#5C4977]/90 transition-all disabled:opacity-50 cursor-pointer"
                       >
                         {isAdding || isUpdating ? (

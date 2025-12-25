@@ -161,7 +161,7 @@ const Product = ({ product, mehsul }) => {
     >
       {productData.isHot && (
         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
-          HOT
+          {productData.hotLabel || "HOT"}
         </div>
       )}
 
