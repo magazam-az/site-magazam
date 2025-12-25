@@ -239,17 +239,57 @@ const EditPageContent = () => {
     setSlides(newSlides);
   };
 
-  const handleSlideImageChange = (index, e) => {
+  const handleSlideImageChange = async (index, e) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 1200, 800, 0.7);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1.5 * 1024 * 1024; // 1.5MB (hero slide üçün)
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 1000, 700, 0.6);
+      }
+      
+      // Final yoxlama
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 800, 600, 0.5);
+      }
+
+      console.log(`Kompress edilmiş slide ${index} şəkil ölçüsü:`, compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
       const newSlides = [...slides];
-      newSlides[index].image = file;
+      newSlides[index].image = compressedFile;
       const reader = new FileReader();
       reader.onloadend = () => {
         newSlides[index].imagePreview = reader.result;
         setSlides(newSlides);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -257,15 +297,54 @@ const EditPageContent = () => {
     setRightTop({ ...rightTop, [field]: value });
   };
 
-  const handleRightTopImageChange = (e) => {
+  const handleRightTopImageChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setRightTop({ ...rightTop, image: file });
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 1000, 800, 0.7);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1.5 * 1024 * 1024; // 1.5MB (rightTop üçün)
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 800, 600, 0.6);
+      }
+      
+      // Final yoxlama
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 600, 400, 0.5);
+      }
+
+      console.log("Kompress edilmiş rightTop şəkil ölçüsü:", compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setRightTop({ ...rightTop, image: file, imagePreview: reader.result });
+        setRightTop({ ...rightTop, image: compressedFile, imagePreview: reader.result });
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -275,17 +354,57 @@ const EditPageContent = () => {
     setBottomBlocks(newBlocks);
   };
 
-  const handleBottomBlockImageChange = (index, e) => {
+  const handleBottomBlockImageChange = async (index, e) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Şəkil ölçüsünü yoxla (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    try {
+      // Şəkil kompress et
+      let compressedFile = await compressImage(file, 800, 600, 0.7);
+      
+      // Əgər hələ də böyükdürsə, daha çox kompress et
+      const targetSize = 1 * 1024 * 1024; // 1MB (bottom block üçün)
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 600, 400, 0.6);
+      }
+      
+      // Final yoxlama
+      if (compressedFile.size > targetSize) {
+        compressedFile = await compressImage(file, 400, 300, 0.5);
+      }
+
+      console.log(`Kompress edilmiş bottom block ${index} şəkil ölçüsü:`, compressedFile.size, "bytes", `(${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+
       const newBlocks = [...bottomBlocks];
-      newBlocks[index].image = file;
+      newBlocks[index].image = compressedFile;
       const reader = new FileReader();
       reader.onloadend = () => {
         newBlocks[index].imagePreview = reader.result;
         setBottomBlocks(newBlocks);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Şəkil kompress xətası:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: "Şəkil işlənmədi. Zəhmət olmasa başqa şəkil seçin.",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -449,14 +568,19 @@ const EditPageContent = () => {
     console.log("BottomBlocks data:", bottomBlocksData);
 
     // FormData məzmununu yoxla
+    let totalFormDataSize = 0;
     console.log("FormData entries:");
     for (let pair of form.entries()) {
       if (pair[1] instanceof File) {
-        console.log(`${pair[0]}: [File] ${pair[1].name} (${pair[1].size} bytes)`);
+        totalFormDataSize += pair[1].size;
+        console.log(`${pair[0]}: [File] ${pair[1].name} (${(pair[1].size / 1024 / 1024).toFixed(2)}MB)`);
       } else {
-        console.log(`${pair[0]}: ${pair[1]}`);
+        const textSize = new TextEncoder().encode(pair[1]).length;
+        totalFormDataSize += textSize;
+        console.log(`${pair[0]}: ${pair[1].substring(0, 100)}... (${textSize} bytes)`);
       }
     }
+    console.log(`Total FormData size: ${(totalFormDataSize / 1024 / 1024).toFixed(2)}MB`);
 
     try {
       console.log("Sending createHero request...");
