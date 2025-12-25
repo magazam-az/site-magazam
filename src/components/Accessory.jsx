@@ -1,4 +1,4 @@
-import { Package } from "lucide-react";
+import { Package, Loader2 } from "lucide-react";
 import '../assets/css/Thumbnail.css';
 import React, { useState, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -8,12 +8,14 @@ import { Link } from 'react-router-dom';
 import Container from "../components/ui/Container"
 import Product from './Product';
 import { useGetCategoriesQuery } from "../redux/api/categoryApi";
+import { useGetHomeAppliancesQuery } from "../redux/api/homeAppliancesApi";
 
 import 'swiper/css';
 import 'swiper/css/navigation';
 
 export default function Accessory({ accessoryData }) {
   const { data: categoriesDataFromApi } = useGetCategoriesQuery();
+  const { data: homeAppliancesData, isLoading: isLoadingHomeAppliances } = useGetHomeAppliancesQuery();
   
   // Default values if accessoryData is not provided
   const title = accessoryData?.title || "Microsoft Accessories";
@@ -30,6 +32,35 @@ export default function Accessory({ accessoryData }) {
       selectedCategoryIds.includes(cat._id?.toString())
     );
   }, [allCategories, selectedCategoryIds]);
+
+  // Home Appliances məlumatlarını hazırla
+  const homeAppliances = homeAppliancesData?.homeAppliances;
+  const hotLabel = homeAppliances?.hotLabel || "Hot";
+  
+  // Home Appliances məhsullarını Product komponentinə uyğun formata çevir
+  const homeAppliancesProducts = useMemo(() => {
+    if (!homeAppliances || !homeAppliances.isActive || !homeAppliances.selectedProductIds) {
+      return [];
+    }
+    
+    return homeAppliances.selectedProductIds.map((product) => ({
+      _id: product._id,
+      name: product.name,
+      brand: product.brand,
+      model: product.model,
+      price: typeof product.price === 'number' 
+        ? product.price 
+        : parseFloat(product.price) || 0,
+      inStock: (product.stock !== undefined && product.stock > 0) || product.inStock !== false,
+      stock: product.stock,
+      imageUrl: product.images?.[0]?.url || product.image || "",
+      imageAlt: product.name || "Product Image",
+      isHot: true, // HomeAppliances-də bütün məhsullar "Hot" olaraq göstərilir
+      hotLabel: hotLabel, // Hot label-i məhsula əlavə et
+      rating: product.ratings || product.rating || 5,
+      sku: product.sku || product._id?.substring(0, 7),
+    }));
+  }, [homeAppliances, hotLabel]);
 
   return (
     <div className="w-full py-4 sm:py-6">
@@ -146,22 +177,38 @@ export default function Accessory({ accessoryData }) {
                   </button>
 
                   {/* Swiper */}
-                  <Swiper
-                    modules={[Navigation]}
-                    spaceBetween={12}
-                    slidesPerView={1}
-                    navigation={{
-                      prevEl: '.product-prev',
-                      nextEl: '.product-next',
-                    }}
-                    className="product-swiper"
-                    style={{
-                      padding: '8px 0',
-                      height: '100%'
-                    }}
-                  >
-                    {/* Products will be loaded from HomeAppliances component */}
-                  </Swiper>
+                  {isLoadingHomeAppliances ? (
+                    <div className="flex items-center justify-center h-full min-h-[200px]">
+                      <Loader2 className="h-6 w-6 text-[#5C4977] animate-spin" />
+                    </div>
+                  ) : homeAppliancesProducts.length > 0 ? (
+                    <Swiper
+                      modules={[Navigation]}
+                      spaceBetween={12}
+                      slidesPerView={1}
+                      navigation={{
+                        prevEl: '.product-prev',
+                        nextEl: '.product-next',
+                      }}
+                      className="product-swiper"
+                      style={{
+                        padding: '8px 0',
+                        height: '100%'
+                      }}
+                    >
+                      {homeAppliancesProducts.map((product) => (
+                        <SwiperSlide key={product._id}>
+                          <Product product={product} />
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  ) : (
+                    <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500 text-sm">
+                      {homeAppliances && !homeAppliances.isActive 
+                        ? "Home Appliances deaktivdir" 
+                        : "Məhsul tapılmadı"}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
