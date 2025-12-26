@@ -75,7 +75,13 @@ const LoginForm = () => {
         rememberMe: false
       });
       
-      navigate('/');
+      // Check if user is admin and redirect accordingly
+      const userRole = result?.user?.role || result?.role;
+      if (userRole === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
       
     } catch (err) {
       console.error('Login failed:', err);

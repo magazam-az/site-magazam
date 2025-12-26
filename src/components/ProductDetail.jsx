@@ -71,11 +71,12 @@ const CustomBreadcrumb = ({ items }) => {
 const ProductDetail = () => {
   const params = useParams();
   const navigate = useNavigate();
-  const { data, isLoading, error, isError } = useGetProductDetailsQuery(params?.id);
+  const productSlug = params?.slug; // Now using slug instead of id
+  const { data, isLoading, error, isError } = useGetProductDetailsQuery(productSlug);
   const product = data?.product;
 
   // User authentication check
-  const { isAuthenticated } = useSelector((state) => state.user || {});
+  const { isAuthenticated, user } = useSelector((state) => state.user || {});
 
   // Get categories to find slugs
   const { data: categoriesData } = useGetCategoriesQuery();
@@ -586,7 +587,14 @@ const ProductDetail = () => {
                 {/* Price & Stock */}
                 <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
                   <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#5C4977]">
-                    {product?.price?.toFixed(2) || "50,00"} <span className="text-lg sm:text-xl md:text-2xl">₼</span>
+                    {(() => {
+                      const userTier = user?.user?.tier || user?.tier || "normal";
+                      if (userTier === "promoted" || !user) {
+                        return <>{product?.price?.toFixed(2) || "50,00"} <span className="text-lg sm:text-xl md:text-2xl">₼</span></>;
+                      } else {
+                        return "Qiymət üçün əlaqə saxlayın";
+                      }
+                    })()}
                   </p>
                   {isOutOfStock ? (
                     <span className="px-3 py-1 text-xs sm:text-sm font-medium text-red-700 bg-red-100 rounded-full w-fit">

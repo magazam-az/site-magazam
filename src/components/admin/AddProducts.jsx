@@ -15,6 +15,7 @@ const AddProduct = () => {
     name: "",
     brand: "",
     model: "",
+    slug: "",
     price: "",
     description: "",
     category: "",
@@ -55,6 +56,16 @@ const AddProduct = () => {
     setFormData((prev) => {
       if (name === "category") {
         return { ...prev, [name]: value, subcategory: "" };
+      }
+      // Auto-generate slug from name if slug is empty and name is being changed
+      if (name === "name" && !prev.slug) {
+        const autoSlug = value
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        return { ...prev, [name]: value, slug: autoSlug };
       }
       return { ...prev, [name]: value };
     });
@@ -262,6 +273,7 @@ const AddProduct = () => {
         name: "",
         brand: "",
         model: "",
+        slug: "",
         price: "",
         description: "",
         category: "",
@@ -379,6 +391,20 @@ const AddProduct = () => {
                       className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
                       required
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                      Slug (URL üçün) <span className="text-gray-500 text-xs font-normal">(İstəyə bağlı)</span>
+                    </label>
+                    <input
+                      name="slug"
+                      value={formData.slug}
+                      onChange={handleInputChange}
+                      placeholder="Məs. iphone-15-pro-max"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Boş buraxılsa, məhsul adı əsasında avtomatik yaradılacaq</p>
                   </div>
 
                   <div>

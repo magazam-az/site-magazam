@@ -126,8 +126,12 @@ const Product = ({ product, mehsul, badgeText = "", badgeColor = "#FF0000" }) =>
   };
 
   const goToDetail = useCallback(() => {
-    if (hasValidId) navigate(`/product/${productId}`);
-  }, [hasValidId, productId, navigate]);
+    if (hasValidId) {
+      // Use slug if available, otherwise fallback to ID
+      const productSlug = productData?.slug || productId;
+      navigate(`/product/${productSlug}`);
+    }
+  }, [hasValidId, productId, productData?.slug, navigate]);
 
   const handleClick = (e) => {
     // interaktiv elementə toxunubsa açma
@@ -232,9 +236,18 @@ const Product = ({ product, mehsul, badgeText = "", badgeColor = "#FF0000" }) =>
           </div>
 
           <div className="text-base sm:text-lg font-bold text-[#5C4977] mb-2 sm:mb-3 pl-1">
-            {typeof productData.price === 'number'
-              ? `${productData.price.toFixed(2)} ₼`
-              : productData.price || '0.00 ₼'}
+            {(() => {
+              const { user } = useSelector((state) => state.user || {});
+              const userTier = user?.user?.tier || user?.tier || "normal";
+              // Show price for promoted users or non-logged users, hide for normal users
+              if (userTier === "promoted" || !user) {
+                return typeof productData.price === 'number'
+                  ? `${productData.price.toFixed(2)} ₼`
+                  : productData.price || '0.00 ₼';
+              } else {
+                return "Qiymət üçün əlaqə saxlayın";
+              }
+            })()}
           </div>
 
           <button

@@ -31,7 +31,7 @@ const ProductCard = ({ mehsul }) => {
   };
 
   return (
-    <Link to={`/product/${mehsul?._id}`}>
+    <Link to={`/product/${mehsul?.slug || mehsul?._id}`}>
       <div className="relative border rounded-lg p-4 shadow-md hover:shadow-xl transition bg-white cursor-pointer">
         {/* Stokda bitib badge-i */}
         {isOutOfStock && (

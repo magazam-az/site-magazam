@@ -278,7 +278,7 @@ export default function MetaShopHeader() {
             {searchResults.products.slice(0, 8).map((product) => (
               <Link
                 key={product._id}
-                to={`/product/${product._id}`}
+                to={`/product/${product.slug || product._id}`}
                 className="flex items-center gap-3 p-3 hover:bg-[#f5f2fa] transition-colors border-b border-gray-100 last:border-b-0"
                 onClick={() => {
                   setSearchQuery("")

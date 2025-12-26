@@ -79,7 +79,7 @@ const ProductCard = ({ mehsul }) => {
 
       {/* Product Image */}
       <Link
-        to={`/product/${mehsul?._id}`}
+        to={`/product/${mehsul?.slug || mehsul?._id}`}
         className="flex items-center justify-center h-[140px] mt-4 mb-4"
       >
         <img
@@ -96,7 +96,7 @@ const ProductCard = ({ mehsul }) => {
 
       {/* Product Info */}
       <div className="space-y-1">
-        <Link to={`/product/${mehsul?._id}`}>
+        <Link to={`/product/${mehsul?.slug || mehsul?._id}`}>
           <h3 className="font-semibold text-[#5C4977] text-sm line-clamp-2 hover:text-[#5C4977]/80 transition-colors">
             {mehsul?.name || 'Apple MacBook Pro 13" M2'}
           </h3>

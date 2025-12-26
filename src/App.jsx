@@ -69,6 +69,7 @@ import AdminDashboard from './components/admin/AdminDashboard'
 // ScrollToTop Component
 import ScrollToTop from './components/ui/ScrollToTop'
 import Promosiyalar from './components/Promotions'
+import NotFound from './components/NotFound'
 
 // Global redirect komponenti - vercel.app-dən magazam.az-ə yönləndirir
 const GlobalRedirect = () => {
@@ -112,8 +113,8 @@ function App() {
           {/* Catch-all route for crud paths - SONDA OLMALIDIR */}
           <Route path="/crud/*" element={<PasswordResetRedirect />} />
 
-          {/* Product Detail */}
-          <Route path="/product/:id" element={<ProductDetail />} />
+          {/* Product Detail - supports both ID and slug */}
+          <Route path="/product/:slug" element={<ProductDetail />} />
 
           {/* Search Results */}
           <Route path="/search-results" element={<SearchResults />} />
@@ -324,6 +325,9 @@ function App() {
               <AdminShoppingEvent />
             </AdminRoute>
           } />
+
+          {/* 404 Not Found - Catch-all route must be last */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </BrowserRouter>

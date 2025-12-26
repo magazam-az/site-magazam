@@ -170,7 +170,7 @@ const ProductCard = ({ mehsul }) => {
       </div>
       
       {/* Product Image */}
-      <Link to={`/product/${mehsul?._id}`} className="w-full flex justify-center items-center mb-3 sm:mb-4" style={{ height: '200px' }}>
+      <Link to={`/product/${mehsul?.slug || mehsul?._id}`} className="w-full flex justify-center items-center mb-3 sm:mb-4" style={{ height: '200px' }}>
         <img 
           src={productImageUrl}
           alt={mehsul?.name}
@@ -185,7 +185,7 @@ const ProductCard = ({ mehsul }) => {
       {/* Product Info */}
       <div className="flex flex-col flex-grow text-left">
         <div className="mb-2 sm:mb-3 flex-grow">
-          <Link to={`/product/${mehsul?._id}`}>
+          <Link to={`/product/${mehsul?.slug || mehsul?._id}`}>
             <h3 className="text-sm sm:text-base font-semibold text-gray-800 line-clamp-2 mb-1 sm:mb-2 hover:text-[#5C4977] transition-colors">
               {mehsul?.name}
             </h3>

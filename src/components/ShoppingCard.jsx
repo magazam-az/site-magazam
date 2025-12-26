@@ -175,7 +175,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                         {/* Product Image */}
                         <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-gray-50 rounded-lg p-2">
                           <Link
-                            to={`/product/${item.product._id}`}
+                            to={`/product/${item.product.slug || item.product._id}`}
                             className="block w-full h-full cursor-pointer"
                           >
                             <img
@@ -196,7 +196,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                           <div className="flex items-start justify-between gap-3 mb-4">
                             <div className="flex-1 min-w-0">
                               <Link
-                                to={`/product/${item.product._id}`}
+                                to={`/product/${item.product.slug || item.product._id}`}
                                 className="block cursor-pointer group"
                               >
                                 <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2 group-hover:text-[#5C4977] transition-colors cursor-pointer">
@@ -428,7 +428,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex-1 min-w-0">
                           <Link
-                            to={`/product/${item.product._id}`}
+                            to={`/product/${item.product.slug || item.product._id}`}
                             onClick={() => onClose && onClose()}
                             className="block cursor-pointer"
                           >

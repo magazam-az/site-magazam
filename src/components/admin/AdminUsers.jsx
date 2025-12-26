@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetAllUsersQuery, useDeleteUserMutation } from "../../redux/api/userApi";
 import { FaRegEdit, FaTrash } from "react-icons/fa";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import Swal from "sweetalert2";
 import AdminLayout from "./AdminLayout";
 
@@ -10,6 +10,7 @@ const AdminUsers = () => {
   const { data, error, isLoading, refetch } = useGetAllUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleEdit = (id) => {
     navigate(`/admin/edit-user/${id}`);
@@ -49,6 +50,20 @@ const AdminUsers = () => {
       }
     }
   };
+
+  // Filter users based on search query
+  const filteredUsers = useMemo(() => {
+    if (!data?.users) return [];
+    if (!searchQuery.trim()) return data.users;
+
+    const query = searchQuery.toLowerCase().trim();
+    return data.users.filter((user) => {
+      const name = user.name?.toLowerCase() || "";
+      const email = user.email?.toLowerCase() || "";
+      const role = user.role?.toLowerCase() || "";
+      return name.includes(query) || email.includes(query) || role.includes(query);
+    });
+  }, [data?.users, searchQuery]);
 
   if (isLoading) {
     return (
@@ -99,11 +114,24 @@ const AdminUsers = () => {
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <h2 className="text-xl font-bold text-[#5C4977]">İstifadəçilər Siyahısı</h2>
-              <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
-                {data?.users?.length || 0} istifadəçi
-              </span>
+              <div className="flex items-center gap-4">
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5C4977]/60" />
+                  <input
+                    type="text"
+                    placeholder="Axtarış..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors w-full md:w-64"
+                  />
+                </div>
+                <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full whitespace-nowrap">
+                  {filteredUsers.length} / {data?.users?.length || 0} istifadəçi
+                </span>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -118,7 +146,7 @@ const AdminUsers = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {data?.users?.map((user) => (
+                  {filteredUsers.map((user) => (
                     <tr
                       key={user._id}
                       className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
@@ -188,9 +216,11 @@ const AdminUsers = () => {
               </table>
             </div>
 
-            {(!data?.users || data.users.length === 0) && (
+            {filteredUsers.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                Heç bir istifadəçi tapılmadı
+                {searchQuery.trim() 
+                  ? `"${searchQuery}" üçün heç bir istifadəçi tapılmadı`
+                  : "Heç bir istifadəçi tapılmadı"}
               </div>
             )}
           </div>

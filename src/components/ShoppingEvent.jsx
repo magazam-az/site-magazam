@@ -139,7 +139,7 @@ const ShoppingEvent = () => {
             const productRating = product.rating || product.ratings || 5;
 
             return (
-              <Link key={product._id} to={`/product/${product._id}`}>
+              <Link key={product._id} to={`/product/${product.slug || product._id}`}>
                 <div className="bg-white rounded-xl p-2 sm:p-3 md:p-4 shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 flex items-center gap-2 sm:gap-3 cursor-pointer">
                   {/* Şəkil Konteyneri - Solda */}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 flex-shrink-0">
