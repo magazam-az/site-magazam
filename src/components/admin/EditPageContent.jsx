@@ -191,9 +191,9 @@ const EditPageContent = () => {
     buttonText: "",
   });
 
-  // Load HomeAppliances data when available
+  // Load HomeAppliances data when editing (only when editingBlock is set)
   useEffect(() => {
-    if (homeAppliancesData?.homeAppliances) {
+    if (homeAppliancesData?.homeAppliances && editingBlock && editingBlock.type === "HomeAppliances") {
       const data = homeAppliancesData.homeAppliances;
       setHomeAppliancesFormData({
         title: data.title || "",
@@ -201,8 +201,16 @@ const EditPageContent = () => {
         selectedProductIds: data.selectedProductIds?.map(id => id.toString()) || [],
         isActive: data.isActive !== undefined ? data.isActive : true,
       });
+    } else if (!editingBlock && selectedBlockType === "HomeAppliances") {
+      // Reset form when creating new HomeAppliances block
+      setHomeAppliancesFormData({
+        title: "",
+        hotLabel: "",
+        selectedProductIds: [],
+        isActive: true,
+      });
     }
-  }, [homeAppliancesData]);
+  }, [homeAppliancesData, editingBlock, selectedBlockType]);
 
   // DefaultSlider seçildiğinde direkt hero ekleme formunu aç
   useEffect(() => {
@@ -3077,6 +3085,7 @@ const EditPageContent = () => {
                     <div className="space-y-6">
                       <AdminShoppingEvent 
                         withoutLayout={true}
+                        editingShoppingEvent={editingBlock ? editingBlock._id : null}
                         onClose={async () => {
                           // After ShoppingEvent form is submitted, add the block to page content
                           if (pageContentId) {

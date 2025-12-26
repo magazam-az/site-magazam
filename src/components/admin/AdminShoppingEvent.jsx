@@ -5,7 +5,7 @@ import AdminLayout from "./AdminLayout";
 import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 
-const AdminShoppingEvent = ({ withoutLayout = false, onClose = null }) => {
+const AdminShoppingEvent = ({ withoutLayout = false, onClose = null, editingShoppingEvent = null }) => {
   const { data: shoppingEventData, isLoading: isLoadingEvent, refetch } = useGetShoppingEventAdminQuery();
   const { data: productsData, isLoading: isLoadingProducts } = useGetProductsQuery();
   const [updateShoppingEvent, { isLoading: isUpdating }] = useUpdateShoppingEventMutation();
@@ -26,9 +26,9 @@ const AdminShoppingEvent = ({ withoutLayout = false, onClose = null }) => {
   const [deviceImage, setDeviceImage] = useState(null);
   const [deviceImagePreview, setDeviceImagePreview] = useState(null);
 
-  // ShoppingEvent data gəldikdə state-ləri doldur
+  // ShoppingEvent data gəldikdə state-ləri doldur (yalnız editing mode-da)
   useEffect(() => {
-    if (shoppingEvent) {
+    if (shoppingEvent && editingShoppingEvent) {
       setTitle(shoppingEvent.title || "");
       setDescription(shoppingEvent.description || "");
       
@@ -44,8 +44,20 @@ const AdminShoppingEvent = ({ withoutLayout = false, onClose = null }) => {
       setIsActive(shoppingEvent.isActive !== undefined ? shoppingEvent.isActive : true);
       setBackgroundImagePreview(shoppingEvent.backgroundImage?.url || null);
       setDeviceImagePreview(shoppingEvent.deviceImage?.url || null);
+    } else if (!editingShoppingEvent) {
+      // Reset form when creating new (not editing)
+      setTitle("");
+      setDescription("");
+      setEndDate("");
+      setButtonText("");
+      setSelectedProductIds([]);
+      setIsActive(true);
+      setBackgroundImage(null);
+      setBackgroundImagePreview(null);
+      setDeviceImage(null);
+      setDeviceImagePreview(null);
     }
-  }, [shoppingEvent]);
+  }, [shoppingEvent, editingShoppingEvent]);
 
   // Background image handler
   const handleBackgroundImageChange = (e) => {
