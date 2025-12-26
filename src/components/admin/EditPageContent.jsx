@@ -77,13 +77,13 @@ const EditPageContent = () => {
 
   // Categories state
   const [categoriesData, setCategoriesData] = useState({
-    title: "Popular Kateqoriyalar",
+    title: "",
     visibleCategories: [],
   });
 
   // BestOffers state (deprecated - Products bloğu kullanılacak)
   const [bestOffersData, setBestOffersData] = useState({
-    title: "The Best Offers",
+    title: "",
     selectedProducts: [],
     moreProductsLink: "",
     moreProductsButtonText: "",
@@ -91,7 +91,7 @@ const EditPageContent = () => {
 
   // NewGoods state (deprecated - Products bloğu kullanılacak)
   const [newGoodsData, setNewGoodsData] = useState({
-    title: "New Goods",
+    title: "",
     selectedProducts: [],
     moreProductsLink: "",
     moreProductsButtonText: "",
@@ -107,7 +107,7 @@ const EditPageContent = () => {
 
   // Products state (BestOffers + NewGoods birleşimi)
   const [productsBlockData, setProductsBlockData] = useState({
-    title: "Məhsullar",
+    title: "",
     selectedProducts: [],
     moreProductsLink: "",
     moreProductsButtonText: "",
@@ -134,16 +134,16 @@ const EditPageContent = () => {
   const { data: homeAppliancesData, refetch: refetchHomeAppliances } = useGetHomeAppliancesAdminQuery();
   const [updateHomeAppliances, { isLoading: isUpdatingHomeAppliances }] = useUpdateHomeAppliancesMutation();
   const [homeAppliancesFormData, setHomeAppliancesFormData] = useState({
-    title: "Home Appliance",
-    hotLabel: "Hot",
+    title: "",
+    hotLabel: "",
     selectedProductIds: [],
     isActive: true,
   });
 
   // Accessories state
   const [accessoryData, setAccessoryData] = useState({
-    title: "Microsoft Accessories",
-    description: "Personalize your Surface Pro with Microsoft branded accessories. In the presence of many colors for every taste.",
+    title: "",
+    description: "",
     heroImage: null,
     heroImagePreview: null,
     selectedCategories: [],
@@ -180,15 +180,15 @@ const EditPageContent = () => {
   const allBlogs = blogsData?.blogs || [];
   const [blogSearchTerm, setBlogSearchTerm] = useState("");
   const [blogData, setBlogData] = useState({
-    title: "Məqalələrimiz",
+    title: "",
     selectedBlogs: [],
   });
 
   // About state
   const [aboutData, setAboutData] = useState({
-    title: "Online store of household appliances and electronics",
-    description: "Then the question arises: where's the content? Not there yet? That's not so bad, there's dummy copy to the rescue. But worse, what if the fish doesn't fit in the can, the foot's to big for the boot? Or to small? To short sentences, to many headings, images too large for the proposed design, or too small, or they fit in but it looks iffy for reasons.",
-    buttonText: "Read More",
+    title: "",
+    description: "",
+    buttonText: "",
   });
 
   // Load HomeAppliances data when available
@@ -196,8 +196,8 @@ const EditPageContent = () => {
     if (homeAppliancesData?.homeAppliances) {
       const data = homeAppliancesData.homeAppliances;
       setHomeAppliancesFormData({
-        title: data.title || "Home Appliance",
-        hotLabel: data.hotLabel || "Hot",
+        title: data.title || "",
+        hotLabel: data.hotLabel || "",
         selectedProductIds: data.selectedProductIds?.map(id => id.toString()) || [],
         isActive: data.isActive !== undefined ? data.isActive : true,
       });
@@ -1923,7 +1923,7 @@ const EditPageContent = () => {
 
     if (block.type === "Products" && block.productsData) {
       setProductsBlockData({
-        title: block.productsData.title || "Məhsullar",
+        title: block.productsData.title || "",
         selectedProducts: block.productsData.selectedProducts || [],
         moreProductsLink: block.productsData.moreProductsLink || "",
         moreProductsButtonText: block.productsData.moreProductsButtonText || "",
@@ -1968,7 +1968,7 @@ const EditPageContent = () => {
 
     if (block.type === "Accessories" && block.accessoryData) {
       setAccessoryData({
-        title: block.accessoryData.title || "Microsoft Accessories",
+        title: block.accessoryData.title || "",
         description: block.accessoryData.description || "",
         heroImage: null,
         heroImagePreview: block.accessoryData.heroImage?.url || null,
@@ -2011,16 +2011,16 @@ const EditPageContent = () => {
 
     if (block.type === "Blogs" && block.blogData) {
       setBlogData({
-        title: block.blogData.title || "Məqalələrimiz",
+        title: block.blogData.title || "",
         selectedBlogs: block.blogData.selectedBlogs?.map(id => id.toString()) || [],
       });
     }
 
     if (block.type === "About" && block.aboutData) {
       setAboutData({
-        title: block.aboutData.title || "Online store of household appliances and electronics",
+        title: block.aboutData.title || "",
         description: block.aboutData.description || "",
-        buttonText: block.aboutData.buttonText || "Read More",
+        buttonText: block.aboutData.buttonText || "",
       });
     }
 
@@ -2029,17 +2029,17 @@ const EditPageContent = () => {
 
   const resetForm = () => {
     setCategoriesData({
-      title: "Popular Kateqoriyalar",
+      title: "",
       visibleCategories: [],
     });
     setBestOffersData({
-      title: "The Best Offers",
+      title: "",
       selectedProducts: [],
       moreProductsLink: "",
       moreProductsButtonText: "",
     });
     setNewGoodsData({
-      title: "New Goods",
+      title: "",
       selectedProducts: [],
       moreProductsLink: "",
       moreProductsButtonText: "",
@@ -2053,7 +2053,7 @@ const EditPageContent = () => {
       },
     });
     setProductsBlockData({
-      title: "Məhsullar",
+      title: "",
       selectedProducts: [],
       moreProductsLink: "",
       moreProductsButtonText: "",
@@ -2072,14 +2072,14 @@ const EditPageContent = () => {
     setNewGoodsSearchTerm("");
     setHomeAppliancesSearchTerm("");
     setHomeAppliancesFormData({
-      title: "Home Appliance",
-      hotLabel: "Hot",
+      title: "",
+      hotLabel: "",
       selectedProductIds: [],
       isActive: true,
     });
     setAccessoryData({
-      title: "Microsoft Accessories",
-      description: "Personalize your Surface Pro with Microsoft branded accessories. In the presence of many colors for every taste.",
+      title: "",
+      description: "",
       heroImage: null,
       heroImagePreview: null,
       selectedCategories: [],
@@ -2111,14 +2111,14 @@ const EditPageContent = () => {
       ],
     });
     setBlogData({
-      title: "Məqalələrimiz",
+      title: "",
       selectedBlogs: [],
     });
     setBlogSearchTerm("");
     setAboutData({
-      title: "Online store of household appliances and electronics",
-      description: "Then the question arises: where's the content? Not there yet? That's not so bad, there's dummy copy to the rescue. But worse, what if the fish doesn't fit in the can, the foot's to big for the boot? Or to small? To short sentences, to many headings, images too large for the proposed design, or too small, or they fit in but it looks iffy for reasons.",
-      buttonText: "Read More",
+      title: "",
+      description: "",
+      buttonText: "",
     });
   };
 
