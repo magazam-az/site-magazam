@@ -344,12 +344,17 @@ const EditPageContent = () => {
       const result = await createHero(form).unwrap();
       const newHero = result?.hero;
 
-      // Ən böyük order-i tap və yeni hero-nu ən aşağıya yerləşdir
+      // Ən böyük order-i tap (bütün hero-ları və blokları nəzərə al)
       if (newHero?._id) {
-        // Yeni hero-nu da nəzərə al (o hələ heroes array-də yoxdur)
-        const allHeroOrders = [...heroes.map(h => h.order || 0), newHero.order || 0];
-        const maxOrder = allHeroOrders.length > 0 
-          ? Math.max(...allHeroOrders)
+        // Bütün items-in (hero + blocks) order-lərini topla
+        const allOrders = [
+          ...heroes.map(h => h.order || 0),
+          ...blocks.map(b => b.order || 0),
+          newHero.order || 0
+        ];
+        
+        const maxOrder = allOrders.length > 0 
+          ? Math.max(...allOrders)
           : -1;
         const newOrder = maxOrder + 1;
 
@@ -371,7 +376,9 @@ const EditPageContent = () => {
         showConfirmButton: false,
       });
 
+      // Həm heroes, həm də blocks yenilənsin
       refetchHeroes();
+      refetch();
     } catch (error) {
       console.error("Duplicate hero error:", error);
       Swal.fire({
