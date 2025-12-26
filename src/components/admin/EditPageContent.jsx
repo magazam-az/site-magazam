@@ -2104,6 +2104,9 @@ const EditPageContent = () => {
         heroImage: null,
         heroImagePreview: block.accessoryData.heroImage?.url || null,
         selectedCategories: block.accessoryData.selectedCategories?.map(id => id.toString()) || [],
+        selectedProducts: block.accessoryData.selectedProducts?.map(id => id.toString()) || [],
+        badgeText: block.accessoryData.badgeText || "",
+        badgeColor: block.accessoryData.badgeColor || "#FF0000",
         cards: block.accessoryData.cards?.map(card => ({
           title: card.title || "",
           description: card.description || "",
@@ -4481,8 +4484,190 @@ const EditPageContent = () => {
                         )}
                       </div>
 
+                      {/* Sağ Tərəf - Məhsul Siyahısı və Badge */}
+                      <div className="border-t border-gray-200 pt-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">
+                          Sağ Tərəf - Məhsul Siyahısı
+                        </h4>
+                        
+                        {/* Məhsul Seçimi */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Məhsulları Seçin
+                          </label>
+                          <div className="mb-4">
+                            <input
+                              type="text"
+                              value={productSearchTerm}
+                              onChange={(e) => setProductSearchTerm(e.target.value)}
+                              placeholder="Məhsul axtar..."
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+                          <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                            {allProducts.length === 0 ? (
+                              <p className="text-gray-500">Məhsul tapılmadı</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {allProducts
+                                  .filter((product) => {
+                                    if (!productSearchTerm) return true;
+                                    const searchLower = productSearchTerm.toLowerCase();
+                                    return (
+                                      product.name?.toLowerCase().includes(searchLower) ||
+                                      product.brand?.toLowerCase().includes(searchLower) ||
+                                      product.model?.toLowerCase().includes(searchLower)
+                                    );
+                                  })
+                                  .map((product) => {
+                                    const isSelected = accessoryData.selectedProducts.includes(
+                                      product._id
+                                    );
+                                    return (
+                                      <label
+                                        key={product._id}
+                                        className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          onChange={() => {
+                                            if (isSelected) {
+                                              setAccessoryData({
+                                                ...accessoryData,
+                                                selectedProducts: accessoryData.selectedProducts.filter(
+                                                  (id) => id !== product._id
+                                                ),
+                                              });
+                                            } else {
+                                              setAccessoryData({
+                                                ...accessoryData,
+                                                selectedProducts: [
+                                                  ...accessoryData.selectedProducts,
+                                                  product._id,
+                                                ],
+                                              });
+                                            }
+                                          }}
+                                          className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                                        />
+                                        <div className="flex items-center gap-3 flex-1">
+                                          <img
+                                            src={
+                                              product.images?.[0]?.url ||
+                                              product.image ||
+                                              "https://placehold.co/60x60/6B7280/ffffff?text=No+Image"
+                                            }
+                                            alt={product.name}
+                                            className="w-12 h-12 object-contain rounded border border-gray-200"
+                                            onError={(e) => {
+                                              e.target.src =
+                                                "https://placehold.co/60x60/6B7280/ffffff?text=No+Image";
+                                            }}
+                                          />
+                                          <div className="flex-1">
+                                            <p className="font-medium text-gray-800">
+                                              {product.name}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                              {product.brand} {product.model && `- ${product.model}`}
+                                            </p>
+                                            <p className="text-sm font-semibold text-[#5C4977]">
+                                              {typeof product.price === 'number'
+                                                ? `${product.price.toFixed(2)} ₼`
+                                                : product.price || '0.00 ₼'}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </label>
+                                    );
+                                  })}
+                              </div>
+                            )}
+                          </div>
+                          {accessoryData.selectedProducts.length > 0 && (
+                            <div className="mt-4 p-3 bg-[#5C4977]/10 rounded-lg">
+                              <p className="text-sm font-medium text-[#5C4977]">
+                                Seçilmiş məhsul sayı: {accessoryData.selectedProducts.length}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Badge Section */}
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Badge Yazısı
+                            </label>
+                            <input
+                              type="text"
+                              value={accessoryData.badgeText || ""}
+                              onChange={(e) =>
+                                setAccessoryData({
+                                  ...accessoryData,
+                                  badgeText: e.target.value,
+                                })
+                              }
+                              placeholder="10%"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Badge Rəngi (RGB)
+                            </label>
+                            <div className="flex items-center gap-4">
+                              <input
+                                type="color"
+                                value={accessoryData.badgeColor || "#FF0000"}
+                                onChange={(e) =>
+                                  setAccessoryData({
+                                    ...accessoryData,
+                                    badgeColor: e.target.value,
+                                  })
+                                }
+                                className="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={accessoryData.badgeColor || "#FF0000"}
+                                onChange={(e) =>
+                                  setAccessoryData({
+                                    ...accessoryData,
+                                    badgeColor: e.target.value,
+                                  })
+                                }
+                                placeholder="#FF0000"
+                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+                                pattern="^#[0-9A-Fa-f]{6}$"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              RGB rəng kodunu daxil edin (məsələn: #FF0000)
+                            </p>
+                          </div>
+
+                          {/* Badge Preview */}
+                          {accessoryData.badgeText && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                              <p className="text-sm font-medium text-gray-700 mb-2">Badge Önizləmə:</p>
+                              <div className="inline-block">
+                                <span
+                                  className="px-3 py-1 rounded text-sm font-semibold text-white"
+                                  style={{ backgroundColor: accessoryData.badgeColor || "#FF0000" }}
+                                >
+                                  {accessoryData.badgeText}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       {/* Cards */}
-                      <div>
+                      <div className="border-t border-gray-200 pt-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Kartlar (3 kart)
                         </label>
