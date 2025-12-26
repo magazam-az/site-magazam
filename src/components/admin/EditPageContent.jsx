@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useGetOrCreateHomePageContentQuery,
@@ -341,7 +341,26 @@ const EditPageContent = () => {
         form.append("bottomBlocks", JSON.stringify(bottomBlocksData));
       }
 
-      await createHero(form).unwrap();
+      const result = await createHero(form).unwrap();
+      const newHero = result?.hero;
+
+      // Ən böyük order-i tap və yeni hero-nu ən aşağıya yerləşdir
+      if (newHero?._id) {
+        // Yeni hero-nu da nəzərə al (o hələ heroes array-də yoxdur)
+        const allHeroOrders = [...heroes.map(h => h.order || 0), newHero.order || 0];
+        const maxOrder = allHeroOrders.length > 0 
+          ? Math.max(...allHeroOrders)
+          : -1;
+        const newOrder = maxOrder + 1;
+
+        // Yeni hero-nun order-ini dəyişdir (ən aşağıya)
+        try {
+          await updateHeroesOrder([{ heroId: newHero._id.toString(), order: newOrder }]).unwrap();
+        } catch (orderError) {
+          console.error("Order update error:", orderError);
+          // Order update xətası olsa belə, hero yaradıldı
+        }
+      }
 
       Swal.fire({
         title: "Uğurlu!",
@@ -2237,6 +2256,114 @@ const EditPageContent = () => {
     }
   };
 
+  // Auto scroll during drag
+  const scrollIntervalRef = useRef(null);
+  const mouseYRef = useRef(null);
+
+  // Global mouse move listener for better scroll tracking
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mouseYRef.current = e.clientY;
+    };
+
+    if (draggedBlock) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [draggedBlock]);
+
+  const startAutoScroll = (e, container) => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+    }
+
+    // Daha agresiv scroll parametrləri
+    const baseScrollSpeed = 40; // Artırılmış base scroll sürəti
+    const scrollThreshold = 200; // Daha geniş threshold - ekranın yarısı
+
+    const scrollHandler = () => {
+      if (!container) return;
+
+      // Mouse position-u ref-dən al (daha dəqiq)
+      const mouseY = mouseYRef.current !== null ? mouseYRef.current : (e?.clientY || 0);
+      if (!mouseY) return;
+
+      let rect;
+      let scrollElement;
+
+      // Scroll container-i müəyyən et
+      if (container === document.documentElement || container === window) {
+        // Window scroll
+        scrollElement = window;
+        rect = {
+          top: 0,
+          bottom: window.innerHeight,
+          height: window.innerHeight
+        };
+      } else {
+        // Element scroll
+        scrollElement = container;
+        rect = container.getBoundingClientRect();
+      }
+
+      const containerHeight = rect.height || window.innerHeight;
+      const thresholdTop = scrollThreshold;
+      const thresholdBottom = containerHeight - scrollThreshold;
+
+      // Yuxarı scroll (mouse container-in yuxarı hissəsindədirsə)
+      if (mouseY < thresholdTop) {
+        // Mouse threshold-a nə qədər yaxındırsa, scroll o qədər sürətli olur
+        const distance = thresholdTop - mouseY;
+        const normalizedDistance = Math.min(distance / scrollThreshold, 1); // 0-1 arası
+        const speed = baseScrollSpeed + (normalizedDistance * baseScrollSpeed * 2); // Daha sürətli scroll
+        
+        if (scrollElement === window) {
+          window.scrollBy({ top: -speed, behavior: 'auto' });
+        } else {
+          scrollElement.scrollTop = Math.max(0, scrollElement.scrollTop - speed);
+        }
+      }
+      // Aşağı scroll (mouse container-in aşağı hissəsindədirsə)
+      else if (mouseY > thresholdBottom) {
+        // Mouse threshold-a nə qədər yaxındırsa, scroll o qədər sürətli olur
+        const distance = mouseY - thresholdBottom;
+        const normalizedDistance = Math.min(distance / scrollThreshold, 1); // 0-1 arası
+        const speed = baseScrollSpeed + (normalizedDistance * baseScrollSpeed * 2); // Daha sürətli scroll
+        
+        if (scrollElement === window) {
+          const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+          if (currentScroll < maxScroll) {
+            window.scrollBy({ top: speed, behavior: 'auto' });
+          }
+        } else {
+          const maxScroll = scrollElement.scrollHeight - scrollElement.clientHeight;
+          scrollElement.scrollTop = Math.min(maxScroll, scrollElement.scrollTop + speed);
+        }
+      }
+    };
+
+    scrollIntervalRef.current = setInterval(scrollHandler, 8); // Daha tez update (~125fps)
+  };
+
+  const stopAutoScroll = () => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
+    mouseYRef.current = null;
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopAutoScroll();
+    };
+  }, []);
+
   // Drag & Drop handlers
   const handleDragStart = (e, blockId) => {
     setDraggedBlock(blockId);
@@ -2249,12 +2376,25 @@ const EditPageContent = () => {
     e.currentTarget.style.opacity = "1";
     setDraggedBlock(null);
     setDraggedOverIndex(null);
+    stopAutoScroll();
   };
 
   const handleDragOver = (e, index) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDraggedOverIndex(index);
+    
+    // Scroll container-i tap və auto scroll başlat
+    const blocksContainer = e.currentTarget.closest('[data-blocks-container]')?.parentElement ||
+                           document.querySelector('[data-blocks-container]')?.parentElement ||
+                           document.querySelector('.bg-white.rounded-2xl') ||
+                           window;
+    
+    if (blocksContainer && blocksContainer !== window) {
+      startAutoScroll(e, blocksContainer);
+    } else if (blocksContainer === window) {
+      startAutoScroll(e, document.documentElement);
+    }
   };
 
   const handleDragLeave = () => {
@@ -2375,7 +2515,7 @@ const EditPageContent = () => {
               </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3" data-blocks-container>
               {isUpdatingOrder && (
                 <div className="text-center py-2 text-[#5C4977] text-sm">
                   <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
@@ -2409,15 +2549,25 @@ const EditPageContent = () => {
                             e.dataTransfer.setData("type", "hero");
                             e.currentTarget.style.opacity = "0.5";
                           }}
+                          onDrag={(e) => {
+                            // Drag zamanı scroll - window scroll istifadə et
+                            mouseYRef.current = e.clientY;
+                            startAutoScroll(e, window);
+                          }}
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = "1";
                             setDraggedBlock(null);
                             setDraggedOverIndex(null);
+                            stopAutoScroll();
                           }}
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.dataTransfer.dropEffect = "move";
                             setDraggedOverIndex(totalIndex);
+                            
+                            // Scroll - window scroll istifadə et
+                            mouseYRef.current = e.clientY;
+                            startAutoScroll(e, window);
                           }}
                           onDragLeave={() => {
                             setDraggedOverIndex(null);
@@ -2607,15 +2757,25 @@ const EditPageContent = () => {
                             e.dataTransfer.setData("type", "block");
                             e.currentTarget.style.opacity = "0.5";
                           }}
+                          onDrag={(e) => {
+                            // Drag zamanı scroll - window scroll istifadə et
+                            mouseYRef.current = e.clientY;
+                            startAutoScroll(e, window);
+                          }}
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = "1";
                             setDraggedBlock(null);
                             setDraggedOverIndex(null);
+                            stopAutoScroll();
                           }}
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.dataTransfer.dropEffect = "move";
                             setDraggedOverIndex(totalIndex);
+                            
+                            // Scroll - window scroll istifadə et
+                            mouseYRef.current = e.clientY;
+                            startAutoScroll(e, window);
                           }}
                           onDragLeave={handleDragLeave}
                           onDrop={async (e) => {
