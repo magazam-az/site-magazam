@@ -147,6 +147,9 @@ const EditPageContent = () => {
     heroImage: null,
     heroImagePreview: null,
     selectedCategories: [],
+    selectedProducts: [],
+    badgeText: "",
+    badgeColor: "#FF0000",
     cards: [
       {
         title: "",
@@ -1588,6 +1591,9 @@ const EditPageContent = () => {
         title: accessoryData.title,
         description: accessoryData.description || "",
         selectedCategories: accessoryData.selectedCategories,
+        selectedProducts: accessoryData.selectedProducts || [],
+        badgeText: accessoryData.badgeText || "",
+        badgeColor: accessoryData.badgeColor || "#FF0000",
         cards: accessoryData.cards.map(card => ({
           title: card.title || "",
           description: card.description || "",
@@ -1994,6 +2000,9 @@ const EditPageContent = () => {
           title: block.accessoryData.title || "",
           description: block.accessoryData.description || "",
           selectedCategories: block.accessoryData.selectedCategories || [],
+          selectedProducts: block.accessoryData.selectedProducts || [],
+          badgeText: block.accessoryData.badgeText || "",
+          badgeColor: block.accessoryData.badgeColor || "#FF0000",
           cards: block.accessoryData.cards?.map(card => ({
             title: card.title || "",
             description: card.description || "",
@@ -2205,6 +2214,9 @@ const EditPageContent = () => {
       heroImage: null,
       heroImagePreview: null,
       selectedCategories: [],
+      selectedProducts: [],
+      badgeText: "",
+      badgeColor: "#FF0000",
       cards: [
         {
           title: "",
