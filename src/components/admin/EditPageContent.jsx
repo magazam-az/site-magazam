@@ -1871,14 +1871,102 @@ const EditPageContent = () => {
         blockData.categoriesData = block.categoriesData;
       } else if (block.type === "BestOffers" && block.bestOffersData) {
         blockData.bestOffersData = block.bestOffersData;
+      } else if (block.type === "Products" && block.productsData) {
+        // Products üçün banner şəkilini yüklə
+        if (block.productsData.banner?.image?.url) {
+          try {
+            const file = await urlToFile(block.productsData.banner.image.url, "productsBanner.jpg");
+            formData.append("productsBannerImage", file);
+          } catch (error) {
+            console.error("Error loading Products banner image:", error);
+          }
+        }
+        
+        // Banner məlumatlarını JSON-dan çıxar (şəkil URL-i olmadan)
+        const bannerDataForJson = {
+          subtitle: block.productsData.banner?.subtitle || "",
+          title: block.productsData.banner?.title || "",
+          buttonText: block.productsData.banner?.buttonText || "",
+          buttonLink: block.productsData.banner?.buttonLink || "",
+        };
+        
+        blockData.productsData = {
+          title: block.productsData.title || "",
+          selectedProducts: block.productsData.selectedProducts || [],
+          moreProductsLink: block.productsData.moreProductsLink || "",
+          moreProductsButtonText: block.productsData.moreProductsButtonText || "",
+          badgeText: block.productsData.badgeText || "",
+          badgeColor: block.productsData.badgeColor || "#FF0000",
+          banner: bannerDataForJson,
+        };
       } else if (block.type === "NewGoods" && block.newGoodsData) {
-        blockData.newGoodsData = block.newGoodsData;
+        // NewGoods üçün banner şəkilini yüklə
+        if (block.newGoodsData.banner?.image?.url) {
+          try {
+            const file = await urlToFile(block.newGoodsData.banner.image.url, "newGoodsBanner.jpg");
+            formData.append("newGoodsBannerImage", file);
+          } catch (error) {
+            console.error("Error loading NewGoods banner image:", error);
+          }
+        }
+        
+        // Banner məlumatlarını JSON-dan çıxar (şəkil URL-i olmadan)
+        const bannerDataForJson = {
+          subtitle: block.newGoodsData.banner?.subtitle || "",
+          title: block.newGoodsData.banner?.title || "",
+          buttonText: block.newGoodsData.banner?.buttonText || "",
+          buttonLink: block.newGoodsData.banner?.buttonLink || "",
+        };
+        
+        blockData.newGoodsData = {
+          title: block.newGoodsData.title || "",
+          selectedProducts: block.newGoodsData.selectedProducts || [],
+          moreProductsLink: block.newGoodsData.moreProductsLink || "",
+          moreProductsButtonText: block.newGoodsData.moreProductsButtonText || "",
+          banner: bannerDataForJson,
+        };
       } else if (block.type === "ShoppingEvent") {
         // ShoppingEvent üçün xüsusi məlumat yoxdur
       } else if (block.type === "HomeAppliances") {
         // HomeAppliances üçün xüsusi məlumat yoxdur
       } else if (block.type === "Accessories" && block.accessoryData) {
-        blockData.accessoryData = block.accessoryData;
+        // Accessories üçün hero image yüklə
+        if (block.accessoryData.heroImage?.url) {
+          try {
+            const file = await urlToFile(block.accessoryData.heroImage.url, "accessoryHero.jpg");
+            formData.append("accessoryHeroImage", file);
+          } catch (error) {
+            console.error("Error loading Accessories hero image:", error);
+          }
+        }
+        
+        // Card şəkillərini yüklə
+        if (block.accessoryData.cards && Array.isArray(block.accessoryData.cards)) {
+          for (let i = 0; i < block.accessoryData.cards.length; i++) {
+            const card = block.accessoryData.cards[i];
+            if (card.backgroundImage?.url) {
+              try {
+                const file = await urlToFile(card.backgroundImage.url, `accessoryCard_${i}.jpg`);
+                formData.append(`accessoryCardImage${i}`, file);
+              } catch (error) {
+                console.error(`Error loading Accessories card ${i} image:`, error);
+              }
+            }
+          }
+        }
+        
+        // Accessory məlumatlarını hazırla (şəkil URL-ləri olmadan)
+        blockData.accessoryData = {
+          title: block.accessoryData.title || "",
+          description: block.accessoryData.description || "",
+          selectedCategories: block.accessoryData.selectedCategories || [],
+          cards: block.accessoryData.cards?.map(card => ({
+            title: card.title || "",
+            description: card.description || "",
+            buttonText: card.buttonText || "",
+            buttonLink: card.buttonLink || "",
+          })) || [],
+        };
       } else if (block.type === "Blogs" && block.blogData) {
         blockData.blogData = block.blogData;
       } else if (block.type === "About" && block.aboutData) {
