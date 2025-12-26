@@ -1825,7 +1825,7 @@ const EditPageContent = () => {
                 </p>
               </div>
               <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
-                {blocks.length || 0} blok
+                {(heroes.length + blocks.length) || 0} blok
               </span>
             </div>
 
@@ -1836,14 +1836,203 @@ const EditPageContent = () => {
                   Blokların sırası yenilənir...
                 </div>
               )}
-              {blocks.length === 0 ? (
+              {heroes.length === 0 && blocks.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <p>Hələ heç bir blok əlavə edilməyib</p>
                 </div>
               ) : (
-                [...blocks]
-                  .sort((a, b) => a.order - b.order)
-                  .map((block, index) => {
+                <>
+                  {/* Hero-ları göstər - əvvəlcə */}
+                  {!isLoadingHeroes && heroes.map((hero, heroIndex) => {
+                    const slidesCount = hero.leftSide?.slides?.length || 0;
+                    const totalImages = slidesCount + (hero.rightTop?.image ? 1 : 0) + (hero.bottomBlocks?.length || 0);
+                    const bottomBlocksCount = hero.bottomBlocks?.length || 0;
+                    
+                    const heroBlockDetails = [
+                      { label: "Slide sayı", value: `${slidesCount} slide` },
+                      { label: "Şəkil sayı", value: `${totalImages} şəkil` },
+                      { label: "Sağ üst", value: hero.rightTop ? "Var" : "Yoxdur" },
+                      { label: "Alt bloklar", value: `${bottomBlocksCount} blok` },
+                    ];
+                    
+                    const heroId = `hero-${hero._id}`;
+                    const totalIndex = heroIndex;
+                    
+                    return (
+                      <div
+                        key={heroId}
+                        draggable={!isUpdatingOrder}
+                        onDragStart={(e) => {
+                          setDraggedBlock(heroId);
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/html", heroId);
+                          e.dataTransfer.setData("type", "hero");
+                          e.currentTarget.style.opacity = "0.5";
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.style.opacity = "1";
+                          setDraggedBlock(null);
+                          setDraggedOverIndex(null);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          setDraggedOverIndex(totalIndex);
+                        }}
+                        onDragLeave={() => {
+                          setDraggedOverIndex(null);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDraggedOverIndex(null);
+                          
+                          if (!draggedBlock || draggedBlock === heroId) return;
+                          
+                          const draggedType = e.dataTransfer.getData("type");
+                          
+                          // Əgər hero-nu başqa hero ilə dəyişdiririksə
+                          if (draggedType === "hero" && draggedBlock.startsWith("hero-")) {
+                            const draggedHeroId = draggedBlock.replace("hero-", "");
+                            const draggedHeroIndex = heroes.findIndex(h => h._id === draggedHeroId);
+                            
+                            if (draggedHeroIndex === -1 || draggedHeroIndex === heroIndex) {
+                              setDraggedBlock(null);
+                              return;
+                            }
+                            
+                            // Hero-ların sırasını dəyişdir
+                            const newHeroes = [...heroes];
+                            const [removed] = newHeroes.splice(draggedHeroIndex, 1);
+                            newHeroes.splice(heroIndex, 0, removed);
+                            
+                            // TODO: Backend-ə hero-ların yeni sırasını göndər
+                            // Bu üçün backend-də hero order update endpoint-i lazımdır
+                            
+                            Swal.fire({
+                              title: "Xəbərdarlıq!",
+                              text: "Hero-ların sırası dəyişdirildi, amma backend-də saxlanılmadı. Backend dəstəyi lazımdır.",
+                              icon: "warning",
+                              confirmButtonColor: "#5C4977",
+                            });
+                          }
+                          
+                          // Əgər bloku hero ilə dəyişdiririksə
+                          if (draggedType === "block" && draggedBlock && !draggedBlock.startsWith("hero-")) {
+                            // Blokları hero-ların arasına yerləşdirmək üçün
+                            // Bu halda blokları hero-lardan sonra yerləşdirmək lazımdır
+                            // Çünki hero-lar həmişə əvvəldə olmalıdır
+                            Swal.fire({
+                              title: "Məlumat!",
+                              text: "Bloklar hero-lardan sonra yerləşdirilir",
+                              icon: "info",
+                              confirmButtonColor: "#5C4977",
+                            });
+                          }
+                          
+                          setDraggedBlock(null);
+                        }}
+                        className={`bg-white rounded-xl border transition-all overflow-hidden ${
+                          isUpdatingOrder
+                            ? "cursor-not-allowed opacity-60"
+                            : "cursor-move"
+                        } ${
+                          draggedBlock === heroId
+                            ? "opacity-50 border-[#5C4977]"
+                            : draggedOverIndex === totalIndex
+                            ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
+                            : "border-gray-200 hover:border-[#5C4977]/30 hover:shadow-md"
+                        }`}
+                      >
+                        <div className="p-4">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-4 flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className="text-gray-400">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <line x1="9" y1="11" x2="9" y2="17"></line>
+                                    <line x1="15" y1="11" x2="15" y2="17"></line>
+                                    <line x1="9" y1="7" x2="9" y2="13"></line>
+                                    <line x1="15" y1="7" x2="15" y2="13"></line>
+                                  </svg>
+                                </div>
+                                <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
+                                  {heroIndex + 1}
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h3 className="font-bold text-gray-800 text-lg">
+                                    Hero
+                                  </h3>
+                                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                    hero.isActive 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {hero.isActive ? 'Aktiv' : 'Deaktiv'}
+                                  </span>
+                                </div>
+                                
+                                {/* Hero detalları */}
+                                {heroBlockDetails.length > 0 && (
+                                  <div className="space-y-2">
+                                    {heroBlockDetails.map((detail, idx) => (
+                                      <div key={idx} className="flex items-center gap-2 text-sm">
+                                        <span className="text-gray-500 font-medium min-w-[100px]">
+                                          {detail.label}:
+                                        </span>
+                                        <span className="text-gray-800">
+                                          {detail.value}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              <button
+                                onClick={() => {
+                                  setShowAddBlockModal(false);
+                                  navigate(`/admin/edit-hero/${hero._id}`);
+                                }}
+                                disabled={isUpdatingOrder}
+                                className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <FaEdit className="h-4 w-4" />
+                                Redaktə
+                              </button>
+                              <button
+                                onClick={() => handleDeleteHero(hero._id)}
+                                disabled={isUpdatingOrder}
+                                className="bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <FaTrash className="h-4 w-4" />
+                                Sil
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Digər bloklar */}
+                  {[...blocks]
+                    .sort((a, b) => a.order - b.order)
+                    .map((block, index) => {
                     // Blok məlumatlarını hazırla
                     let blockDetails = [];
                     
@@ -1879,15 +2068,58 @@ const EditPageContent = () => {
                       ];
                     }
                     
+                    const totalIndex = heroes.length + index;
+                    
                     return (
                       <div
                         key={block._id}
                         draggable={!isUpdatingOrder}
-                        onDragStart={(e) => handleDragStart(e, block._id)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragStart={(e) => {
+                          setDraggedBlock(block._id);
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/html", block._id);
+                          e.dataTransfer.setData("type", "block");
+                          e.currentTarget.style.opacity = "0.5";
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.style.opacity = "1";
+                          setDraggedBlock(null);
+                          setDraggedOverIndex(null);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          setDraggedOverIndex(totalIndex);
+                        }}
                         onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, index)}
+                        onDrop={async (e) => {
+                          e.preventDefault();
+                          setDraggedOverIndex(null);
+                          
+                          if (!draggedBlock || draggedBlock === block._id) {
+                            setDraggedBlock(null);
+                            return;
+                          }
+                          
+                          const draggedType = e.dataTransfer.getData("type");
+                          
+                          // Əgər bloku başqa blok ilə dəyişdiririksə
+                          if (draggedType === "block" && !draggedBlock.startsWith("hero-")) {
+                            await handleDrop(e, index);
+                          }
+                          
+                          // Əgər hero-nu blok ilə dəyişdiririksə - hero-lar həmişə əvvəldə olmalıdır
+                          if (draggedType === "hero" && draggedBlock.startsWith("hero-")) {
+                            Swal.fire({
+                              title: "Məlumat!",
+                              text: "Hero-lar həmişə digər bloklardan əvvəl yerləşdirilir",
+                              icon: "info",
+                              confirmButtonColor: "#5C4977",
+                            });
+                          }
+                          
+                          setDraggedBlock(null);
+                        }}
                         className={`bg-white rounded-xl border transition-all overflow-hidden ${
                           isUpdatingOrder
                             ? "cursor-not-allowed opacity-60"
@@ -1923,7 +2155,7 @@ const EditPageContent = () => {
                                   </svg>
                                 </div>
                                 <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
-                                  {index + 1}
+                                  {heroes.length + index + 1}
                                 </div>
                               </div>
                               <div className="flex-1">
@@ -1984,7 +2216,8 @@ const EditPageContent = () => {
                         </div>
                       </div>
                     );
-                  })
+                  })}
+                </>
               )}
             </div>
           </div>
