@@ -9,6 +9,7 @@ import Container from "../components/ui/Container"
 import Product from './Product';
 import { useGetCategoriesQuery } from "../redux/api/categoryApi";
 import { useGetHomeAppliancesQuery } from "../redux/api/homeAppliancesApi";
+import { useGetProductsQuery } from "../redux/api/productsApi";
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -16,12 +17,17 @@ import 'swiper/css/navigation';
 export default function Accessory({ accessoryData }) {
   const { data: categoriesDataFromApi } = useGetCategoriesQuery();
   const { data: homeAppliancesData, isLoading: isLoadingHomeAppliances } = useGetHomeAppliancesQuery();
+  const { data: productsData } = useGetProductsQuery();
+  const allProducts = productsData?.products || [];
   
   // Default values if accessoryData is not provided
   const title = accessoryData?.title || "Microsoft Accessories";
   const description = accessoryData?.description || "Personalize your Surface Pro with Microsoft branded accessories. In the presence of many colors for every taste.";
   const heroImage = accessoryData?.heroImage?.url || accessoryData?.heroImage || "/images/microsoft-accessories.jpg";
   const selectedCategoryIds = accessoryData?.selectedCategories || [];
+  const selectedProductIds = accessoryData?.selectedProducts || [];
+  const badgeText = accessoryData?.badgeText || "";
+  const badgeColor = accessoryData?.badgeColor || "#FF0000";
   const cards = accessoryData?.cards || [];
 
   // Get all categories and filter selected ones
@@ -33,12 +39,46 @@ export default function Accessory({ accessoryData }) {
     );
   }, [allCategories, selectedCategoryIds]);
 
-  // Home Appliances məlumatlarını hazırla
+  // Selected products məlumatlarını hazırla
+  const selectedProductsList = useMemo(() => {
+    if (!selectedProductIds || selectedProductIds.length === 0) {
+      return [];
+    }
+    
+    // allProducts-dan selectedProductIds-ə uyğun məhsulları tap
+    return allProducts
+      .filter(product => {
+        const productId = product._id?.toString();
+        return selectedProductIds.includes(productId) || selectedProductIds.includes(product._id);
+      })
+      .map((product) => ({
+        _id: product._id,
+        name: product.name,
+        brand: product.brand,
+        model: product.model,
+        price: typeof product.price === 'number' 
+          ? product.price 
+          : parseFloat(product.price) || 0,
+        inStock: (product.stock !== undefined && product.stock > 0) || product.inStock !== false,
+        stock: product.stock,
+        imageUrl: product.images?.[0]?.url || product.image || "",
+        imageAlt: product.name || "Product Image",
+        rating: product.ratings || product.rating || 5,
+        sku: product.sku || product._id?.substring(0, 7),
+      }));
+  }, [allProducts, selectedProductIds]);
+
+  // Home Appliances məlumatlarını hazırla (fallback olaraq)
   const homeAppliances = homeAppliancesData?.homeAppliances;
   const hotLabel = homeAppliances?.hotLabel || "Hot";
   
-  // Home Appliances məhsullarını Product komponentinə uyğun formata çevir
+  // Məhsulları Product komponentinə uyğun formata çevir - əvvəlcə selectedProducts-i yoxla
   const homeAppliancesProducts = useMemo(() => {
+    // Əgər selectedProducts varsa, onu istifadə et, yoxsa homeAppliances-i istifadə et
+    if (selectedProductsList.length > 0) {
+      return selectedProductsList;
+    }
+    
     if (!homeAppliances || !homeAppliances.isActive || !homeAppliances.selectedProductIds) {
       return [];
     }
@@ -60,7 +100,7 @@ export default function Accessory({ accessoryData }) {
       rating: product.ratings || product.rating || 5,
       sku: product.sku || product._id?.substring(0, 7),
     }));
-  }, [homeAppliances, hotLabel]);
+  }, [selectedProductsList, homeAppliances, hotLabel]);
 
   return (
     <div className="w-full py-4 sm:py-6">
@@ -198,13 +238,13 @@ export default function Accessory({ accessoryData }) {
                     >
                       {homeAppliancesProducts.map((product) => (
                         <SwiperSlide key={product._id}>
-                          <Product product={product} />
+                          <Product product={product} badgeText={badgeText} badgeColor={badgeColor} />
                         </SwiperSlide>
                       ))}
                     </Swiper>
                   ) : (
                     <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500 text-sm">
-                      {homeAppliances && !homeAppliances.isActive 
+                      {selectedProductsList.length === 0 && homeAppliances && !homeAppliances.isActive 
                         ? "Home Appliances deaktivdir" 
                         : "Məhsul tapılmadı"}
                     </div>

@@ -1587,13 +1587,24 @@ const EditPageContent = () => {
       });
       
       // Accessory data for JSON (without file objects)
+      // Validate and normalize badgeColor to ensure it's a valid hex color (#rrggbb format)
+      let normalizedBadgeColor = accessoryData.badgeColor || "#FF0000";
+      if (!normalizedBadgeColor.match(/^#[0-9A-Fa-f]{6}$/)) {
+        // If invalid format, fix it
+        if (!normalizedBadgeColor.startsWith('#')) {
+          normalizedBadgeColor = '#' + normalizedBadgeColor;
+        }
+        const hexPart = normalizedBadgeColor.slice(1).replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+        normalizedBadgeColor = '#' + hexPart.padEnd(6, '0');
+      }
+      
       const accessoryDataForJson = {
         title: accessoryData.title,
         description: accessoryData.description || "",
         selectedCategories: accessoryData.selectedCategories,
         selectedProducts: accessoryData.selectedProducts || [],
         badgeText: accessoryData.badgeText || "",
-        badgeColor: accessoryData.badgeColor || "#FF0000",
+        badgeColor: normalizedBadgeColor,
         cards: accessoryData.cards.map(card => ({
           title: card.title || "",
           description: card.description || "",
@@ -4622,30 +4633,50 @@ const EditPageContent = () => {
                               <input
                                 type="color"
                                 value={accessoryData.badgeColor || "#FF0000"}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  // Ensure it's a valid hex color (6 digits)
+                                  let colorValue = e.target.value;
+                                  if (colorValue && !colorValue.match(/^#[0-9A-Fa-f]{6}$/)) {
+                                    // If invalid, use default
+                                    colorValue = "#FF0000";
+                                  }
                                   setAccessoryData({
                                     ...accessoryData,
-                                    badgeColor: e.target.value,
-                                  })
-                                }
+                                    badgeColor: colorValue,
+                                  });
+                                }}
                                 className="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer"
                               />
                               <input
                                 type="text"
                                 value={accessoryData.badgeColor || "#FF0000"}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  let colorValue = e.target.value;
+                                  // Always allow user to type, but normalize on input
+                                  if (colorValue) {
+                                    // If it doesn't start with #, add it
+                                    if (!colorValue.startsWith('#')) {
+                                      colorValue = '#' + colorValue;
+                                    }
+                                    // Remove any invalid characters and keep only hex digits after #
+                                    const hexPart = colorValue.slice(1).replace(/[^0-9A-Fa-f]/g, '');
+                                    // Limit to 6 hex digits
+                                    colorValue = '#' + hexPart.slice(0, 6);
+                                  } else {
+                                    colorValue = "#FF0000";
+                                  }
                                   setAccessoryData({
                                     ...accessoryData,
-                                    badgeColor: e.target.value,
-                                  })
-                                }
+                                    badgeColor: colorValue,
+                                  });
+                                }}
                                 placeholder="#FF0000"
                                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
                                 pattern="^#[0-9A-Fa-f]{6}$"
                               />
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
-                              RGB rəng kodunu daxil edin (məsələn: #FF0000)
+                              RGB rəng kodunu daxil edin (məsələn: #FF0000 - tam 6 rəqəmli hex kodu)
                             </p>
                           </div>
 
