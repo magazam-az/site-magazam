@@ -1589,13 +1589,29 @@ const EditPageContent = () => {
       // Accessory data for JSON (without file objects)
       // Validate and normalize badgeColor to ensure it's a valid hex color (#rrggbb format)
       let normalizedBadgeColor = accessoryData.badgeColor || "#FF0000";
+      
+      // Ensure it's a string
+      if (typeof normalizedBadgeColor !== 'string') {
+        normalizedBadgeColor = String(normalizedBadgeColor || "#FF0000");
+      }
+      
+      // Remove any whitespace
+      normalizedBadgeColor = normalizedBadgeColor.trim();
+      
+      // If it doesn't start with #, add it
+      if (!normalizedBadgeColor.startsWith('#')) {
+        normalizedBadgeColor = '#' + normalizedBadgeColor;
+      }
+      
+      // Extract only hex characters (0-9, A-F, a-f)
+      const hexPart = normalizedBadgeColor.slice(1).replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+      
+      // Pad to 6 characters with zeros if needed
+      normalizedBadgeColor = '#' + hexPart.padEnd(6, '0');
+      
+      // Final validation - if still invalid, use default
       if (!normalizedBadgeColor.match(/^#[0-9A-Fa-f]{6}$/)) {
-        // If invalid format, fix it
-        if (!normalizedBadgeColor.startsWith('#')) {
-          normalizedBadgeColor = '#' + normalizedBadgeColor;
-        }
-        const hexPart = normalizedBadgeColor.slice(1).replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
-        normalizedBadgeColor = '#' + hexPart.padEnd(6, '0');
+        normalizedBadgeColor = "#FF0000";
       }
       
       const accessoryDataForJson = {
@@ -1613,6 +1629,9 @@ const EditPageContent = () => {
         })),
       };
       
+      // Verify badgeColor is normalized
+      console.log("accessoryDataForJson.badgeColor:", accessoryDataForJson.badgeColor);
+      
       const blockDataString = JSON.stringify({ accessoryData: accessoryDataForJson });
       formData.append("blockData", blockDataString);
       
@@ -1620,6 +1639,8 @@ const EditPageContent = () => {
       console.log("=== Accessories FormData ===");
       console.log("pageType: home");
       console.log("blockType: Accessories");
+      console.log("badgeColor (original):", accessoryData.badgeColor);
+      console.log("badgeColor (normalized):", normalizedBadgeColor);
       console.log("blockData:", blockDataString);
       console.log("Hero image:", accessoryData.heroImage ? "Yes" : "No");
       console.log("Card images:", accessoryData.cards.filter(c => c.backgroundImage).length);
