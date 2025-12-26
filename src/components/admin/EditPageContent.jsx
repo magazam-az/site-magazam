@@ -1316,9 +1316,15 @@ const EditPageContent = () => {
         refetch();
       } catch (error) {
         console.error("Save Accessories block error:", error);
+        console.error("Error status:", error?.status);
+        console.error("Error data:", error?.data);
+        console.error("Error message:", error?.message);
+        console.error("Full error object:", JSON.stringify(error, null, 2));
+        
+        const errorMessage = error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi";
         Swal.fire({
           title: "Xəta!",
-          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
+          text: errorMessage,
           icon: "error",
           confirmButtonColor: "#5C4977",
         });
