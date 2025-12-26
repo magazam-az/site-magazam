@@ -601,9 +601,28 @@ const ProductDetail = () => {
 
                 {/* Description */}
                 <div className="mt-4">
-                  <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">
-                    {product?.description || "No description available."}
-                  </p>
+                  {(() => {
+                    const description = product?.description || "No description available.";
+                    // HTML olub-olmadığını yoxla
+                    const hasHTML = /<[a-z][\s\S]*>/i.test(description);
+                    
+                    if (hasHTML) {
+                      // HTML kimi render et
+                      return (
+                        <div 
+                          className="text-gray-500 text-xs sm:text-sm leading-relaxed prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: description }}
+                        />
+                      );
+                    } else {
+                      // Adi text kimi render et
+                      return (
+                        <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                          {description}
+                        </p>
+                      );
+                    }
+                  })()}
                 </div>
 
                 {/* Quantity & Buttons */}
