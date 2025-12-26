@@ -12,7 +12,6 @@ const EditHero = () => {
   const { data, isLoading } = useGetHeroByIdQuery(id);
   const [updateHero] = useUpdateHeroMutation();
 
-  const [heroType, setHeroType] = useState("DefaultSlider");
   const [slides, setSlides] = useState([]);
   const [rightTop, setRightTop] = useState({
     image: null,
@@ -27,7 +26,6 @@ const EditHero = () => {
   useEffect(() => {
     if (data?.hero) {
       const hero = data.hero;
-      setHeroType(hero.type || "DefaultSlider");
 
       // Slides
       if (hero.leftSide?.slides && hero.leftSide.slides.length > 0) {
@@ -422,7 +420,7 @@ const EditHero = () => {
     }
 
     const form = new FormData();
-    form.append("type", heroType);
+    form.append("type", "DefaultSlider");
 
     // Slide şəkilləri
     slides.forEach((slide, index) => {
@@ -531,7 +529,7 @@ const EditHero = () => {
         confirmButtonColor: "#5C4977",
       });
 
-      navigate("/admin/heroes");
+      navigate("/admin/contents/home/edit");
     } catch (error) {
       console.log(error);
       Swal.fire({
@@ -565,7 +563,7 @@ const EditHero = () => {
                 <p className="text-gray-600">Hero məlumatlarını yeniləyin</p>
               </div>
               <button
-                onClick={() => navigate("/admin/heroes")}
+                onClick={() => navigate("/admin/contents/home/edit")}
                 className="flex items-center gap-2 text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -577,24 +575,6 @@ const EditHero = () => {
           {/* Form Container */}
           <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-8" encType="multipart/form-data">
-              {/* Hero Type */}
-              <div className="border-b border-[#5C4977]/10 pb-6">
-                <h2 className="text-xl font-bold text-[#5C4977] mb-6">Hero Tipi</h2>
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Tip *
-                  </label>
-                  <select
-                    value={heroType}
-                    onChange={(e) => setHeroType(e.target.value)}
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                    required
-                  >
-                    <option value="DefaultSlider">DefaultSlider</option>
-                  </select>
-                </div>
-              </div>
-
               {/* Sol Tərəf - Slider */}
               <div className="border-b border-[#5C4977]/10 pb-6">
                 <div className="flex items-center justify-between mb-6">

@@ -12,7 +12,7 @@ import {
 } from '../utils/favorites';
 
 // Product Card Component
-const Product = ({ product, mehsul }) => {
+const Product = ({ product, mehsul, badgeText = "", badgeColor = "#FF0000" }) => {
   const productData = product || mehsul;
   if (!productData) return null;
 
@@ -159,7 +159,18 @@ const Product = ({ product, mehsul }) => {
         maxWidth: '100%'
       }}
     >
-      {productData.isHot && (
+      {/* Badge (Products bloğundan gəlir) */}
+      {badgeText && (
+        <div 
+          className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-1 rounded-md z-10"
+          style={{ backgroundColor: badgeColor }}
+        >
+          {badgeText}
+        </div>
+      )}
+      
+      {/* Hot Badge (əgər badgeText yoxdursa və isHot varsa) */}
+      {!badgeText && productData.isHot && (
         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
           {productData.hotLabel || "HOT"}
         </div>

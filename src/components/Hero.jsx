@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useGetHeroQuery } from "../redux/api/heroApi";
+import { useGetHeroesQuery } from "../redux/api/heroApi";
 import { Link } from "react-router-dom";
 import Container from "./ui/Container";
 
@@ -55,105 +55,22 @@ const CountdownTimer = ({ endDate }) => {
   );
 };
 
-export default function ProductBanners() {
-  const { data, isLoading, error } = useGetHeroQuery();
-  const hero = data?.hero;
-
+// Single Hero Item Component
+export const HeroItem = ({ hero }) => {
   const swiperRef = useRef(null);
   const [swiperInstance, setSwiperInstance] = useState(null);
-
-  // Debug: məlumatı yoxla
-  useEffect(() => {
-    if (hero) {
-      console.log("=== HERO DATA DEBUG ===");
-      console.log("Full hero object:", hero);
-      console.log("Hero ID:", hero._id);
-      console.log("Hero isActive:", hero.isActive);
-      console.log("Hero type:", hero.type);
-      console.log("LeftSide:", hero.leftSide);
-      console.log("Slides array:", hero.leftSide?.slides);
-      console.log("Slides count:", hero.leftSide?.slides?.length || 0);
-      console.log("RightTop:", hero.rightTop);
-      console.log("RightTop image:", hero.rightTop?.image);
-      console.log("BottomBlocks:", hero.bottomBlocks);
-      console.log("BottomBlocks count:", hero.bottomBlocks?.length || 0);
-      console.log("=====================");
-    } else {
-      console.log("Hero is null or undefined");
-    }
-  }, [hero]);
-
-  if (isLoading) {
-    return (
-      <Container>
-        <div className="w-full my-5">
-          <div className="flex items-center justify-center h-96">
-            <div className="text-gray-500">Yüklənir...</div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
-
-  if (error) {
-    console.error("Hero error:", error);
-    return null;
-  }
-
-  if (!hero) {
-    console.log("Hero not found or not active");
-    return (
-      <Container>
-        <div className="w-full my-5">
-          <div className="text-center py-8 text-gray-500">
-            Hero məlumatı tapılmadı
-          </div>
-        </div>
-      </Container>
-    );
-  }
 
   const slides = hero.leftSide?.slides || [];
   const rightTop = hero.rightTop || {};
   const bottomBlocks = hero.bottomBlocks || [];
 
-  console.log("=== RENDERING HERO ===");
-  console.log("Hero object:", hero);
-  console.log("Hero leftSide:", hero.leftSide);
-  console.log("Slides array:", slides);
-  console.log("Slides count:", slides.length);
-  if (slides.length > 0) {
-    console.log("First slide:", slides[0]);
-    console.log("First slide image:", slides[0].image);
-  }
-  console.log("RightTop object:", rightTop);
-  console.log("RightTop image:", rightTop.image);
-  console.log("RightTop image URL:", rightTop.image?.url);
-  console.log("BottomBlocks array:", bottomBlocks);
-  console.log("BottomBlocks count:", bottomBlocks.length);
-  if (bottomBlocks.length > 0) {
-    console.log("First bottomBlock:", bottomBlocks[0]);
-    console.log("First bottomBlock image:", bottomBlocks[0].image);
-  }
-  console.log("=====================");
-
   // Əgər heç bir məlumat yoxdursa, göstərmə
   if (slides.length === 0 && !rightTop.image?.url && bottomBlocks.length === 0) {
-    console.log("No hero content available - all sections are empty");
-    return (
-      <Container>
-        <div className="w-full my-5">
-          <div className="text-center py-8 text-gray-500">
-            Hero məlumatı boşdur
-          </div>
-        </div>
-      </Container>
-    );
+    return null;
   }
 
   return (
-    <Container>
-      <div className="w-full my-5">
+    <div className="w-full my-5">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* --- 1. Left Column (Slider) --- */}
           {slides.length > 0 && (
@@ -386,7 +303,56 @@ export default function ProductBanners() {
             border-radius: 6px;
           }
         `}</style>
-      </div>
+    </div>
+  );
+};
+
+// Main Component
+export default function ProductBanners() {
+  const { data, isLoading, error } = useGetHeroesQuery();
+  const heroes = (data?.heroes || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  if (isLoading) {
+    return (
+      <Container>
+        <div className="w-full my-5">
+          <div className="flex flex-col lg:flex-row gap-6 animate-pulse">
+            {/* Left Column Skeleton (Slider) */}
+            <div className="lg:w-[680px] w-full">
+              <div className="relative rounded-lg overflow-hidden h-full min-h-[420px] bg-gray-200"></div>
+            </div>
+            
+            {/* Right Column Skeleton */}
+            <div className="lg:flex-1 flex flex-col gap-6">
+              {/* Right Top Skeleton */}
+              <div className="relative rounded-xl overflow-hidden h-[250px] bg-gray-200"></div>
+              
+              {/* Bottom Blocks Skeleton */}
+              <div className="flex flex-col sm:flex-row gap-6">
+                <div className="flex-1 h-[170px] rounded-xl bg-gray-200"></div>
+                <div className="flex-1 h-[170px] rounded-xl bg-gray-200"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (error) {
+    console.error("Hero error:", error);
+    return null;
+  }
+
+  if (!heroes || heroes.length === 0) {
+    return null;
+  }
+
+  return (
+    <Container>
+      {heroes.map((hero) => (
+        <HeroItem key={hero._id} hero={hero} />
+      ))}
     </Container>
   );
 }

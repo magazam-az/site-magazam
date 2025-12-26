@@ -16,6 +16,11 @@ export const heroApi = createApi({
       query: () => "/hero",
       providesTags: ["Hero"],
     }),
+    // Aktiv hero-ları gətirir (birdən çox ola bilər)
+    getHeroes: builder.query({
+      query: () => "/heroes",
+      providesTags: ["Hero"],
+    }),
     // Bütün hero-ları gətirir (admin üçün)
     getAllHeroes: builder.query({
       query: () => "/admin/heroes",
@@ -52,15 +57,26 @@ export const heroApi = createApi({
       }),
       invalidatesTags: ["Hero"],
     }),
+    // Hero-ların sırasını yeniləyir
+    updateHeroesOrder: builder.mutation({
+      query: (heroOrders) => ({
+        url: "/admin/heroes/order",
+        method: "PUT",
+        body: { heroOrders },
+      }),
+      invalidatesTags: ["Hero"],
+    }),
   }),
 });
 
 export const {
   useGetHeroQuery,
+  useGetHeroesQuery,
   useGetAllHeroesQuery,
   useGetHeroByIdQuery,
   useCreateHeroMutation,
   useUpdateHeroMutation,
   useDeleteHeroMutation,
+  useUpdateHeroesOrderMutation,
 } = heroApi;
 

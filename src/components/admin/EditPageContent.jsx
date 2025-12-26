@@ -8,12 +8,12 @@ import {
   useUpdateBlocksOrderMutation,
 } from "../../redux/api/pageContentApi";
 import { useGetCategoriesQuery } from "../../redux/api/categoryApi";
-import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation, useUpdateHeroMutation } from "../../redux/api/heroApi";
+import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation, useUpdateHeroMutation, useUpdateHeroesOrderMutation } from "../../redux/api/heroApi";
 import { useGetProductsQuery } from "../../redux/api/productsApi";
 import { useGetHomeAppliancesAdminQuery, useUpdateHomeAppliancesMutation } from "../../redux/api/homeAppliancesApi";
 import { useGetBlogsQuery } from "../../redux/api/blogApi";
 import Swal from "sweetalert2";
-import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
+import { FaPlus, FaTrash, FaEdit, FaCopy, FaPowerOff, FaToggleOn } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import AdminShoppingEvent from "./AdminShoppingEvent";
@@ -30,12 +30,26 @@ const EditPageContent = () => {
   const [deleteHero] = useDeleteHeroMutation();
   const [createHero, { isLoading: isCreatingHero }] = useCreateHeroMutation();
   const [updateHero, { isLoading: isUpdatingHero }] = useUpdateHeroMutation();
+  const [updateHeroesOrder, { isLoading: isUpdatingHeroesOrder }] = useUpdateHeroesOrderMutation();
 
   const pageContent = data?.pageContent;
   const pageContentId = pageContent?._id;
-  const blocks = pageContent?.blocks || [];
+  const allBlocks = pageContent?.blocks || [];
   const categories = categoriesApiData?.categories || [];
-  const heroes = heroesData?.heroes || [];
+  // Hero-ları _id-yə görə unikal et (duplicate-ləri sil) və order-a görə sırala
+  const heroes = (heroesData?.heroes || [])
+    .filter((hero, index, self) => 
+      index === self.findIndex((h) => h._id === hero._id)
+    )
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  // DefaultSlider bloklarını filtrlə (onlar hero olaraq göstərilir)
+  const blocks = allBlocks.filter(block => block.type !== "DefaultSlider");
+  
+  // Hero'ları ve blokları birleştirip tek bir listede göster (order'a göre sırala)
+  const allItems = [
+    ...heroes.map(hero => ({ type: 'hero', id: hero._id, data: hero, order: hero.order || 0 })),
+    ...blocks.map(block => ({ type: 'block', id: block._id, data: block, order: block.order || 0 }))
+  ].sort((a, b) => a.order - b.order);
 
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [selectedBlockType, setSelectedBlockType] = useState("");
@@ -45,7 +59,6 @@ const EditPageContent = () => {
   const [showAddHeroModal, setShowAddHeroModal] = useState(false);
   
   // Hero form state
-  const [heroType, setHeroType] = useState("DefaultSlider");
   const [slides, setSlides] = useState([
     { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" }
   ]);
@@ -68,7 +81,7 @@ const EditPageContent = () => {
     visibleCategories: [],
   });
 
-  // BestOffers state
+  // BestOffers state (deprecated - Products bloğu kullanılacak)
   const [bestOffersData, setBestOffersData] = useState({
     title: "The Best Offers",
     selectedProducts: [],
@@ -76,12 +89,30 @@ const EditPageContent = () => {
     moreProductsButtonText: "",
   });
 
-  // NewGoods state
+  // NewGoods state (deprecated - Products bloğu kullanılacak)
   const [newGoodsData, setNewGoodsData] = useState({
     title: "New Goods",
     selectedProducts: [],
     moreProductsLink: "",
     moreProductsButtonText: "",
+    banner: {
+      image: null,
+      imagePreview: null,
+      subtitle: "",
+      title: "",
+      buttonText: "",
+      buttonLink: "",
+    },
+  });
+
+  // Products state (BestOffers + NewGoods birleşimi)
+  const [productsBlockData, setProductsBlockData] = useState({
+    title: "Məhsullar",
+    selectedProducts: [],
+    moreProductsLink: "",
+    moreProductsButtonText: "",
+    badgeText: "",
+    badgeColor: "#FF0000",
     banner: {
       image: null,
       imagePreview: null,
@@ -173,6 +204,14 @@ const EditPageContent = () => {
     }
   }, [homeAppliancesData]);
 
+  // DefaultSlider seçildiğinde direkt hero ekleme formunu aç
+  useEffect(() => {
+    if (selectedBlockType === "DefaultSlider" && showAddBlockModal && !editingBlock) {
+      resetHeroForm();
+      setShowAddHeroModal(true);
+    }
+  }, [selectedBlockType, showAddBlockModal, editingBlock]);
+
   const handleDeleteHero = async (id) => {
     const result = await Swal.fire({
       title: "Əminsiniz?",
@@ -203,6 +242,125 @@ const EditPageContent = () => {
           confirmButtonColor: "#5C4977",
         });
       }
+    }
+  };
+
+  // URL-dən şəkli File obyektinə çevir
+  const urlToFile = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const file = new File([blob], filename, { type: blob.type });
+      return file;
+    } catch (error) {
+      console.error("Error converting URL to file:", error);
+      throw error;
+    }
+  };
+
+  const handleDuplicateHero = async (hero) => {
+    try {
+      // Yükləmə göstəricisi
+      Swal.fire({
+        title: "Kopyalanır...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      const form = new FormData();
+      form.append("type", hero.type || "DefaultSlider");
+
+      // Slide şəkillərini yüklə və FormData-ya əlavə et
+      if (hero.leftSide?.slides && hero.leftSide.slides.length > 0) {
+        for (let i = 0; i < hero.leftSide.slides.length; i++) {
+          const slide = hero.leftSide.slides[i];
+          if (slide.image?.url) {
+            try {
+              const file = await urlToFile(slide.image.url, `slide_${i}.jpg`);
+              form.append(`slideImage_${i}`, file);
+            } catch (error) {
+              console.error(`Error loading slide image ${i}:`, error);
+            }
+          }
+        }
+
+        // Slide məlumatları
+        const leftSideData = {
+          slides: hero.leftSide.slides.map(slide => ({
+            title: slide.title || "",
+            description: slide.description || "",
+            buttonText: slide.buttonText || "",
+            buttonLink: slide.buttonLink || "",
+          }))
+        };
+        form.append("leftSide", JSON.stringify(leftSideData));
+      }
+
+      // RightTop şəklini yüklə və FormData-ya əlavə et
+      if (hero.rightTop?.image?.url) {
+        try {
+          const file = await urlToFile(hero.rightTop.image.url, "rightTop.jpg");
+          form.append("rightTopImage", file);
+        } catch (error) {
+          console.error("Error loading rightTop image:", error);
+        }
+      }
+
+      // RightTop məlumatları
+      const rightTopData = {
+        title: hero.rightTop?.title || "",
+        buttonText: hero.rightTop?.buttonText || "",
+        buttonLink: hero.rightTop?.buttonLink || "",
+        endDate: hero.rightTop?.endDate || "",
+      };
+      form.append("rightTop", JSON.stringify(rightTopData));
+
+      // BottomBlocks şəkillərini yüklə və FormData-ya əlavə et
+      if (hero.bottomBlocks && hero.bottomBlocks.length > 0) {
+        for (let i = 0; i < hero.bottomBlocks.length; i++) {
+          const block = hero.bottomBlocks[i];
+          if (block.image?.url) {
+            try {
+              const file = await urlToFile(block.image.url, `bottomBlock_${i}.jpg`);
+              form.append(`bottomBlockImage_${i}`, file);
+            } catch (error) {
+              console.error(`Error loading bottomBlock image ${i}:`, error);
+            }
+          }
+        }
+
+        // BottomBlocks məlumatları
+        const bottomBlocksData = hero.bottomBlocks.map(block => ({
+          title: block.title || "",
+          description: block.description || "",
+          buttonText: block.buttonText || "",
+          buttonLink: block.buttonLink || "",
+        }));
+        form.append("bottomBlocks", JSON.stringify(bottomBlocksData));
+      }
+
+      await createHero(form).unwrap();
+
+      Swal.fire({
+        title: "Uğurlu!",
+        text: "Hero uğurla kopyalandı",
+        icon: "success",
+        confirmButtonColor: "#5C4977",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      refetchHeroes();
+    } catch (error) {
+      console.error("Duplicate hero error:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: error?.data?.error || error?.data?.message || error?.message || "Hero kopyalanarkən xəta baş verdi",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
     }
   };
 
@@ -410,7 +568,6 @@ const EditPageContent = () => {
   };
 
   const resetHeroForm = () => {
-    setHeroType("DefaultSlider");
     setSlides([
       { image: null, imagePreview: null, title: "", description: "", buttonText: "", buttonLink: "" }
     ]);
@@ -514,8 +671,8 @@ const EditPageContent = () => {
     }
 
     const form = new FormData();
-    form.append("type", heroType);
-    console.log("Hero type:", heroType);
+    form.append("type", "DefaultSlider");
+    console.log("Hero type: DefaultSlider");
 
     // Slide şəkilləri
     let slideImageCount = 0;
@@ -629,6 +786,41 @@ const EditPageContent = () => {
       console.log("Sending createHero request...");
       const result = await createHero(form).unwrap();
       console.log("CreateHero success:", result);
+
+      // Eğer blok ekleme modalı açıksa ve DefaultSlider seçildiyse, hero'yu blok olarak da ekle
+      if (showAddBlockModal && selectedBlockType === "DefaultSlider" && pageContentId && result?.hero?._id) {
+        try {
+          const formData = new FormData();
+          formData.append("pageType", "home");
+          formData.append("blockType", "DefaultSlider");
+          formData.append("blockData", JSON.stringify({ heroId: result.hero._id }));
+
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+
+          Swal.fire({
+            title: "Uğurlu!",
+            text: "Hero və blok uğurla əlavə edildi",
+            icon: "success",
+            timer: 2000,
+            showConfirmButton: false,
+            confirmButtonColor: "#5C4977",
+          });
+
+          setShowAddHeroModal(false);
+          setShowAddBlockModal(false);
+          setSelectedBlockType("");
+          resetHeroForm();
+          refetchHeroes();
+          refetch();
+          return;
+        } catch (blockError) {
+          console.error("Add block error:", blockError);
+          // Hero oluşturuldu ama blok eklenemedi, yine de devam et
+        }
+      }
 
       Swal.fire({
         title: "Uğur!",
@@ -934,6 +1126,99 @@ const EditPageContent = () => {
         refetch();
       } catch (error) {
         console.error("Save block error:", error);
+        Swal.fire({
+          title: "Xəta!",
+          text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+      }
+    } else if (selectedBlockType === "Products") {
+      // Required fields validation
+      if (!productsBlockData.title || productsBlockData.title.trim() === "") {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Başlıq doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      if (productsBlockData.selectedProducts.length === 0) {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Ən azı bir məhsul seçilməlidir",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", "Products");
+      
+      // Banner şəkil upload (optional)
+      if (productsBlockData.banner?.image) {
+        console.log("Banner şəkil ölçüsü:", productsBlockData.banner.image.size, "bytes", `(${(productsBlockData.banner.image.size / 1024 / 1024).toFixed(2)}MB)`);
+        formData.append("productsBannerImage", productsBlockData.banner.image);
+      }
+      
+      // Banner məlumatlarını JSON-a çevir (şəkil faylı və imagePreview olmadan)
+      const bannerDataForJson = {
+        subtitle: productsBlockData.banner?.subtitle || "",
+        title: productsBlockData.banner?.title || "",
+        buttonText: productsBlockData.banner?.buttonText || "",
+        buttonLink: productsBlockData.banner?.buttonLink || "",
+      };
+      
+      const productsDataForJson = {
+        title: productsBlockData.title,
+        selectedProducts: productsBlockData.selectedProducts,
+        moreProductsLink: productsBlockData.moreProductsLink || "",
+        moreProductsButtonText: productsBlockData.moreProductsButtonText || "",
+        badgeText: productsBlockData.badgeText || "",
+        badgeColor: productsBlockData.badgeColor || "#FF0000",
+        banner: bannerDataForJson,
+      };
+      
+      const blockDataString = JSON.stringify({ productsData: productsDataForJson });
+      formData.append("blockData", blockDataString);
+      
+      console.log("FormData being sent:");
+      console.log("- pageType: home");
+      console.log("- blockType: Products");
+      console.log("- blockData:", blockDataString);
+      
+      try {
+        if (editingBlock) {
+          await updateBlock({
+            pageContentId,
+            blockId: editingBlock._id,
+            formData,
+          }).unwrap();
+        } else {
+          await addBlock({
+            pageContentId,
+            formData,
+          }).unwrap();
+        }
+
+        Swal.fire({
+          title: "Uğurlu!",
+          text: editingBlock ? "Blok yeniləndi" : "Blok əlavə edildi",
+          icon: "success",
+          confirmButtonColor: "#5C4977",
+        });
+
+        setShowAddBlockModal(false);
+        setEditingBlock(null);
+        setSelectedBlockType("");
+        resetForm();
+        refetch();
+      } catch (error) {
+        console.error("Save Products block error:", error);
         Swal.fire({
           title: "Xəta!",
           text: error?.data?.error || error?.data?.message || error?.message || "Blok saxlanarkən xəta baş verdi",
@@ -1553,12 +1838,106 @@ const EditPageContent = () => {
     }
   };
 
+  const handleDuplicateBlock = async (block) => {
+    if (!pageContentId) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Səhifə məlumatı tapılmadı",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    try {
+      // Yükləmə göstəricisi
+      Swal.fire({
+        title: "Kopyalanır...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      // Blokun məlumatlarını hazırla
+      const formData = new FormData();
+      formData.append("pageType", "home");
+      formData.append("blockType", block.type);
+
+      // Blok tipinə görə məlumatları əlavə et (backend nested structure gözləyir)
+      const blockData = {};
+      
+      if (block.type === "Categories" && block.categoriesData) {
+        blockData.categoriesData = block.categoriesData;
+      } else if (block.type === "BestOffers" && block.bestOffersData) {
+        blockData.bestOffersData = block.bestOffersData;
+      } else if (block.type === "NewGoods" && block.newGoodsData) {
+        blockData.newGoodsData = block.newGoodsData;
+      } else if (block.type === "ShoppingEvent") {
+        // ShoppingEvent üçün xüsusi məlumat yoxdur
+      } else if (block.type === "HomeAppliances") {
+        // HomeAppliances üçün xüsusi məlumat yoxdur
+      } else if (block.type === "Accessories" && block.accessoryData) {
+        blockData.accessoryData = block.accessoryData;
+      } else if (block.type === "Blogs" && block.blogData) {
+        blockData.blogData = block.blogData;
+      } else if (block.type === "About" && block.aboutData) {
+        blockData.aboutData = block.aboutData;
+      }
+      
+      formData.append("blockData", JSON.stringify(blockData));
+
+      await addBlock({
+        pageContentId,
+        formData,
+      }).unwrap();
+
+      Swal.fire({
+        title: "Uğurlu!",
+        text: "Blok uğurla kopyalandı",
+        icon: "success",
+        confirmButtonColor: "#5C4977",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      refetch();
+    } catch (error) {
+      console.error("Duplicate block error:", error);
+      Swal.fire({
+        title: "Xəta!",
+        text: error?.data?.error || error?.data?.message || error?.message || "Blok kopyalanarkən xəta baş verdi",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+    }
+  };
+
   const handleEditBlock = (block) => {
     setEditingBlock(block);
     setSelectedBlockType(block.type);
 
     if (block.type === "Categories" && block.categoriesData) {
       setCategoriesData(block.categoriesData);
+    }
+
+    if (block.type === "Products" && block.productsData) {
+      setProductsBlockData({
+        title: block.productsData.title || "Məhsullar",
+        selectedProducts: block.productsData.selectedProducts || [],
+        moreProductsLink: block.productsData.moreProductsLink || "",
+        moreProductsButtonText: block.productsData.moreProductsButtonText || "",
+        badgeText: block.productsData.badgeText || "",
+        badgeColor: block.productsData.badgeColor || "#FF0000",
+        banner: {
+          image: null,
+          imagePreview: block.productsData.banner?.image?.url || null,
+          subtitle: block.productsData.banner?.subtitle || "",
+          title: block.productsData.banner?.title || "",
+          buttonText: block.productsData.banner?.buttonText || "",
+          buttonLink: block.productsData.banner?.buttonLink || "",
+        },
+      });
     }
 
     if (block.type === "BestOffers" && block.bestOffersData) {
@@ -1673,6 +2052,22 @@ const EditPageContent = () => {
         buttonLink: "",
       },
     });
+    setProductsBlockData({
+      title: "Məhsullar",
+      selectedProducts: [],
+      moreProductsLink: "",
+      moreProductsButtonText: "",
+      badgeText: "",
+      badgeColor: "#FF0000",
+      banner: {
+        image: null,
+        imagePreview: null,
+        subtitle: "",
+        title: "",
+        buttonText: "",
+        buttonLink: "",
+      },
+    });
     setProductSearchTerm("");
     setNewGoodsSearchTerm("");
     setHomeAppliancesSearchTerm("");
@@ -1733,6 +2128,8 @@ const EditPageContent = () => {
         return "Hero";
       case "Categories":
         return "Kateqoriyalar";
+      case "Products":
+        return "Məhsullar";
       case "BestOffers":
         return "Ən Yaxşı Təkliflər";
       case "NewGoods":
@@ -1846,33 +2243,33 @@ const EditPageContent = () => {
           {/* Header */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-[#5C4977] mb-2">
+                  Ana Səhifə Kontenti
+                </h1>
+                <p className="text-gray-600">Blokları idarə edin</p>
+              </div>
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate("/admin/contents")}
-                  className="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-all duration-200 cursor-pointer"
+                  className="flex items-center gap-2 text-[#5C4977] hover:text-[#5C4977]/70 font-medium transition-colors border border-[#5C4977] hover:bg-[#5C4977]/5 px-4 py-2 rounded-xl cursor-pointer"
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Geri qayıt
                 </button>
-                <div>
-                  <h1 className="text-3xl font-bold text-[#5C4977] mb-2">
-                    Ana Səhifə Kontenti
-                  </h1>
-                  <p className="text-gray-600">Blokları idarə edin</p>
-                </div>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setEditingBlock(null);
+                    setSelectedBlockType("");
+                    setShowAddBlockModal(true);
+                  }}
+                  className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20 cursor-pointer"
+                >
+                  <FaPlus className="h-5 w-5" />
+                  Yeni Blok
+                </button>
               </div>
-
-              <button
-                onClick={() => {
-                  resetForm();
-                  setEditingBlock(null);
-                  setSelectedBlockType("");
-                  setShowAddBlockModal(true);
-                }}
-                className="bg-[#5C4977] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#5C4977]/90 focus:ring-2 focus:ring-[#5C4977] focus:ring-offset-2 transition-all duration-200 inline-flex items-center gap-2 shadow-lg shadow-[#5C4977]/20 cursor-pointer"
-              >
-                <FaPlus className="h-5 w-5" />
-                Yeni Blok
-              </button>
             </div>
           </div>
 
@@ -1886,7 +2283,7 @@ const EditPageContent = () => {
                 </p>
               </div>
               <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
-                {(heroes.length + blocks.length) || 0} blok
+                {heroes.length + blocks.length} blok
               </span>
             </div>
 
@@ -1903,111 +2300,135 @@ const EditPageContent = () => {
                 </div>
               ) : (
                 <>
-                  {/* Hero-ları göstər - əvvəlcə */}
-                  {!isLoadingHeroes && heroes.map((hero, heroIndex) => {
-                    const slidesCount = hero.leftSide?.slides?.length || 0;
-                    const totalImages = slidesCount + (hero.rightTop?.image ? 1 : 0) + (hero.bottomBlocks?.length || 0);
-                    const bottomBlocksCount = hero.bottomBlocks?.length || 0;
+                  {/* Hero-ları və blokları birleştirilmiş listede göster */}
+                  {!isLoadingHeroes && allItems.map((item, itemIndex) => {
+                    const isHero = item.type === 'hero';
+                    const itemId = isHero ? `hero-${item.id}` : item.id;
+                    const totalIndex = itemIndex;
+                    const hero = isHero ? item.data : null;
+                    const block = !isHero ? item.data : null;
                     
-                    const heroBlockDetails = [
-                      { label: "Slide sayı", value: `${slidesCount} slide` },
-                      { label: "Şəkil sayı", value: `${totalImages} şəkil` },
-                      { label: "Sağ üst", value: hero.rightTop ? "Var" : "Yoxdur" },
-                      { label: "Alt bloklar", value: `${bottomBlocksCount} blok` },
-                    ];
-                    
-                    const heroId = `hero-${hero._id}`;
-                    const totalIndex = heroIndex;
-                    
-                    return (
-                      <div
-                        key={heroId}
-                        draggable={!isUpdatingOrder}
-                        onDragStart={(e) => {
-                          setDraggedBlock(heroId);
-                          e.dataTransfer.effectAllowed = "move";
-                          e.dataTransfer.setData("text/html", heroId);
-                          e.dataTransfer.setData("type", "hero");
-                          e.currentTarget.style.opacity = "0.5";
-                        }}
-                        onDragEnd={(e) => {
-                          e.currentTarget.style.opacity = "1";
-                          setDraggedBlock(null);
-                          setDraggedOverIndex(null);
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = "move";
-                          setDraggedOverIndex(totalIndex);
-                        }}
-                        onDragLeave={() => {
-                          setDraggedOverIndex(null);
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setDraggedOverIndex(null);
-                          
-                          if (!draggedBlock || draggedBlock === heroId) return;
-                          
-                          const draggedType = e.dataTransfer.getData("type");
-                          
-                          // Əgər hero-nu başqa hero ilə dəyişdiririksə
-                          if (draggedType === "hero" && draggedBlock.startsWith("hero-")) {
-                            const draggedHeroId = draggedBlock.replace("hero-", "");
-                            const draggedHeroIndex = heroes.findIndex(h => h._id === draggedHeroId);
+                    // Hero render
+                    if (isHero && hero) {
+                      return (
+                        <div
+                          key={itemId}
+                          draggable={!isUpdatingOrder}
+                          onDragStart={(e) => {
+                            setDraggedBlock(itemId);
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/html", itemId);
+                            e.dataTransfer.setData("type", "hero");
+                            e.currentTarget.style.opacity = "0.5";
+                          }}
+                          onDragEnd={(e) => {
+                            e.currentTarget.style.opacity = "1";
+                            setDraggedBlock(null);
+                            setDraggedOverIndex(null);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                            setDraggedOverIndex(totalIndex);
+                          }}
+                          onDragLeave={() => {
+                            setDraggedOverIndex(null);
+                          }}
+                          onDrop={async (e) => {
+                            e.preventDefault();
+                            setDraggedOverIndex(null);
                             
-                            if (draggedHeroIndex === -1 || draggedHeroIndex === heroIndex) {
+                            if (!draggedBlock || draggedBlock === itemId) return;
+                            
+                            const draggedType = e.dataTransfer.getData("type");
+                            
+                            // Hero'ları ve blokları birleştirilmiş listede yeniden sırala
+                            const newAllItems = [...allItems];
+                            const draggedItemIndex = newAllItems.findIndex(item => 
+                              draggedType === "hero" && draggedBlock.startsWith("hero-") 
+                                ? item.type === "hero" && item.id === draggedBlock.replace("hero-", "")
+                                : item.type === "block" && item.id === draggedBlock
+                            );
+                            
+                            if (draggedItemIndex === -1 || draggedItemIndex === itemIndex) {
                               setDraggedBlock(null);
                               return;
                             }
                             
-                            // Hero-ların sırasını dəyişdir
-                            const newHeroes = [...heroes];
-                            const [removed] = newHeroes.splice(draggedHeroIndex, 1);
-                            newHeroes.splice(heroIndex, 0, removed);
+                            // Item'ı yeni pozisyona taşı
+                            const [removed] = newAllItems.splice(draggedItemIndex, 1);
+                            newAllItems.splice(itemIndex, 0, removed);
                             
-                            // TODO: Backend-ə hero-ların yeni sırasını göndər
-                            // Bu üçün backend-də hero order update endpoint-i lazımdır
+                            // Yeni order'ları təyin et
+                            const heroOrders = [];
+                            const blockOrders = [];
                             
-                            Swal.fire({
-                              title: "Xəbərdarlıq!",
-                              text: "Hero-ların sırası dəyişdirildi, amma backend-də saxlanılmadı. Backend dəstəyi lazımdır.",
-                              icon: "warning",
-                              confirmButtonColor: "#5C4977",
+                            newAllItems.forEach((item, index) => {
+                              if (item.type === "hero") {
+                                heroOrders.push({
+                                  heroId: item.id.toString(),
+                                  order: index,
+                                });
+                              } else {
+                                blockOrders.push({
+                                  blockId: item.id,
+                                  order: index,
+                                });
+                              }
                             });
-                          }
-                          
-                          // Əgər bloku hero ilə dəyişdiririksə
-                          if (draggedType === "block" && draggedBlock && !draggedBlock.startsWith("hero-")) {
-                            // Blokları hero-ların arasına yerləşdirmək üçün
-                            // Bu halda blokları hero-lardan sonra yerləşdirmək lazımdır
-                            // Çünki hero-lar həmişə əvvəldə olmalıdır
-                            Swal.fire({
-                              title: "Məlumat!",
-                              text: "Bloklar hero-lardan sonra yerləşdirilir",
-                              icon: "info",
-                              confirmButtonColor: "#5C4977",
-                            });
-                          }
-                          
-                          setDraggedBlock(null);
-                        }}
-                        className={`bg-white rounded-xl border transition-all overflow-hidden ${
-                          isUpdatingOrder
-                            ? "cursor-not-allowed opacity-60"
-                            : "cursor-move"
-                        } ${
-                          draggedBlock === heroId
-                            ? "opacity-50 border-[#5C4977]"
-                            : draggedOverIndex === totalIndex
-                            ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
-                            : "border-gray-200 hover:border-[#5C4977]/30 hover:shadow-md"
-                        }`}
-                      >
-                        <div className="p-4">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-4 flex-1">
-                              <div className="flex items-center gap-2">
+                            
+                            try {
+                              // Hero order'larını güncelle
+                              if (heroOrders.length > 0) {
+                                await updateHeroesOrder(heroOrders).unwrap();
+                              }
+                              
+                              // Block order'larını güncelle
+                              if (blockOrders.length > 0 && pageContentId) {
+                                await updateBlocksOrder({
+                                  pageContentId,
+                                  blockOrders,
+                                }).unwrap();
+                              }
+                              
+                              Swal.fire({
+                                title: "Uğurlu!",
+                                text: "Sıra yeniləndi",
+                                icon: "success",
+                                confirmButtonColor: "#5C4977",
+                                timer: 1500,
+                                showConfirmButton: false,
+                              });
+                              
+                              refetchHeroes();
+                              refetch();
+                            } catch (error) {
+                              console.error("Update order error:", error);
+                              Swal.fire({
+                                title: "Xəta!",
+                                text: error?.data?.error || error?.data?.message || error?.message || "Sıra yenilənərkən xəta baş verdi",
+                                icon: "error",
+                                confirmButtonColor: "#5C4977",
+                              });
+                            }
+                            
+                            setDraggedBlock(null);
+                          }}
+                          className={`bg-white rounded-xl border transition-all overflow-hidden ${
+                            isUpdatingOrder
+                              ? "cursor-not-allowed opacity-60"
+                              : "cursor-move"
+                          } ${
+                            draggedBlock === itemId
+                              ? "opacity-50 border-[#5C4977]"
+                              : draggedOverIndex === totalIndex
+                              ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
+                              : "border-gray-200 hover:border-[#5C4977]/30 hover:shadow-md"
+                          }`}
+                        >
+                          <div className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1">
                                 <div className="text-gray-400">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -2026,194 +2447,187 @@ const EditPageContent = () => {
                                     <line x1="15" y1="7" x2="15" y2="13"></line>
                                   </svg>
                                 </div>
-                                <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
-                                  {heroIndex + 1}
-                                </div>
+                                <h3 className="font-semibold text-gray-800 text-lg">
+                                  Hero
+                                </h3>
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <h3 className="font-bold text-gray-800 text-lg">
-                                    Hero
-                                  </h3>
-                                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                    hero.isActive 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {hero.isActive ? 'Aktiv' : 'Deaktiv'}
-                                  </span>
-                                </div>
-                                
-                                {/* Hero detalları */}
-                                {heroBlockDetails.length > 0 && (
-                                  <div className="space-y-2">
-                                    {heroBlockDetails.map((detail, idx) => (
-                                      <div key={idx} className="flex items-center gap-2 text-sm">
-                                        <span className="text-gray-500 font-medium min-w-[100px]">
-                                          {detail.label}:
-                                        </span>
-                                        <span className="text-gray-800">
-                                          {detail.value}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleToggleHeroActive(hero._id, hero.isActive)}
+                                  disabled={isUpdatingOrder}
+                                  className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    hero.isActive
+                                      ? "text-green-600 hover:text-green-700 hover:bg-green-50"
+                                      : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  }`}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title={hero.isActive ? "Deaktivləşdir" : "Aktivləşdir"}
+                                >
+                                  {hero.isActive ? (
+                                    <FaToggleOn className="h-5 w-5" />
+                                  ) : (
+                                    <FaPowerOff className="h-5 w-5" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDuplicateHero(hero)}
+                                  disabled={isUpdatingOrder}
+                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title="Kopyala"
+                                >
+                                  <FaCopy className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setShowAddBlockModal(false);
+                                    navigate(`/admin/edit-hero/${hero._id}`);
+                                  }}
+                                  disabled={isUpdatingOrder}
+                                  className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title="Redaktə et"
+                                >
+                                  <FaEdit className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteHero(hero._id)}
+                                  disabled={isUpdatingOrder}
+                                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title="Sil"
+                                >
+                                  <FaTrash className="h-5 w-5" />
+                                </button>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2 ml-4">
-                              {/* Toggle Active/Deactive */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggleHeroActive(hero._id, hero.isActive);
-                                }}
-                                disabled={isUpdatingOrder || isUpdatingHero}
-                                className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                                  hero.isActive
-                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                title={hero.isActive ? "Deaktivləşdir" : "Aktivləşdir"}
-                              >
-                                {hero.isActive ? "Aktiv" : "Deaktiv"}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setShowAddBlockModal(false);
-                                  navigate(`/admin/edit-hero/${hero._id}`);
-                                }}
-                                disabled={isUpdatingOrder}
-                                className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                <FaEdit className="h-4 w-4" />
-                                Redaktə
-                              </button>
-                              <button
-                                onClick={() => handleDeleteHero(hero._id)}
-                                disabled={isUpdatingOrder}
-                                className="bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                <FaTrash className="h-4 w-4" />
-                                Sil
-                              </button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Digər bloklar */}
-                  {[...blocks]
-                    .sort((a, b) => a.order - b.order)
-                    .map((block, index) => {
-                    // Blok məlumatlarını hazırla
-                    let blockDetails = [];
-                    
-                    if (block.type === "DefaultSlider" && block.sliderData) {
-                      const slides = block.sliderData?.slides || [];
-                      const rightTop = block.sliderData?.rightTop;
-                      const bottomBlocks = block.sliderData?.bottomBlocks || [];
-                      const totalImages = slides.length + (rightTop ? 1 : 0) + bottomBlocks.length;
-                      
-                      blockDetails = [
-                        { label: "Slide sayı", value: `${slides.length} slide` },
-                        { label: "Şəkil sayı", value: `${totalImages} şəkil` },
-                        { label: "Sağ üst", value: rightTop ? "Var" : "Yoxdur" },
-                        { label: "Alt bloklar", value: `${bottomBlocks.length} blok` },
-                      ];
-                    } else if (block.type === "Categories" && block.categoriesData) {
-                      const visibleCategories = block.categoriesData?.visibleCategories || [];
-                      blockDetails = [
-                        { label: "Başlıq", value: block.categoriesData?.title || "Yoxdur" },
-                        { label: "Kateqoriya sayı", value: `${visibleCategories.length} kateqoriya` },
-                      ];
-                    } else if (block.type === "BestOffers" && block.bestOffersData) {
-                      const selectedProducts = block.bestOffersData?.selectedProducts || [];
-                      blockDetails = [
-                        { label: "Başlıq", value: block.bestOffersData?.title || "Yoxdur" },
-                        { label: "Məhsul sayı", value: `${selectedProducts.length} məhsul` },
-                      ];
-                    } else if (block.type === "NewGoods" && block.newGoodsData) {
-                      const selectedProducts = block.newGoodsData?.selectedProducts || [];
-                      blockDetails = [
-                        { label: "Başlıq", value: block.newGoodsData?.title || "Yoxdur" },
-                        { label: "Məhsul sayı", value: `${selectedProducts.length} məhsul` },
-                      ];
+                      );
                     }
                     
-                    const totalIndex = heroes.length + index;
-                    
-                    return (
-                      <div
-                        key={block._id}
-                        draggable={!isUpdatingOrder}
-                        onDragStart={(e) => {
-                          setDraggedBlock(block._id);
-                          e.dataTransfer.effectAllowed = "move";
-                          e.dataTransfer.setData("text/html", block._id);
-                          e.dataTransfer.setData("type", "block");
-                          e.currentTarget.style.opacity = "0.5";
-                        }}
-                        onDragEnd={(e) => {
-                          e.currentTarget.style.opacity = "1";
-                          setDraggedBlock(null);
-                          setDraggedOverIndex(null);
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = "move";
-                          setDraggedOverIndex(totalIndex);
-                        }}
-                        onDragLeave={handleDragLeave}
-                        onDrop={async (e) => {
-                          e.preventDefault();
-                          setDraggedOverIndex(null);
-                          
-                          if (!draggedBlock || draggedBlock === block._id) {
+                    // Block render
+                    if (!isHero && block) {
+                      return (
+                        <div
+                          key={itemId}
+                          draggable={!isUpdatingOrder}
+                          onDragStart={(e) => {
+                            setDraggedBlock(itemId);
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/html", itemId);
+                            e.dataTransfer.setData("type", "block");
+                            e.currentTarget.style.opacity = "0.5";
+                          }}
+                          onDragEnd={(e) => {
+                            e.currentTarget.style.opacity = "1";
                             setDraggedBlock(null);
-                            return;
-                          }
-                          
-                          const draggedType = e.dataTransfer.getData("type");
-                          
-                          // Əgər bloku başqa blok ilə dəyişdiririksə
-                          if (draggedType === "block" && !draggedBlock.startsWith("hero-")) {
-                            await handleDrop(e, index);
-                          }
-                          
-                          // Əgər hero-nu blok ilə dəyişdiririksə - hero-lar həmişə əvvəldə olmalıdır
-                          if (draggedType === "hero" && draggedBlock.startsWith("hero-")) {
-                            Swal.fire({
-                              title: "Məlumat!",
-                              text: "Hero-lar həmişə digər bloklardan əvvəl yerləşdirilir",
-                              icon: "info",
-                              confirmButtonColor: "#5C4977",
+                            setDraggedOverIndex(null);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                            setDraggedOverIndex(totalIndex);
+                          }}
+                          onDragLeave={handleDragLeave}
+                          onDrop={async (e) => {
+                            e.preventDefault();
+                            setDraggedOverIndex(null);
+                            
+                            if (!draggedBlock || draggedBlock === itemId) {
+                              setDraggedBlock(null);
+                              return;
+                            }
+                            
+                            const draggedType = e.dataTransfer.getData("type");
+                            
+                            // Hero'ları ve blokları birleştirilmiş listede yeniden sırala
+                            const newAllItems = [...allItems];
+                            const draggedItemIndex = newAllItems.findIndex(item => 
+                              draggedType === "hero" && draggedBlock.startsWith("hero-") 
+                                ? item.type === "hero" && item.id === draggedBlock.replace("hero-", "")
+                                : item.type === "block" && item.id === draggedBlock
+                            );
+                            
+                            if (draggedItemIndex === -1 || draggedItemIndex === itemIndex) {
+                              setDraggedBlock(null);
+                              return;
+                            }
+                            
+                            // Item'ı yeni pozisyona taşı
+                            const [removed] = newAllItems.splice(draggedItemIndex, 1);
+                            newAllItems.splice(itemIndex, 0, removed);
+                            
+                            // Yeni order'ları təyin et
+                            const heroOrders = [];
+                            const blockOrders = [];
+                            
+                            newAllItems.forEach((item, index) => {
+                              if (item.type === "hero") {
+                                heroOrders.push({
+                                  heroId: item.id.toString(),
+                                  order: index,
+                                });
+                              } else {
+                                blockOrders.push({
+                                  blockId: item.id,
+                                  order: index,
+                                });
+                              }
                             });
-                          }
-                          
-                          setDraggedBlock(null);
-                        }}
-                        className={`bg-white rounded-xl border transition-all overflow-hidden ${
-                          isUpdatingOrder
-                            ? "cursor-not-allowed opacity-60"
-                            : "cursor-move"
-                        } ${
-                          draggedBlock === block._id
-                            ? "opacity-50 border-[#5C4977]"
-                            : draggedOverIndex === totalIndex
-                            ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
-                            : "border-gray-200 hover:border-[#5C4977]/30 hover:shadow-md"
-                        }`}
-                      >
-                        <div className="p-4">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-4 flex-1">
-                              <div className="flex items-center gap-2">
+                            
+                            try {
+                              // Hero order'larını güncelle
+                              if (heroOrders.length > 0) {
+                                await updateHeroesOrder(heroOrders).unwrap();
+                              }
+                              
+                              // Block order'larını güncelle
+                              if (blockOrders.length > 0 && pageContentId) {
+                                await updateBlocksOrder({
+                                  pageContentId,
+                                  blockOrders,
+                                }).unwrap();
+                              }
+                              
+                              Swal.fire({
+                                title: "Uğurlu!",
+                                text: "Sıra yeniləndi",
+                                icon: "success",
+                                confirmButtonColor: "#5C4977",
+                                timer: 1500,
+                                showConfirmButton: false,
+                              });
+                              
+                              refetchHeroes();
+                              refetch();
+                            } catch (error) {
+                              console.error("Update order error:", error);
+                              Swal.fire({
+                                title: "Xəta!",
+                                text: error?.data?.error || error?.data?.message || error?.message || "Sıra yenilənərkən xəta baş verdi",
+                                icon: "error",
+                                confirmButtonColor: "#5C4977",
+                              });
+                            }
+                            
+                            setDraggedBlock(null);
+                          }}
+                          className={`bg-white rounded-xl border transition-all overflow-hidden ${
+                            isUpdatingOrder
+                              ? "cursor-not-allowed opacity-60"
+                              : "cursor-move"
+                          } ${
+                            draggedBlock === itemId
+                              ? "opacity-50 border-[#5C4977]"
+                              : draggedOverIndex === totalIndex
+                              ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
+                              : "border-gray-200 hover:border-[#5C4977]/30 hover:shadow-md"
+                          }`}
+                        >
+                          <div className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1">
                                 <div className="text-gray-400 cursor-move">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -2232,85 +2646,63 @@ const EditPageContent = () => {
                                     <line x1="15" y1="7" x2="15" y2="13"></line>
                                   </svg>
                                 </div>
-                                <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
-                                  {heroes.length + index + 1}
-                                </div>
+                                <h3 className="font-semibold text-gray-800 text-lg">
+                                  {getBlockTypeLabel(block.type)}
+                                </h3>
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <h3 className="font-bold text-gray-800 text-lg">
-                                    {getBlockTypeLabel(block.type)}
-                                  </h3>
-                                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                    block.isActive 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {block.isActive ? 'Aktiv' : 'Deaktiv'}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-500 mb-3">
-                                  Sıra: {block.order}
-                                </p>
-                                
-                                {/* Blok detalları */}
-                                {blockDetails.length > 0 && (
-                                  <div className="space-y-2">
-                                    {blockDetails.map((detail, idx) => (
-                                      <div key={idx} className="flex items-center gap-2 text-sm">
-                                        <span className="text-gray-500 font-medium min-w-[100px]">
-                                          {detail.label}:
-                                        </span>
-                                        <span className="text-gray-800">
-                                          {detail.value}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleToggleBlockActive(block._id, block.isActive)}
+                                  disabled={isUpdatingOrder}
+                                  className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    block.isActive
+                                      ? "text-green-600 hover:text-green-700 hover:bg-green-50"
+                                      : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  }`}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title={block.isActive ? "Deaktivləşdir" : "Aktivləşdir"}
+                                >
+                                  {block.isActive ? (
+                                    <FaToggleOn className="h-5 w-5" />
+                                  ) : (
+                                    <FaPowerOff className="h-5 w-5" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDuplicateBlock(block)}
+                                  disabled={isUpdatingOrder}
+                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title="Kopyala"
+                                >
+                                  <FaCopy className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleEditBlock(block)}
+                                  disabled={isUpdatingOrder}
+                                  className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title="Redaktə et"
+                                >
+                                  <FaEdit className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBlock(block._id)}
+                                  disabled={isUpdatingOrder}
+                                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  title="Sil"
+                                >
+                                  <FaTrash className="h-5 w-5" />
+                                </button>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2 ml-4">
-                              {/* Toggle Active/Deactive */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggleBlockActive(block._id, block.isActive);
-                                }}
-                                disabled={isUpdatingOrder || isUpdating}
-                                className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                                  block.isActive
-                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                title={block.isActive ? "Deaktivləşdir" : "Aktivləşdir"}
-                              >
-                                {block.isActive ? "Aktiv" : "Deaktiv"}
-                              </button>
-                              <button
-                                onClick={() => handleEditBlock(block)}
-                                disabled={isUpdatingOrder}
-                                className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                <FaEdit className="h-4 w-4" />
-                                Redaktə
-                              </button>
-                              <button
-                                onClick={() => handleDeleteBlock(block._id)}
-                                disabled={isUpdatingOrder}
-                                className="bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                <FaTrash className="h-4 w-4" />
-                                Sil
-                              </button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
+                      );
+                    }
+                    
+                    return null;
                   })}
                 </>
               )}
@@ -2368,25 +2760,14 @@ const EditPageContent = () => {
                           </p>
                         </button>
                         <button
-                          onClick={() => setSelectedBlockType("BestOffers")}
+                          onClick={() => setSelectedBlockType("Products")}
                           className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
                         >
                           <h4 className="font-semibold text-gray-800">
-                            Ən Yaxşı Təkliflər
+                            Məhsullar
                           </h4>
                           <p className="text-sm text-gray-500">
-                            Seçilmiş məhsullar bloku
-                          </p>
-                        </button>
-                        <button
-                          onClick={() => setSelectedBlockType("NewGoods")}
-                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                        >
-                          <h4 className="font-semibold text-gray-800">
-                            Yeni Məhsullar
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            Yeni məhsullar bloku
+                            Məhsullar bloku (Ən Yaxşı Təkliflər, Yeni Məhsullar, Home Appliances birleşimi)
                           </p>
                         </button>
                         <button
@@ -2398,17 +2779,6 @@ const EditPageContent = () => {
                           </h4>
                           <p className="text-sm text-gray-500">
                             Shopping event bloku
-                          </p>
-                        </button>
-                        <button
-                          onClick={() => setSelectedBlockType("HomeAppliances")}
-                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#5C4977] transition-all text-left cursor-pointer"
-                        >
-                          <h4 className="font-semibold text-gray-800">
-                            Home Appliances
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            Home appliances bloku
                           </p>
                         </button>
                         <button
@@ -2491,193 +2861,489 @@ const EditPageContent = () => {
                     </div>
                   ) : selectedBlockType === "DefaultSlider" ? (
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold">Hero İdarəetməsi</h3>
-                        <button
-                          onClick={() => {
-                            resetHeroForm();
-                            setShowAddHeroModal(true);
-                          }}
-                          className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer"
-                        >
-                          <FaPlus className="h-5 w-5" />
-                          Yeni Hero
-                        </button>
+                      {/* DefaultSlider seçildiğinde direkt hero ekleme formunu göster */}
+                      <div className="text-center py-8">
+                        <p className="text-gray-600 mb-4">Hero ekleme formu açılıyor...</p>
                       </div>
-
-                      {isLoadingHeroes ? (
-                        <div className="flex items-center justify-center py-12">
-                          <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
+                    </div>
+                  ) : selectedBlockType === "Products" ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">
+                        Məhsullar Məlumatları
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Başlıq *
+                        </label>
+                        <input
+                          type="text"
+                          value={productsBlockData.title}
+                          onChange={(e) =>
+                            setProductsBlockData({
+                              ...productsBlockData,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="Məhsullar"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Məhsulları Seçin *
+                        </label>
+                        <div className="mb-4">
+                          <input
+                            type="text"
+                            value={productSearchTerm}
+                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            placeholder="Məhsul axtar..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                          />
                         </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {heroes.length === 0 ? (
-                            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-                              <p className="text-gray-500">Heç bir hero tapılmadı</p>
-                            </div>
+                        <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                          {allProducts.length === 0 ? (
+                            <p className="text-gray-500">Məhsul tapılmadı</p>
                           ) : (
-                            heroes.map((hero) => {
-                              const slidesCount = hero.leftSide?.slides?.length || 0;
-                              const totalImages = slidesCount + (hero.rightTop?.image ? 1 : 0) + (hero.bottomBlocks?.length || 0);
-                              const bottomBlocksCount = hero.bottomBlocks?.length || 0;
-                              
-                              return (
-                                <div
-                                  key={hero._id}
-                                  className="bg-white rounded-xl border border-[#5C4977]/10 shadow-sm hover:shadow-md transition-all overflow-hidden"
-                                >
-                                  <div className="p-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                      <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center font-bold text-white ${
-                                          hero.isActive 
-                                            ? 'bg-gradient-to-br from-green-500 to-green-600' 
-                                            : 'bg-gradient-to-br from-gray-400 to-gray-500'
-                                        }`}>
-                                          {hero.isActive ? '✓' : '○'}
-                                        </div>
-                                        <div>
-                                          <h4 className="text-lg font-bold text-gray-800">
-                                            {hero.type || "DefaultSlider"}
-                                          </h4>
+                            <div className="space-y-2">
+                              {allProducts
+                                .filter((product) => {
+                                  if (!productSearchTerm) return true;
+                                  const searchLower = productSearchTerm.toLowerCase();
+                                  return (
+                                    product.name?.toLowerCase().includes(searchLower) ||
+                                    product.brand?.toLowerCase().includes(searchLower) ||
+                                    product.model?.toLowerCase().includes(searchLower)
+                                  );
+                                })
+                                .map((product) => {
+                                  const isSelected = productsBlockData.selectedProducts.includes(
+                                    product._id
+                                  );
+                                  return (
+                                    <label
+                                      key={product._id}
+                                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          if (isSelected) {
+                                            setProductsBlockData({
+                                              ...productsBlockData,
+                                              selectedProducts: productsBlockData.selectedProducts.filter(
+                                                (id) => id !== product._id
+                                              ),
+                                            });
+                                          } else {
+                                            setProductsBlockData({
+                                              ...productsBlockData,
+                                              selectedProducts: [
+                                                ...productsBlockData.selectedProducts,
+                                                product._id,
+                                              ],
+                                            });
+                                          }
+                                        }}
+                                        className="w-4 h-4 text-[#5C4977] border-gray-300 rounded focus:ring-[#5C4977]"
+                                      />
+                                      <div className="flex items-center gap-3 flex-1">
+                                        <img
+                                          src={
+                                            product.images?.[0]?.url ||
+                                            product.image ||
+                                            "https://placehold.co/60x60/6B7280/ffffff?text=No+Image"
+                                          }
+                                          alt={product.name}
+                                          className="w-12 h-12 object-contain rounded border border-gray-200"
+                                          onError={(e) => {
+                                            e.target.src =
+                                              "https://placehold.co/60x60/6B7280/ffffff?text=No+Image";
+                                          }}
+                                        />
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-800">
+                                            {product.name}
+                                          </p>
                                           <p className="text-sm text-gray-500">
-                                            ID: {hero._id?.slice(-8)}
+                                            {product.brand} {product.model && `- ${product.model}`}
+                                          </p>
+                                          <p className="text-sm font-semibold text-[#5C4977]">
+                                            {typeof product.price === 'number'
+                                              ? `${product.price.toFixed(2)} ₼`
+                                              : product.price || '0.00 ₼'}
                                           </p>
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          onClick={() => {
-                                            setShowAddBlockModal(false);
-                                            navigate(`/admin/edit-hero/${hero._id}`);
-                                          }}
-                                          className="p-2 text-[#5C4977] hover:text-[#5C4977]/70 hover:bg-[#5C4977]/10 rounded-lg transition-colors cursor-pointer"
-                                          title="Redaktə et"
-                                        >
-                                          <FaEdit className="h-5 w-5" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteHero(hero._id)}
-                                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                          title="Sil"
-                                        >
-                                          <FaTrash className="h-5 w-5" />
-                                        </button>
-                                      </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                      <div className="bg-gray-50 rounded-lg p-3">
-                                        <div className="text-xs text-gray-500 mb-1">Status</div>
-                                        <div className={`text-sm font-semibold ${
-                                          hero.isActive ? 'text-green-600' : 'text-gray-600'
-                                        }`}>
-                                          {hero.isActive ? 'Aktiv' : 'Deaktiv'}
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="bg-gray-50 rounded-lg p-3">
-                                        <div className="text-xs text-gray-500 mb-1">Slide Sayı</div>
-                                        <div className="text-sm font-semibold text-gray-800">
-                                          {slidesCount} slide
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="bg-gray-50 rounded-lg p-3">
-                                        <div className="text-xs text-gray-500 mb-1">Şəkil Sayı</div>
-                                        <div className="text-sm font-semibold text-gray-800">
-                                          {totalImages} şəkil
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="bg-gray-50 rounded-lg p-3">
-                                        <div className="text-xs text-gray-500 mb-1">Alt Bloklar</div>
-                                        <div className="text-sm font-semibold text-gray-800">
-                                          {bottomBlocksCount} blok
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                      <div className="flex items-center gap-2 text-gray-600">
-                                        <span className="font-medium">Yaradılma Tarixi:</span>
-                                        <span>{formatDate(hero.createdAt)}</span>
-                                      </div>
-                                      {hero.updatedAt && (
-                                        <div className="flex items-center gap-2 text-gray-600">
-                                          <span className="font-medium">Yenilənmə Tarixi:</span>
-                                          <span>{formatDate(hero.updatedAt)}</span>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Detallı məlumat */}
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">
-                                        <div>
-                                          <span className="font-medium">Sol Tərəf:</span>
-                                          <div className="mt-1">
-                                            {slidesCount > 0 ? (
-                                              <div className="space-y-1">
-                                                {hero.leftSide?.slides?.slice(0, 2).map((slide, idx) => (
-                                                  <div key={idx} className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full bg-[#5C4977]"></div>
-                                                    <span className="truncate">{slide.title || `Slide ${idx + 1}`}</span>
-                                                  </div>
-                                                ))}
-                                                {slidesCount > 2 && (
-                                                  <div className="text-gray-400">+{slidesCount - 2} daha</div>
-                                                )}
-                                              </div>
-                                            ) : (
-                                              <span className="text-gray-400">Slide yoxdur</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                        
-                                        <div>
-                                          <span className="font-medium">Sağ Üst:</span>
-                                          <div className="mt-1">
-                                            {hero.rightTop?.title ? (
-                                              <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-[#5C4977]"></div>
-                                                <span className="truncate">{hero.rightTop.title}</span>
-                                              </div>
-                                            ) : (
-                                              <span className="text-gray-400">Məlumat yoxdur</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                        
-                                        <div>
-                                          <span className="font-medium">Alt Bloklar:</span>
-                                          <div className="mt-1">
-                                            {bottomBlocksCount > 0 ? (
-                                              <div className="space-y-1">
-                                                {hero.bottomBlocks?.slice(0, 2).map((block, idx) => (
-                                                  <div key={idx} className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full bg-[#5C4977]"></div>
-                                                    <span className="truncate">{block.title || `Blok ${idx + 1}`}</span>
-                                                  </div>
-                                                ))}
-                                                {bottomBlocksCount > 2 && (
-                                                  <div className="text-gray-400">+{bottomBlocksCount - 2} daha</div>
-                                                )}
-                                              </div>
-                                            ) : (
-                                              <span className="text-gray-400">Blok yoxdur</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })
+                                    </label>
+                                  );
+                                })}
+                            </div>
                           )}
                         </div>
-                      )}
+                        {productsBlockData.selectedProducts.length > 0 && (
+                          <div className="mt-4 p-3 bg-[#5C4977]/10 rounded-lg">
+                            <p className="text-sm font-medium text-[#5C4977]">
+                              Seçilmiş məhsul sayı: {productsBlockData.selectedProducts.length}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          More Products Button Linki
+                        </label>
+                        <input
+                          type="text"
+                          value={productsBlockData.moreProductsLink || ""}
+                          onChange={(e) =>
+                            setProductsBlockData({
+                              ...productsBlockData,
+                              moreProductsLink: e.target.value,
+                            })
+                          }
+                          placeholder="/products veya https://example.com"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Boş buraxsanız, button göstərilməyəcək
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          More Products Button Text
+                        </label>
+                        <input
+                          type="text"
+                          value={productsBlockData.moreProductsButtonText ?? ""}
+                          onChange={(e) =>
+                            setProductsBlockData({
+                              ...productsBlockData,
+                              moreProductsButtonText: e.target.value,
+                            })
+                          }
+                          placeholder="More Products (boş buraxsanız, default 'More Products' istifadə olunacaq)"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Button üzərində görünəcək mətn. Boş buraxsanız, "More Products" istifadə olunacaq.
+                        </p>
+                      </div>
+
+                      {/* Banner Section (Optional) */}
+                      <div className="border-t border-gray-200 pt-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">
+                          Banner Məlumatları (İstəyə bağlı)
+                        </h4>
+                        
+                        <div className="space-y-4">
+                          {/* Banner Şəkil */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Banner Şəkil
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                const maxSize = 5 * 1024 * 1024; // 5MB
+                                if (file.size > maxSize) {
+                                  Swal.fire({
+                                    title: "Xəta!",
+                                    text: "Şəkil çox böyükdür. Maksimum ölçü: 5MB",
+                                    icon: "error",
+                                    confirmButtonColor: "#5C4977",
+                                  });
+                                  e.target.value = "";
+                                  return;
+                                }
+
+                                const compressImage = (file, maxWidth = 1200, maxHeight = 800, quality = 0.7) => {
+                                  return new Promise((resolve, reject) => {
+                                    const reader = new FileReader();
+                                    reader.readAsDataURL(file);
+                                    reader.onload = (event) => {
+                                      const img = new Image();
+                                      img.src = event.target.result;
+                                      img.onload = () => {
+                                        const canvas = document.createElement('canvas');
+                                        let width = img.width;
+                                        let height = img.height;
+
+                                        if (width > height) {
+                                          if (width > maxWidth) {
+                                            height = (height * maxWidth) / width;
+                                            width = maxWidth;
+                                          }
+                                        } else {
+                                          if (height > maxHeight) {
+                                            width = (width * maxHeight) / height;
+                                            height = maxHeight;
+                                          }
+                                        }
+
+                                        canvas.width = width;
+                                        canvas.height = height;
+
+                                        const ctx = canvas.getContext('2d');
+                                        ctx.drawImage(img, 0, 0, width, height);
+
+                                        const outputType = 'image/jpeg';
+                                        canvas.toBlob(
+                                          (blob) => {
+                                            if (!blob) {
+                                              reject(new Error("Blob yaradılmadı"));
+                                              return;
+                                            }
+                                            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                                              type: outputType,
+                                              lastModified: Date.now(),
+                                            });
+                                            resolve(compressedFile);
+                                          },
+                                          outputType,
+                                          quality
+                                        );
+                                      };
+                                      img.onerror = () => reject(new Error("Şəkil yüklənmədi"));
+                                    };
+                                    reader.onerror = () => reject(new Error("Fayl oxunmadı"));
+                                  });
+                                };
+
+                                try {
+                                  let compressedFile = await compressImage(file, 800, 600, 0.6);
+                                  const targetSize = 1 * 1024 * 1024; // 1MB
+                                  if (compressedFile.size > targetSize) {
+                                    compressedFile = await compressImage(file, 600, 400, 0.5);
+                                  }
+                                  if (compressedFile.size > targetSize) {
+                                    compressedFile = await compressImage(file, 400, 300, 0.4);
+                                  }
+
+                                  const preview = URL.createObjectURL(compressedFile);
+                                  setProductsBlockData({
+                                    ...productsBlockData,
+                                    banner: {
+                                      ...productsBlockData.banner,
+                                      image: compressedFile,
+                                      imagePreview: preview,
+                                    },
+                                  });
+                                } catch (error) {
+                                  console.error("Image compression error:", error);
+                                  Swal.fire({
+                                    title: "Xəta!",
+                                    text: "Şəkil işlənərkən xəta baş verdi",
+                                    icon: "error",
+                                    confirmButtonColor: "#5C4977",
+                                  });
+                                }
+                              }}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                            {productsBlockData.banner?.imagePreview && (
+                              <div className="mt-4">
+                                <img
+                                  src={productsBlockData.banner.imagePreview}
+                                  alt="Banner preview"
+                                  className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setProductsBlockData({
+                                      ...productsBlockData,
+                                      banner: {
+                                        ...productsBlockData.banner,
+                                        image: null,
+                                        imagePreview: null,
+                                      },
+                                    });
+                                  }}
+                                  className="mt-2 text-sm text-red-600 hover:text-red-700"
+                                >
+                                  Şəkli sil
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Banner Subtitle */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Banner Alt Başlıq
+                            </label>
+                            <input
+                              type="text"
+                              value={productsBlockData.banner?.subtitle || ""}
+                              onChange={(e) =>
+                                setProductsBlockData({
+                                  ...productsBlockData,
+                                  banner: {
+                                    ...productsBlockData.banner,
+                                    subtitle: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Banner alt başlıq"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+
+                          {/* Banner Title */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Banner Başlıq
+                            </label>
+                            <input
+                              type="text"
+                              value={productsBlockData.banner?.title || ""}
+                              onChange={(e) =>
+                                setProductsBlockData({
+                                  ...productsBlockData,
+                                  banner: {
+                                    ...productsBlockData.banner,
+                                    title: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Banner başlıq"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+
+                          {/* Banner Button Text */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Banner Button Mətni
+                            </label>
+                            <input
+                              type="text"
+                              value={productsBlockData.banner?.buttonText || ""}
+                              onChange={(e) =>
+                                setProductsBlockData({
+                                  ...productsBlockData,
+                                  banner: {
+                                    ...productsBlockData.banner,
+                                    buttonText: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Button mətni"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+
+                          {/* Banner Button Link */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Banner Button Linki
+                            </label>
+                            <input
+                              type="text"
+                              value={productsBlockData.banner?.buttonLink || ""}
+                              onChange={(e) =>
+                                setProductsBlockData({
+                                  ...productsBlockData,
+                                  banner: {
+                                    ...productsBlockData.banner,
+                                    buttonLink: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="/products veya https://example.com"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Badge Məlumatları (İstəyə bağlı) */}
+                      <div className="border-t border-gray-200 pt-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">
+                          Badge Məlumatları (İstəyə bağlı)
+                        </h4>
+                        
+                        <div className="space-y-4">
+                          {/* Badge Yazısı */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Badge Yazısı
+                            </label>
+                            <input
+                              type="text"
+                              value={productsBlockData.badgeText || ""}
+                              onChange={(e) =>
+                                setProductsBlockData({
+                                  ...productsBlockData,
+                                  badgeText: e.target.value,
+                                })
+                              }
+                              placeholder="Məsələn: Yeni, Endirim, Hot və s."
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Badge yazısı seçilmiş məhsulların üzərində görünəcək
+                            </p>
+                          </div>
+
+                          {/* Badge Rəngi */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Badge Rəngi
+                            </label>
+                            <div className="flex items-center gap-4">
+                              <input
+                                type="color"
+                                value={productsBlockData.badgeColor || "#FF0000"}
+                                onChange={(e) =>
+                                  setProductsBlockData({
+                                    ...productsBlockData,
+                                    badgeColor: e.target.value,
+                                  })
+                                }
+                                className="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={productsBlockData.badgeColor || "#FF0000"}
+                                onChange={(e) =>
+                                  setProductsBlockData({
+                                    ...productsBlockData,
+                                    badgeColor: e.target.value,
+                                  })
+                                }
+                                placeholder="#FF0000"
+                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Badge rəngi seçin (RGB hex formatında)
+                            </p>
+                          </div>
+
+                          {/* Badge Preview */}
+                          {productsBlockData.badgeText && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                              <p className="text-sm font-medium text-gray-700 mb-2">Badge Önizləmə:</p>
+                              <div className="inline-block">
+                                <span
+                                  className="px-3 py-1 rounded text-sm font-semibold text-white"
+                                  style={{ backgroundColor: productsBlockData.badgeColor || "#FF0000" }}
+                                >
+                                  {productsBlockData.badgeText}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ) : selectedBlockType === "BestOffers" ? (
                     <div className="space-y-6">
@@ -3877,7 +4543,7 @@ const EditPageContent = () => {
                     </div>
                   )}
 
-                  {(selectedBlockType === "Categories" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances" || selectedBlockType === "Accessories" || selectedBlockType === "Blogs" || selectedBlockType === "About") && (
+                  {(selectedBlockType === "Categories" || selectedBlockType === "Products" || selectedBlockType === "BestOffers" || selectedBlockType === "NewGoods" || selectedBlockType === "HomeAppliances" || selectedBlockType === "Accessories" || selectedBlockType === "Blogs" || selectedBlockType === "About") && (
                     <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
                       <button
                         onClick={() => {
@@ -3936,6 +4602,11 @@ const EditPageContent = () => {
                       onClick={() => {
                         setShowAddHeroModal(false);
                         resetHeroForm();
+                        // Eğer blok ekleme modalı açıksa ve DefaultSlider seçildiyse, blok ekleme modalını da kapat
+                        if (showAddBlockModal && selectedBlockType === "DefaultSlider") {
+                          setShowAddBlockModal(false);
+                          setSelectedBlockType("");
+                        }
                       }}
                       className="text-gray-500 hover:text-gray-700 text-2xl cursor-pointer"
                     >
@@ -3945,24 +4616,6 @@ const EditPageContent = () => {
                 </div>
 
                 <form onSubmit={handleCreateHero} className="p-6 space-y-8" encType="multipart/form-data">
-                  {/* Hero Type */}
-                  <div className="border-b border-[#5C4977]/10 pb-6">
-                    <h2 className="text-xl font-bold text-[#5C4977] mb-6">Hero Tipi</h2>
-                    <div>
-                      <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                        Tip *
-                      </label>
-                      <select
-                        value={heroType}
-                        onChange={(e) => setHeroType(e.target.value)}
-                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                        required
-                      >
-                        <option value="DefaultSlider">DefaultSlider</option>
-                      </select>
-                    </div>
-                  </div>
-
                   {/* Sol Tərəf - Slider */}
                   <div className="border-b border-[#5C4977]/10 pb-6">
                     <div className="flex items-center justify-between mb-6">
@@ -4273,6 +4926,11 @@ const EditPageContent = () => {
                       onClick={() => {
                         setShowAddHeroModal(false);
                         resetHeroForm();
+                        // Eğer blok ekleme modalı açıksa ve DefaultSlider seçildiyse, blok ekleme modalını da kapat
+                        if (showAddBlockModal && selectedBlockType === "DefaultSlider") {
+                          setShowAddBlockModal(false);
+                          setSelectedBlockType("");
+                        }
                       }}
                       className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all cursor-pointer"
                     >

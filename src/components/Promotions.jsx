@@ -5,6 +5,7 @@ import Navbar from "./Navbar"
 import Footer from "./Footer"
 import About from "./About"
 import { useGetPromotionsQuery } from "../redux/api/promotionApi"
+import { useGetPageContentQuery } from "../redux/api/pageContentApi"
 import { Loader2 } from "lucide-react"
 
 // Breadcrumb komponenti
@@ -31,6 +32,14 @@ const Breadcrumb = ({ items }) => {
 const MetashopPromotions = () => {
   const { data, error, isLoading } = useGetPromotionsQuery();
   const promotions = data?.promotions || [];
+  
+  // Ana səhifə kontentindən About bloğunu gətir
+  const { data: pageContentData, isLoading: pageContentLoading } = useGetPageContentQuery("home");
+  const pageContent = pageContentData?.pageContent;
+  const blocks = pageContent?.blocks || [];
+  
+  // About bloğunu tap
+  const aboutBlock = blocks.find(block => block.type === "About" && block.isActive);
 
   // Tarix formatla
   const formatDate = (dateString) => {
@@ -122,21 +131,19 @@ const MetashopPromotions = () => {
             <div className="text-center py-12">
               <p className="text-red-600">Xəta baş verdi: {error?.data?.error || "Promotion-lar yüklənərkən xəta baş verdi"}</p>
             </div>
-          ) : promotions.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600">Hələ promotion yoxdur.</p>
-            </div>
-          ) : (
+          ) : promotions.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 mb-10 md:mb-12">
               {promotions.map((promotion) => (
                 <PromotionCard key={promotion._id} promotion={promotion} />
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
-        {/* About komponenti */}
-        <About />
+        {/* About komponenti - Dinamik */}
+        {aboutBlock && aboutBlock.aboutData && (
+          <About aboutData={aboutBlock.aboutData} />
+        )}
       </section>
 
       {/* Footer komponenti */}

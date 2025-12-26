@@ -9,7 +9,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 
 // Əsas Products Komponenti
-const Products = ({ title = "Products", products = [], showBanner = false, bannerData = null, moreProductsLink = null, moreProductsButtonText = "More Products" }) => {
+const Products = ({ title = "Products", products = [], showBanner = false, bannerData = null, moreProductsLink = null, moreProductsButtonText = "More Products", badgeText = "", badgeColor = "#FF0000" }) => {
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -209,7 +209,7 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
                     pointerEvents: isDragging ? 'none' : 'auto'
                   }}
                 >
-                  <Product product={product} />
+                  <Product product={product} badgeText={badgeText} badgeColor={badgeColor} />
                 </div>
               ))}
             </div>
@@ -274,7 +274,7 @@ const Products = ({ title = "Products", products = [], showBanner = false, banne
             >
               {products.map((product, index) => (
                 <SwiperSlide key={`${product.sku || product.id || index}-${index}`}>
-                  <Product product={product} />
+                  <Product product={product} badgeText={badgeText} badgeColor={badgeColor} />
                 </SwiperSlide>
               ))}
             </Swiper>

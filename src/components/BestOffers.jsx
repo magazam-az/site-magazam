@@ -66,24 +66,9 @@ export default function BestOffers({ bestOffersData }) {
     return null;
   }
 
-  // Show message if no products selected, but still show the section
+  // Eğer məhsul yoxdursa, heç nə göstərmə
   if (filteredProducts.length === 0) {
-    return (
-      <Container>
-        <div className="w-full py-8 sm:py-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-5 tracking-tight text-center sm:text-left">
-            {title}
-          </h2>
-          <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-[#5C4977]/10">
-            <div className="text-[#5C4977]/60 text-5xl mb-4">📦</div>
-            <div className="text-gray-400 text-lg mb-2">Məhsul seçilməyib</div>
-            <div className="text-gray-500 text-sm">
-              Admin panelindən məhsullar seçilməlidir.
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
+    return null;
   }
 
   const moreProductsLink = bestOffersData.moreProductsLink || null;
