@@ -8,7 +8,7 @@ import {
   useUpdateBlocksOrderMutation,
 } from "../../redux/api/pageContentApi";
 import { useGetCategoriesQuery } from "../../redux/api/categoryApi";
-import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation } from "../../redux/api/heroApi";
+import { useGetAllHeroesQuery, useDeleteHeroMutation, useCreateHeroMutation, useUpdateHeroMutation } from "../../redux/api/heroApi";
 import { useGetProductsQuery } from "../../redux/api/productsApi";
 import { useGetHomeAppliancesAdminQuery, useUpdateHomeAppliancesMutation } from "../../redux/api/homeAppliancesApi";
 import { useGetBlogsQuery } from "../../redux/api/blogApi";
@@ -29,6 +29,7 @@ const EditPageContent = () => {
   const [updateBlocksOrder, { isLoading: isUpdatingOrder }] = useUpdateBlocksOrderMutation();
   const [deleteHero] = useDeleteHeroMutation();
   const [createHero, { isLoading: isCreatingHero }] = useCreateHeroMutation();
+  const [updateHero, { isLoading: isUpdatingHero }] = useUpdateHeroMutation();
 
   const pageContent = data?.pageContent;
   const pageContentId = pageContent?._id;
@@ -1459,6 +1460,66 @@ const EditPageContent = () => {
     }
   };
 
+  const handleToggleBlockActive = async (blockId, currentStatus) => {
+    if (!pageContentId) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("blockData", JSON.stringify({ isActive: !currentStatus }));
+
+      await updateBlock({
+        pageContentId,
+        blockId,
+        formData,
+      }).unwrap();
+
+      Swal.fire({
+        title: "Uğurlu!",
+        text: `Blok ${!currentStatus ? "aktivləşdirildi" : "deaktivləşdirildi"}`,
+        icon: "success",
+        confirmButtonColor: "#5C4977",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      refetch();
+    } catch (error) {
+      Swal.fire({
+        title: "Xəta!",
+        text: error?.data?.error || error?.data?.message || "Blok statusu yenilənərkən xəta baş verdi",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+    }
+  };
+
+  const handleToggleHeroActive = async (heroId, currentStatus) => {
+    try {
+      await updateHero({
+        id: heroId,
+        heroData: { isActive: !currentStatus },
+      }).unwrap();
+
+      Swal.fire({
+        title: "Uğurlu!",
+        text: `Hero ${!currentStatus ? "aktivləşdirildi" : "deaktivləşdirildi"}`,
+        icon: "success",
+        confirmButtonColor: "#5C4977",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      refetchHeroes();
+    } catch (error) {
+      Swal.fire({
+        title: "Xəta!",
+        text: error?.data?.error || error?.data?.message || "Hero statusu yenilənərkən xəta baş verdi",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+    }
+  };
+
   const handleDeleteBlock = async (blockId) => {
     const result = await Swal.fire({
       title: "Əminsiniz?",
@@ -2001,6 +2062,23 @@ const EditPageContent = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 ml-4">
+                              {/* Toggle Active/Deactive */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleHeroActive(hero._id, hero.isActive);
+                                }}
+                                disabled={isUpdatingOrder || isUpdatingHero}
+                                className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  hero.isActive
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                title={hero.isActive ? "Deaktivləşdir" : "Aktivləşdir"}
+                              >
+                                {hero.isActive ? "Aktiv" : "Deaktiv"}
+                              </button>
                               <button
                                 onClick={() => {
                                   setShowAddBlockModal(false);
@@ -2127,7 +2205,7 @@ const EditPageContent = () => {
                         } ${
                           draggedBlock === block._id
                             ? "opacity-50 border-[#5C4977]"
-                            : draggedOverIndex === index
+                            : draggedOverIndex === totalIndex
                             ? "border-[#5C4977] border-2 bg-[#5C4977]/5"
                             : "border-gray-200 hover:border-[#5C4977]/30 hover:shadow-md"
                         }`}
@@ -2193,6 +2271,23 @@ const EditPageContent = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 ml-4">
+                              {/* Toggle Active/Deactive */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleBlockActive(block._id, block.isActive);
+                                }}
+                                disabled={isUpdatingOrder || isUpdating}
+                                className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  block.isActive
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                title={block.isActive ? "Deaktivləşdir" : "Aktivləşdir"}
+                              >
+                                {block.isActive ? "Aktiv" : "Deaktiv"}
+                              </button>
                               <button
                                 onClick={() => handleEditBlock(block)}
                                 disabled={isUpdatingOrder}

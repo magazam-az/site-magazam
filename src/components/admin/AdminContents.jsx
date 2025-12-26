@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   useGetOrCreateHomePageContentQuery,
 } from "../../redux/api/pageContentApi";
+import { useGetAllHeroesQuery } from "../../redux/api/heroApi";
 import { FaEdit } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
@@ -10,9 +11,11 @@ import AdminLayout from "./AdminLayout";
 const AdminContents = () => {
   const navigate = useNavigate();
   const { data, isLoading, refetch } = useGetOrCreateHomePageContentQuery();
+  const { data: heroesData, isLoading: isLoadingHeroes } = useGetAllHeroesQuery();
 
   const pageContent = data?.pageContent;
   const blocks = pageContent?.blocks || [];
+  const heroes = heroesData?.heroes || [];
 
   if (isLoading) {
     return (
@@ -27,9 +30,23 @@ const AdminContents = () => {
   const getBlockTypeLabel = (type) => {
     switch (type) {
       case "DefaultSlider":
-        return "Slider";
+        return "Hero";
       case "Categories":
         return "Kateqoriyalar";
+      case "BestOffers":
+        return "BestOffers";
+      case "NewGoods":
+        return "NewGoods";
+      case "ShoppingEvent":
+        return "ShoppingEvent";
+      case "HomeAppliances":
+        return "HomeAppliances";
+      case "Accessories":
+        return "Accessories";
+      case "Blogs":
+        return "Blogs";
+      case "About":
+        return "About";
       default:
         return type;
     }
@@ -60,12 +77,12 @@ const AdminContents = () => {
                 Ana Səhifə
               </h2>
               <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
-                {blocks.length || 0} blok
+                {(heroes.length + blocks.length) || 0} blok
               </span>
             </div>
 
             <div className="space-y-4">
-              {blocks.length === 0 ? (
+              {heroes.length === 0 && blocks.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <p className="mb-4">Hələ heç bir blok əlavə edilməyib</p>
                   <button
@@ -79,6 +96,38 @@ const AdminContents = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {/* Hero-ları göstər - əvvəlcə */}
+                  {!isLoadingHeroes && heroes.map((hero, heroIndex) => (
+                    <div
+                      key={hero._id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-[#5C4977]/30 transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
+                          {heroIndex + 1}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-800">
+                            Hero
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {hero.isActive ? "Aktiv" : "Deaktiv"}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/contents/home/edit`)
+                        }
+                        className="bg-[#5C4977] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#5C4977]/90 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer"
+                      >
+                        <FaEdit className="h-4 w-4" />
+                        Redaktə Et
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Digər bloklar */}
                   {[...blocks]
                     .sort((a, b) => a.order - b.order)
                     .map((block, index) => (
@@ -88,7 +137,7 @@ const AdminContents = () => {
                       >
                         <div className="flex items-center gap-4">
                           <div className="bg-[#5C4977]/10 text-[#5C4977] font-bold w-10 h-10 rounded-full flex items-center justify-center">
-                            {index + 1}
+                            {heroes.length + index + 1}
                           </div>
                           <div>
                             <h3 className="font-semibold text-gray-800">
