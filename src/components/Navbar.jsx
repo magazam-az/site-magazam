@@ -181,7 +181,9 @@ export default function MetaShopHeader() {
   useEffect(() => {
     const updateFavoriteCount = () => {
       const favorites = getFavorites()
-      setFavoriteCount(favorites.length)
+      // Valid elementləri filter et (null, undefined, boş string olmayanlar)
+      const validFavorites = favorites.filter(id => id != null && id !== '')
+      setFavoriteCount(validFavorites.length)
     }
     
     // İlk yüklemede sayıyı al
