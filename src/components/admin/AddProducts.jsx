@@ -28,17 +28,6 @@ const AddProduct = () => {
   // ✅ keyword input (tag əlavə etmək üçün)
   const [keywordInput, setKeywordInput] = useState("");
 
-  // ✅ Size attribute state
-  const [sizeAttribute, setSizeAttribute] = useState({
-    name: "size",
-    title: "Ölçü",
-    units: [
-      { name: "gb", title: "GB" },
-      { name: "tb", title: "TB" },
-      { name: "mb", title: "MB" },
-    ],
-  });
-
   // Xüsusiyyətlər üçün state - spec ID-si ilə spec name saxlayacaq
   const [selectedSpecs, setSelectedSpecs] = useState({});
 
@@ -265,24 +254,9 @@ const AddProduct = () => {
       }
 
       // ✅ Attributes array kimi göndər (JSON string kimi)
-      const attributesToSend = [];
-      // Size attribute-u əlavə et
-      if (sizeAttribute && sizeAttribute.units && sizeAttribute.units.length > 0) {
-        attributesToSend.push({
-          name: sizeAttribute.name,
-          title: sizeAttribute.title,
-          units: sizeAttribute.units.map(unit => ({
-            name: unit.name,
-            title: unit.title,
-          })),
-        });
-      }
-      // Digər attributes-ləri də əlavə et (gələcəkdə)
+      // Attributes-lər artıq ayrı səhifədə idarə olunur (ProductAttributes)
       if (Array.isArray(formData.attributes) && formData.attributes.length > 0) {
-        attributesToSend.push(...formData.attributes);
-      }
-      if (attributesToSend.length > 0) {
-        formDataToSend.append("attributes", JSON.stringify(attributesToSend));
+        formDataToSend.append("attributes", JSON.stringify(formData.attributes));
       }
 
       // Seçilmiş specs
@@ -317,15 +291,6 @@ const AddProduct = () => {
       });
       setKeywordInput("");
       setSelectedSpecs({});
-      setSizeAttribute({
-        name: "size",
-        title: "Ölçü",
-        units: [
-          { name: "gb", title: "GB" },
-          { name: "tb", title: "TB" },
-          { name: "mb", title: "MB" },
-        ],
-      });
       setImages([]);
       setPreviews([]);
       setMainImageIndex(0);
@@ -592,115 +557,6 @@ const AddProduct = () => {
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* ✅ Ölçü (Size) Attribute */}
-              <div className="border-b border-[#5C4977]/10 pb-6">
-                <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
-                  <FaTag className="h-5 w-5" />
-                  Ölçü (Size)
-                </h2>
-
-                <div className="space-y-4">
-                  {/* Unit əlavə et */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Unit əlavə et
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        placeholder="name (məs: gb)"
-                        value={sizeAttribute.units[sizeAttribute.units.length - 1]?.name || ""}
-                        onChange={(e) => {
-                          const newUnits = [...sizeAttribute.units];
-                          if (newUnits.length > 0) {
-                            newUnits[newUnits.length - 1] = {
-                              ...newUnits[newUnits.length - 1],
-                              name: e.target.value.toLowerCase().trim(),
-                            };
-                          } else {
-                            newUnits.push({ name: e.target.value.toLowerCase().trim(), title: "" });
-                          }
-                          setSizeAttribute({ ...sizeAttribute, units: newUnits });
-                        }}
-                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                      />
-                      <input
-                        type="text"
-                        placeholder="title (məs: GB)"
-                        value={sizeAttribute.units[sizeAttribute.units.length - 1]?.title || ""}
-                        onChange={(e) => {
-                          const newUnits = [...sizeAttribute.units];
-                          if (newUnits.length > 0) {
-                            newUnits[newUnits.length - 1] = {
-                              ...newUnits[newUnits.length - 1],
-                              title: e.target.value.trim(),
-                            };
-                          } else {
-                            newUnits.push({ name: "", title: e.target.value.trim() });
-                          }
-                          setSizeAttribute({ ...sizeAttribute, units: newUnits });
-                        }}
-                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const lastUnit = sizeAttribute.units[sizeAttribute.units.length - 1];
-                        if (lastUnit && lastUnit.name && lastUnit.title) {
-                          setSizeAttribute({
-                            ...sizeAttribute,
-                            units: [...sizeAttribute.units, { name: "", title: "" }],
-                          });
-                        } else {
-                          Swal.fire({
-                            title: "Xəta",
-                            text: "Zəhmət olmasa name və title daxil edin",
-                            icon: "warning",
-                            confirmButtonColor: "#5C4977",
-                          });
-                        }
-                      }}
-                      className="mt-2 px-4 py-2 bg-[#5C4977] text-white rounded-xl hover:bg-[#5C4977]/90 transition-colors cursor-pointer"
-                    >
-                      + Unit əlavə et
-                    </button>
-                  </div>
-
-                  {/* Seçilmiş units */}
-                  {sizeAttribute.units.filter(u => u.name && u.title).length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-[#5C4977] mb-2">
-                        Seçilmiş Units:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {sizeAttribute.units
-                          .filter(u => u.name && u.title)
-                          .map((unit, idx) => (
-                            <span
-                              key={`${unit.name}-${idx}`}
-                              className="inline-flex items-center gap-2 bg-[#5C4977] text-white px-3 py-1 rounded-full text-sm"
-                            >
-                              {unit.name} ({unit.title})
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newUnits = sizeAttribute.units.filter((_, i) => i !== idx);
-                                  setSizeAttribute({ ...sizeAttribute, units: newUnits });
-                                }}
-                                className="hover:text-red-200 cursor-pointer"
-                                title="Sil"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Texniki Xüsusiyyətlər */}

@@ -146,6 +146,18 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
             </Link>
 
             <Link
+              to="/admin/product-attributes"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                isActive('/admin/product-attributes')
+                  ? 'bg-[#5C4977] text-white shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-[#5C4977]'
+              }`}
+            >
+              <Package size={20} />
+              <span className="font-medium">Məhsul Attributes</span>
+            </Link>
+
+            <Link
               to="/admin/promotions"
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
                 isActive('/admin/promotions')
