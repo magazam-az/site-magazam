@@ -14,6 +14,7 @@ const EditSpec = () => {
   const [updateSpec] = useUpdateSpecMutation();
 
   const [specForm, setSpecForm] = useState({
+    name: "",
     title: "",
     type: "",
     unit: "",
@@ -27,6 +28,7 @@ const EditSpec = () => {
     if (data?.spec) {
       const spec = data.spec;
       setSpecForm({
+        name: spec.name || "",
         title: spec.title || "",
         type: spec.type || "",
         unit: spec.unit?._id || spec.unit || "",
@@ -47,10 +49,20 @@ const EditSpec = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!specForm.name.trim()) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Ad tələb olunur",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
     if (!specForm.title.trim()) {
       Swal.fire({
         title: "Xəta!",
-        text: "Xüsusiyyət başlığı tələb olunur",
+        text: "Başlıq tələb olunur",
         icon: "error",
         confirmButtonColor: "#5C4977",
       });
@@ -69,6 +81,7 @@ const EditSpec = () => {
 
     try {
       const specData = {
+        name: specForm.name.trim(),
         title: specForm.title.trim(),
         type: specForm.type,
         isFilterable: specForm.isFilterable,
@@ -145,7 +158,22 @@ const EditSpec = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Xüsusiyyət Başlığı (Ad) *
+                      Ad *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={specForm.name}
+                      onChange={handleInputChange}
+                      placeholder="Məs. Rəng"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                      Başlıq *
                     </label>
                     <input
                       type="text"

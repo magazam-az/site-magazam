@@ -93,7 +93,7 @@ const ProductAttributes = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#5C4977]/10">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Name</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Ad</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Başlıq</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
                   </tr>
