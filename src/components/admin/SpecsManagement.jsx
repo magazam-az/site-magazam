@@ -93,7 +93,11 @@ const SpecsManagement = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#5C4977]/10">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Ad</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Başlıq</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Tip</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Unit</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Filtr</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Status</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
                   </tr>
                 </thead>
@@ -104,7 +108,39 @@ const SpecsManagement = () => {
                       className="border-b border-[#5C4977]/5 hover:bg-[#5C4977]/5 transition-colors"
                     >
                       <td className="py-4 px-4">
-                        <div className="font-medium text-gray-800">{spec.name}</div>
+                        <div className="font-medium text-gray-800">{spec.title}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {spec.type}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-sm text-gray-600">
+                          {spec.unit ? `${spec.unit.title} (${spec.unit.name})` : '-'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        {spec.isFilterable ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Bəli
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Xeyr
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {spec.status ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Aktiv
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Deaktiv
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">

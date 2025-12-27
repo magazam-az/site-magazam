@@ -6,6 +6,7 @@ import { promotionApi } from "./api/promotionApi";  // Promotion API import edil
 import { categoryApi } from "./api/categoryApi";  // Category API import edilir
 import { brandApi } from "./api/brandApi";  // Brand API import edilir
 import { specApi } from "./api/specApi";  // Spec API import edilir
+import { unitApi } from "./api/unitApi";  // Unit API import edilir
 import { userApi } from "./api/userApi";  // User API import edilir
 import { settingsApi } from "./api/settingsApi";  // Settings API import edilir
 import { orderApi } from "./api/orderApi";  // Order API import edilir
@@ -25,6 +26,7 @@ export const store = configureStore({
     [categoryApi.reducerPath]: categoryApi.reducer, // categoryApi reducer əlavə edildi
     [brandApi.reducerPath]: brandApi.reducer, // brandApi reducer əlavə edildi
     [specApi.reducerPath]: specApi.reducer, // specApi reducer əlavə edildi
+    [unitApi.reducerPath]: unitApi.reducer, // unitApi reducer əlavə edildi
     [userApi.reducerPath]: userApi.reducer, // userApi reducer əlavə edildi
     [settingsApi.reducerPath]: settingsApi.reducer, // settingsApi reducer əlavə edildi
     [orderApi.reducerPath]: orderApi.reducer, // orderApi reducer əlavə edildi
@@ -44,6 +46,7 @@ export const store = configureStore({
       categoryApi.middleware,  // categoryApi middleware əlavə edildi
       brandApi.middleware,  // brandApi middleware əlavə edildi
       specApi.middleware,  // specApi middleware əlavə edildi
+      unitApi.middleware,  // unitApi middleware əlavə edildi
       userApi.middleware,  // userApi middleware əlavə edildi
       settingsApi.middleware,  // settingsApi middleware əlavə edildi
       orderApi.middleware,  // orderApi middleware əlavə edildi
