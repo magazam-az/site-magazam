@@ -154,7 +154,7 @@ const AdminLayout = ({ children, pageTitle = "Admin Panel" }) => {
               }`}
             >
               <Package size={20} />
-              <span className="font-medium">Məhsul Attributes</span>
+              <span className="font-medium">Ölçü Vahidləri</span>
             </Link>
 
             <Link
