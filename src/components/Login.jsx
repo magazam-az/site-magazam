@@ -38,7 +38,7 @@ const LoginForm = () => {
     if (!formData.email.trim()) {
       errors.email = 'Email tələb olunur';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email düzgün deyil';
+      errors.email = 'Email düzgün deyil.';
     }
 
     if (!formData.password) {
