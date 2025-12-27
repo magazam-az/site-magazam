@@ -42,6 +42,8 @@ import SpecsManagement from './components/admin/SpecsManagement'
 import CreateSpec from './components/admin/CreateSpec'
 import EditSpec from './components/admin/EditSpec'
 import ProductAttributes from './components/admin/ProductAttributes'
+import CreateUnit from './components/admin/CreateUnit'
+import EditUnit from './components/admin/EditUnit'
 import AdminContents from './components/admin/AdminContents'
 import EditPageContent from './components/admin/EditPageContent'
 import EditHero from './components/admin/EditHero'
@@ -293,6 +295,18 @@ function App() {
           <Route path='/admin/product-attributes' element={
             <AdminRoute>
               <ProductAttributes />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/units/create' element={
+            <AdminRoute>
+              <CreateUnit />
+            </AdminRoute>
+          } />
+
+          <Route path='/admin/units/edit/:id' element={
+            <AdminRoute>
+              <EditUnit />
             </AdminRoute>
           } />
 
