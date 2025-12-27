@@ -9,7 +9,7 @@ import AdminLayout from "./AdminLayout";
 const EditSpec = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { data, isLoading } = useGetSpecQuery(id);
+  const { data, isLoading, error } = useGetSpecQuery(id);
   const { data: unitsData, isLoading: unitsLoading } = useGetUnitsQuery();
   const [updateSpec] = useUpdateSpecMutation();
 
@@ -120,6 +120,27 @@ const EditSpec = () => {
       <AdminLayout pageTitle="Xüsusiyyəti Redaktə Et">
         <div className="flex items-center justify-center p-12">
           <Loader2 className="h-8 w-8 text-[#5C4977] animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout pageTitle="Xüsusiyyəti Redaktə Et">
+        <div className="bg-gray-50 min-h-full p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
+              <p className="font-medium">Xəta baş verdi:</p>
+              <p>{error?.data?.error || error?.message || "Xüsusiyyət tapılmadı"}</p>
+              <button
+                onClick={() => navigate("/admin/specs")}
+                className="mt-3 bg-[#5C4977] text-white px-4 py-2 rounded-lg hover:bg-[#5C4977]/90 transition-colors cursor-pointer"
+              >
+                Geri qayıt
+              </button>
+            </div>
+          </div>
         </div>
       </AdminLayout>
     );
