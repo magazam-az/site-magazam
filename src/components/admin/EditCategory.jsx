@@ -188,7 +188,7 @@ const EditCategory = () => {
               </div>
 
               {/* Şəkil */}
-              <div>
+              <div className="border-b border-[#5C4977]/10 pb-6">
                 <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
                   <FaImage className="h-5 w-5" />
                   Kateqoriya Şəkli
@@ -249,7 +249,7 @@ const EditCategory = () => {
               </div>
 
               {/* Xüsusiyyətlər */}
-              <div>
+              <div className="border-b border-[#5C4977]/10 pb-6">
                 <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
                   Xüsusiyyətlər
                 </h2>
