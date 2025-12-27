@@ -142,6 +142,7 @@ const CategoryManagement = () => {
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Ad</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Slug</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Şəkil</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Xüsusiyyətlər</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Alt Kateqoriya</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-[#5C4977]">Əməliyyatlar</th>
                   </tr>
@@ -180,6 +181,27 @@ const CategoryManagement = () => {
                           )}
                         </td>
                         <td className="py-4 px-4">
+                          {category.specs && category.specs.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {category.specs.slice(0, 3).map((spec) => (
+                                <span
+                                  key={spec._id || spec}
+                                  className="bg-[#5C4977]/10 text-[#5C4977] text-xs font-medium px-2 py-1 rounded-full"
+                                >
+                                  {spec.title || spec.name || 'N/A'}
+                                </span>
+                              ))}
+                              {category.specs.length > 3 && (
+                                <span className="bg-[#5C4977]/10 text-[#5C4977] text-xs font-medium px-2 py-1 rounded-full">
+                                  +{category.specs.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">Yoxdur</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
                           <span className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full">
                             {category.subcategories?.length || 0}
                           </span>
@@ -205,8 +227,24 @@ const CategoryManagement = () => {
                       </tr>
                       {expandedCategories[category._id] && (
                         <tr>
-                          <td colSpan="5" className="px-4 py-4 bg-gray-50">
+                          <td colSpan="6" className="px-4 py-4 bg-gray-50">
                             <div className="space-y-4">
+                              {/* Xüsusiyyətlər Siyahısı */}
+                              {category.specs && category.specs.length > 0 && (
+                                <div className="mb-4 pb-4 border-b border-[#5C4977]/10">
+                                  <h3 className="text-lg font-semibold text-[#5C4977] mb-3">Xüsusiyyətlər</h3>
+                                  <div className="flex flex-wrap gap-2">
+                                    {category.specs.map((spec) => (
+                                      <span
+                                        key={spec._id || spec}
+                                        className="bg-[#5C4977]/10 text-[#5C4977] text-sm font-medium px-3 py-1 rounded-full"
+                                      >
+                                        {spec.title || spec.name || 'N/A'}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                               <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-[#5C4977]">Alt Kateqoriyalar</h3>
                                 <button

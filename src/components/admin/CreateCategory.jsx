@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateCategoryMutation } from "../../redux/api/categoryApi";
+import { useGetSpecsQuery } from "../../redux/api/specApi";
 import Swal from "sweetalert2";
 import { FaImage } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -9,17 +10,29 @@ import AdminLayout from "./AdminLayout";
 const CreateCategory = () => {
   const navigate = useNavigate();
   const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
+  const { data: specsData } = useGetSpecsQuery();
+  const specs = specsData?.specs || [];
 
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     slug: "",
     image: null,
     imagePreview: null,
+    selectedSpecs: [],
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCategoryForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSpecToggle = (specId) => {
+    setCategoryForm((prev) => {
+      const selectedSpecs = prev.selectedSpecs.includes(specId)
+        ? prev.selectedSpecs.filter((id) => id !== specId)
+        : [...prev.selectedSpecs, specId];
+      return { ...prev, selectedSpecs };
+    });
   };
 
   const handleImageChange = (e) => {
@@ -63,6 +76,9 @@ const CreateCategory = () => {
       }
       if (categoryForm.image) {
         formData.append("image", categoryForm.image);
+      }
+      if (categoryForm.selectedSpecs.length > 0) {
+        formData.append("specs", JSON.stringify(categoryForm.selectedSpecs));
       }
 
       await createCategory(formData).unwrap();
@@ -210,6 +226,39 @@ const CreateCategory = () => {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Xüsusiyyətlər */}
+              <div>
+                <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                  Xüsusiyyətlər
+                </h2>
+                
+                <div className="space-y-3">
+                  {specs.length > 0 ? (
+                    specs.map((spec) => (
+                      <label
+                        key={spec._id}
+                        className="flex items-center gap-3 p-3 border border-[#5C4977]/20 rounded-xl hover:bg-[#5C4977]/5 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={categoryForm.selectedSpecs.includes(spec._id)}
+                          onChange={() => handleSpecToggle(spec._id)}
+                          className="w-5 h-5 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977] cursor-pointer"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">{spec.title || spec.name}</div>
+                          {spec.name && spec.name !== spec.title && (
+                            <div className="text-sm text-gray-500">{spec.name}</div>
+                          )}
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">Hələ heç bir xüsusiyyət yoxdur</p>
+                  )}
+                </div>
               </div>
 
               {/* Submit Button */}

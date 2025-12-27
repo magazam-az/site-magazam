@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetCategoryQuery, useUpdateCategoryMutation } from "../../redux/api/categoryApi";
+import { useGetSpecsQuery } from "../../redux/api/specApi";
 import Swal from "sweetalert2";
 import { FaImage } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -10,6 +11,8 @@ const EditCategory = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data, isLoading } = useGetCategoryQuery(id);
+  const { data: specsData } = useGetSpecsQuery();
+  const specs = specsData?.specs || [];
   const [updateCategory] = useUpdateCategoryMutation();
 
   const [categoryForm, setCategoryForm] = useState({
@@ -17,6 +20,7 @@ const EditCategory = () => {
     slug: "",
     image: null,
     imagePreview: null,
+    selectedSpecs: [],
   });
 
   useEffect(() => {
@@ -27,6 +31,7 @@ const EditCategory = () => {
         slug: category.slug || "",
         image: null,
         imagePreview: category.image?.url || null,
+        selectedSpecs: category.specs?.map((spec) => spec._id || spec) || [],
       });
     }
   }, [data]);
@@ -34,6 +39,15 @@ const EditCategory = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCategoryForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSpecToggle = (specId) => {
+    setCategoryForm((prev) => {
+      const selectedSpecs = prev.selectedSpecs.includes(specId)
+        ? prev.selectedSpecs.filter((id) => id !== specId)
+        : [...prev.selectedSpecs, specId];
+      return { ...prev, selectedSpecs };
+    });
   };
 
   const handleImageChange = (e) => {
@@ -78,6 +92,7 @@ const EditCategory = () => {
       if (categoryForm.image) {
         formData.append("image", categoryForm.image);
       }
+      formData.append("specs", JSON.stringify(categoryForm.selectedSpecs));
 
       await updateCategory({ id, formData }).unwrap();
 
@@ -231,6 +246,39 @@ const EditCategory = () => {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Xüsusiyyətlər */}
+              <div>
+                <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                  Xüsusiyyətlər
+                </h2>
+                
+                <div className="space-y-3">
+                  {specs.length > 0 ? (
+                    specs.map((spec) => (
+                      <label
+                        key={spec._id}
+                        className="flex items-center gap-3 p-3 border border-[#5C4977]/20 rounded-xl hover:bg-[#5C4977]/5 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={categoryForm.selectedSpecs.includes(spec._id)}
+                          onChange={() => handleSpecToggle(spec._id)}
+                          className="w-5 h-5 text-[#5C4977] border-[#5C4977]/30 rounded focus:ring-[#5C4977] cursor-pointer"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">{spec.title || spec.name}</div>
+                          {spec.name && spec.name !== spec.title && (
+                            <div className="text-sm text-gray-500">{spec.name}</div>
+                          )}
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">Hələ heç bir xüsusiyyət yoxdur</p>
+                  )}
+                </div>
               </div>
 
               {/* Submit Button */}
