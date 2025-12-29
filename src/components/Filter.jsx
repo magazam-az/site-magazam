@@ -645,7 +645,8 @@ const Filter = () => {
 
   // Yeni: Stock status filteri
   const [stockStatus, setStockStatus] = useState(""); // "in_stock", "out_of_stock" və ya ""
-  const [selectedSpecs, setSelectedSpecs] = useState([]);
+  // Xüsusiyyətlər üçün state - { specId: [selectedValues] } formatında (array)
+  const [selectedSpecs, setSelectedSpecs] = useState({});
 
   // URL-dən slug-a görə category/subcategory tap
   useEffect(() => {
@@ -746,8 +747,21 @@ const Filter = () => {
       query.stockStatus = stockStatus;
     }
 
-    // Spec filter → ID-lərlə
-    if (selectedSpecs.length > 0) query.specs = selectedSpecs;
+    // Spec filter → selectedSpecs object-dən array-ə çevir
+    // Format: { specId: [values] } -> ["specId:value1", "specId:value2"]
+    const specFilters = [];
+    Object.entries(selectedSpecs).forEach(([specId, values]) => {
+      if (Array.isArray(values) && values.length > 0) {
+        values.forEach(value => {
+          if (value && value !== "") {
+            specFilters.push(`${specId}:${value}`);
+          }
+        });
+      } else if (values && values !== "") {
+        specFilters.push(`${specId}:${values}`);
+      }
+    });
+    if (specFilters.length > 0) query.specs = specFilters;
 
     if (selectedSizes.length > 0) query.sizes = selectedSizes;
 
@@ -794,7 +808,7 @@ const Filter = () => {
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (stockStatus) count++;
-    if (selectedSpecs.length > 0) count++;
+    if (Object.keys(selectedSpecs).length > 0) count++;
     if (selectedBrands.length > 0) count++;
     if (selectedSizes.length > 0) count++;
     if (debouncedPriceMin > 0 || debouncedPriceMax < dynamicMaxPrice) count++;
@@ -839,7 +853,11 @@ const Filter = () => {
     if (stockStatus) {
       query.stockStatus = stockStatus;
     }
-    if (selectedSpecs.length > 0) query.specs = selectedSpecs;
+    // selectedSpecs object-dən array-ə çevir
+    const specFilters = Object.entries(selectedSpecs)
+      .filter(([specId, value]) => value && value !== "")
+      .map(([specId, value]) => `${specId}:${value}`);
+    if (specFilters.length > 0) query.specs = specFilters;
     // selectedBrands-i buraya əlavə etmirik - circular dependency qarşısını almaq üçün
     return query;
   }, [selectedCategory, selectedSubcategory, debouncedPriceMin, debouncedPriceMax, stockStatus, selectedSpecs, dynamicMaxPrice]);
@@ -886,27 +904,167 @@ const Filter = () => {
   const { data: specOptionsData } = useFilterProductsQuery(specOptionsQuery);
   const productsForSpecOptions = specOptionsData?.products || [];
 
-  const specOptions = useMemo(() => {
+  // Dinamik xüsusiyyət seçimləri - məhsullardan götürülür
+  const dynamicSpecOptions = useMemo(() => {
     if (!specs.length || productsForSpecOptions.length === 0) return [];
 
-    return specs
-      .map((spec) => {
-        const count = productsForSpecOptions.filter((p) => {
-          const specsObj = normalizeProductSpecs(p.specs);
-          if (!specsObj) return false;
+    // Yalnız isFilterable: true və status: true olan xüsusiyyətləri göstər
+    const filterableSpecs = specs.filter(
+      (spec) => spec.isFilterable === true && spec.status === true
+    );
 
-          // product.specs içində bu spec-in ID-si varsa → say
-          return Object.prototype.hasOwnProperty.call(specsObj, spec._id);
-        }).length;
+    return filterableSpecs.map((spec) => {
+      // Məhsullardan bu xüsusiyyət üçün bütün dəyərləri topla
+      // Name-ə görə unique et (value-ya görə deyil)
+      const allValuesMap = new Map(); // { name: value } formatında
+      const numberValues = [];
+
+      productsForSpecOptions.forEach((product) => {
+        const specsObj = normalizeProductSpecs(product.specs);
+        if (!specsObj) return;
+
+        // Spec name-ə görə dəyərləri tap
+        const specName = spec.name || spec.title;
+        if (specsObj[specName]) {
+          const values = Array.isArray(specsObj[specName])
+            ? specsObj[specName]
+            : [specsObj[specName]];
+
+          values.forEach((val) => {
+            if (val && typeof val === "object" && val.name !== undefined) {
+              // Name və value var
+              const itemName = String(val.name).trim();
+              const itemValue = val.value !== undefined ? val.value : val;
+              
+              // Name-ə görə unique et (eyni name varsa, value-ni saxla)
+              if (!allValuesMap.has(itemName)) {
+                allValuesMap.set(itemName, itemValue);
+              }
+              
+              if (spec.type === "number") {
+                const numValue = typeof itemValue === "number" ? itemValue : parseFloat(itemValue);
+                if (!isNaN(numValue)) {
+                  numberValues.push({ name: itemName, value: numValue });
+                }
+              }
+            } else if (val && typeof val === "object" && val.value !== undefined) {
+              // Yalnız value var, name yoxdur - value-nu name kimi istifadə et
+              const value = val.value;
+              const valueStr = String(value).trim();
+              
+              if (!allValuesMap.has(valueStr)) {
+                allValuesMap.set(valueStr, value);
+              }
+              
+              if (spec.type === "number") {
+                const numValue = typeof value === "number" ? value : parseFloat(value);
+                if (!isNaN(numValue)) {
+                  numberValues.push({ name: valueStr, value: numValue });
+                }
+              }
+            } else if (val !== null && val !== undefined) {
+              // Sadə dəyər
+              const valStr = String(val).trim();
+              
+              if (!allValuesMap.has(valStr)) {
+                allValuesMap.set(valStr, val);
+              }
+              
+              if (spec.type === "number") {
+                const numValue = typeof val === "number" ? val : parseFloat(val);
+                if (!isNaN(numValue)) {
+                  numberValues.push({ name: valStr, value: numValue });
+                }
+              }
+            }
+          });
+        }
+      });
+
+      // Number tipi üçün range-lər yarat (checkbox üçün)
+      let numberRanges = null;
+      if (spec.type === "number" && numberValues.length > 0) {
+        // Bütün unique dəyərləri topla
+        const uniqueValues = Array.from(new Set(numberValues.map(nv => nv.value))).sort((a, b) => a - b);
+        
+        if (uniqueValues.length > 0) {
+          const minValue = uniqueValues[0];
+          const maxValue = uniqueValues[uniqueValues.length - 1];
+          const totalRange = maxValue - minValue;
+          
+          // Range-lər yarat - dinamik olaraq
+          const ranges = [];
+          
+          // Minimum dəyərdən başla
+          if (minValue > 0) {
+            ranges.push({
+              label: `0-dan ${minValue.toLocaleString()}-dək`,
+              min: 0,
+              max: minValue,
+            });
+          }
+          
+          // Orta range-lər
+          if (uniqueValues.length <= 3) {
+            // Az dəyər varsa, hər birini ayrı range kimi göstər
+            uniqueValues.forEach((val, idx) => {
+              if (idx < uniqueValues.length - 1) {
+                ranges.push({
+                  label: `${val.toLocaleString()}-dən ${uniqueValues[idx + 1].toLocaleString()}-dək`,
+                  min: val,
+                  max: uniqueValues[idx + 1],
+                });
+              }
+            });
+          } else {
+            // Çox dəyər varsa, 3-5 range yarat
+            const numRanges = Math.min(5, Math.max(3, Math.ceil(uniqueValues.length / 2)));
+            const step = Math.max(1, Math.ceil(totalRange / numRanges));
+            
+            for (let i = minValue; i < maxValue; i += step) {
+              const rangeMax = Math.min(i + step, maxValue);
+              if (rangeMax > i) {
+                ranges.push({
+                  label: `${i.toLocaleString()}-dən ${rangeMax.toLocaleString()}-dək`,
+                  min: i,
+                  max: rangeMax,
+                });
+              }
+            }
+          }
+          
+          // "Daha çox" seçimi əlavə et
+          ranges.push({
+            label: `${maxValue.toLocaleString()}-dən daha çox`,
+            min: maxValue,
+            max: Infinity,
+          });
+          
+          numberRanges = ranges;
+        }
+      }
+
+      // Select, boolean və text üçün name-ə görə unique dəyərləri topla
+      const uniqueValues = spec.type === "number" 
+        ? null 
+        : Array.from(allValuesMap.values()).sort();
 
         return {
+        spec: spec,
           id: spec._id,
-          name: spec.name,
-          count,
-          disabled: count === 0,
-        };
-      })
-      .filter((s) => s.count > 0); // Yalnız count > 0 olanları göstər
+        name: spec.title || spec.name,
+        type: spec.type,
+        unit: spec.unit,
+        values: uniqueValues,
+        ranges: numberRanges, // Number tipi üçün range-lər
+        count: productsForSpecOptions.filter((p) => {
+          const specsObj = normalizeProductSpecs(p.specs);
+          if (!specsObj) return false;
+          const specName = spec.name || spec.title;
+          return specsObj[specName] !== undefined && specsObj[specName] !== null;
+        }).length,
+      };
+    }).filter((opt) => opt.count > 0); // Yalnız count > 0 olanları göstər
   }, [specs, productsForSpecOptions]);
 
   // Size options (specs-dən)
@@ -1041,7 +1199,7 @@ const Filter = () => {
       const count = prices.filter((p) => p >= i && p < i + step).length;
       if (count > 0) {
         presets.push({
-          label: `${i.toLocaleString()} ₼ to ${(i + step).toLocaleString()} ₼`,
+          label: `${i.toLocaleString()} ₼-dən ${(i + step).toLocaleString()} ₼-dək`,
           min: i,
           max: i + step,
           count: count.toString(),
@@ -1053,7 +1211,7 @@ const Filter = () => {
       const lessThanCount = prices.filter((p) => p < presets[0].min).length;
       if (lessThanCount > 0) {
         presets.unshift({
-          label: `less than ${presets[0].min.toLocaleString()} ₼`,
+          label: `${presets[0].min.toLocaleString()} ₼-dən az`,
           min: 0,
           max: presets[0].min,
           count: lessThanCount.toString(),
@@ -1063,7 +1221,7 @@ const Filter = () => {
       const moreThanCount = prices.filter((p) => p >= presets[presets.length - 1].max).length;
       if (moreThanCount > 0) {
         presets.push({
-          label: `more than ${presets[presets.length - 1].max.toLocaleString()} ₼`,
+          label: `${presets[presets.length - 1].max.toLocaleString()} ₼-dən daha çox`,
           min: presets[presets.length - 1].max,
           max: Infinity,
           count: moreThanCount.toString(),
@@ -1077,7 +1235,7 @@ const Filter = () => {
   // Bütün filtrləri təmizləmək üçün funksiya
   const clearAllFilters = () => {
     setStockStatus("");
-    setSelectedSpecs([]);
+    setSelectedSpecs({});
     setSelectedBrands([]);
     setSelectedSizes([]);
     setPriceMin(0);
@@ -1085,6 +1243,28 @@ const Filter = () => {
     setSelectedPricePreset("");
     setSearchTerm("");
     setSort("newest");
+  };
+
+  // Xüsusiyyət dəyəri seçimi - checkbox üçün
+  const handleSpecValueToggle = (specId, value) => {
+    setSelectedSpecs((prev) => {
+      const currentValues = prev[specId] ? (Array.isArray(prev[specId]) ? prev[specId] : [prev[specId]]) : [];
+      const isSelected = currentValues.includes(value);
+      
+      if (isSelected) {
+        // Dəyəri sil
+        const newValues = currentValues.filter(v => v !== value);
+        if (newValues.length === 0) {
+          const newSpecs = { ...prev };
+          delete newSpecs[specId];
+          return newSpecs;
+        }
+        return { ...prev, [specId]: newValues };
+      } else {
+        // Dəyəri əlavə et
+        return { ...prev, [specId]: [...currentValues, value] };
+      }
+    });
   };
 
   // "Go back" button üçün dinamik mətn
@@ -1462,41 +1642,125 @@ const Filter = () => {
                   </div>
                 </div>
 
-                {/* Specs Section - İKİNCİ BURADA */}
-                {specOptions.length > 0 && (
+                {/* Specs Section - Dinamik Xüsusiyyətlər */}
+                {dynamicSpecOptions.length > 0 && (
                   <div className="pb-6 border-b border-gray-200">
                     <h3 className="font-semibold text-lg text-gray-800 mb-4">Xüsusiyyətlər</h3>
-                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                      {specOptions.map((spec) => {
-                        const isSelected = selectedSpecs.includes(spec.id);
-                        const isDisabled = spec.disabled;
+                    <div className="space-y-6 max-h-[600px] overflow-y-auto pr-1">
+                      {dynamicSpecOptions.map((specOption) => {
+                        const spec = specOption.spec;
+                        const selectedValues = selectedSpecs[specOption.id] 
+                          ? (Array.isArray(selectedSpecs[specOption.id]) 
+                              ? selectedSpecs[specOption.id] 
+                              : [selectedSpecs[specOption.id]])
+                          : [];
 
                         return (
-                          <div
-                            key={spec.id || spec.name}
-                            className={`flex items-center justify-between text-sm cursor-pointer select-none ${
-                              isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                            } ${isSelected ? "text-[#5C4977]" : "text-gray-800"}`}
-                            onClick={() => {
-                              if (isDisabled) return;
-                              setSelectedSpecs((prev) =>
-                                prev.includes(spec.id)
-                                  ? prev.filter((s) => s !== spec.id)
-                                  : [...prev, spec.id]
-                              );
-                            }}
-                          >
-                            <span className="flex items-center gap-2 flex-1">
+                          <div key={specOption.id} className="space-y-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-4">
+                              {specOption.name}
+                            </label>
+
+                            {/* Select tipi - Checkbox-lar */}
+                            {spec.type === "select" && (
+                              <div className="space-y-2">
+                                {specOption.values.map((value, idx) => {
+                                  const isSelected = selectedValues.includes(value);
+                                  return (
+                                    <label
+                                      key={idx}
+                                      className="flex items-center gap-2 text-sm cursor-pointer hover:text-[#5C4977] transition-colors"
+                                      onClick={() => handleSpecValueToggle(specOption.id, value)}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleSpecValueToggle(specOption.id, value)}
+                                        className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer"
+                                      />
+                                      <span className={isSelected ? "text-[#5C4977] font-medium" : "text-gray-800"}>
+                                        {value}
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Boolean tipi - Checkbox-lar */}
+                            {spec.type === "boolean" && (
+                              <div className="space-y-2">
+                                <label
+                                  className="flex items-center gap-2 text-sm cursor-pointer hover:text-[#5C4977] transition-colors"
+                                  onClick={() => handleSpecValueToggle(specOption.id, "true")}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedValues.includes("true")}
+                                    onChange={() => handleSpecValueToggle(specOption.id, "true")}
+                                    className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer"
+                                  />
+                                  <span className={selectedValues.includes("true") ? "text-[#5C4977] font-medium" : "text-gray-800"}>
+                                    Bəli
+                                  </span>
+                                </label>
+                                <label
+                                  className="flex items-center gap-2 text-sm cursor-pointer hover:text-[#5C4977] transition-colors"
+                                  onClick={() => handleSpecValueToggle(specOption.id, "false")}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedValues.includes("false")}
+                                    onChange={() => handleSpecValueToggle(specOption.id, "false")}
+                                    className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer"
+                                  />
+                                  <span className={selectedValues.includes("false") ? "text-[#5C4977] font-medium" : "text-gray-800"}>
+                                    Xeyr
+                                  </span>
+                                </label>
+                              </div>
+                            )}
+
+                            {/* Number tipi - Range checkbox-lar (unit ilə) */}
+                            {spec.type === "number" && specOption.ranges && specOption.ranges.length > 0 && (
+                              <div className="space-y-2">
+                                {specOption.ranges.map((range, idx) => {
+                                  const rangeValue = `${range.min}-${range.max === Infinity ? 'inf' : range.max}`;
+                                  const isSelected = selectedValues.includes(rangeValue);
+                                  const unitText = specOption.unit && typeof specOption.unit === "object" 
+                                    ? ` ${specOption.unit.title || specOption.unit.name}`
+                                    : "";
+                                  
+                                  // Label formatı - Azərbaycan dilində
+                                  let rangeLabel = "";
+                                  if (range.max === Infinity) {
+                                    rangeLabel = `${range.min.toLocaleString()}${unitText}-dən daha çox`;
+                                  } else if (range.min === range.max) {
+                                    rangeLabel = `${range.min.toLocaleString()}${unitText}`;
+                                  } else {
+                                    rangeLabel = `${range.min.toLocaleString()}${unitText}-dən ${range.max.toLocaleString()}${unitText}-dək`;
+                                  }
+                                  
+                                  return (
+                                    <label
+                                      key={idx}
+                                      className="flex items-center gap-2 text-sm cursor-pointer hover:text-[#5C4977] transition-colors"
+                                      onClick={() => handleSpecValueToggle(specOption.id, rangeValue)}
+                                    >
                               <input
                                 type="checkbox"
-                                readOnly
                                 checked={isSelected}
-                                disabled={isDisabled}
+                                        onChange={() => handleSpecValueToggle(specOption.id, rangeValue)}
                                 className="w-4 h-4 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer"
                               />
-                              <span>{spec.name}</span>
+                                      <span className={isSelected ? "text-[#5C4977] font-medium" : "text-gray-800"}>
+                                        {rangeLabel}
                             </span>
-                            <span className="text-xs text-gray-500">{spec.count}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

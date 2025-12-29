@@ -10,6 +10,7 @@ import { useGetBrandsQuery } from '../../redux/api/brandApi';
 import { useGetSpecsQuery } from '../../redux/api/specApi';
 import { useGetUnitsQuery } from '../../redux/api/unitApi';
 import Swal from 'sweetalert2';
+import { toast } from 'react-hot-toast';
 import { 
   Upload, 
   X, 
@@ -32,8 +33,7 @@ import AdminLayout from './AdminLayout';
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, error, isLoading } = useGetProductDetailsQuery(id);
-  const { refetch } = useGetProductsQuery();
+  const { data, error, isLoading, refetch: refetchProductDetails } = useGetProductDetailsQuery(id);
   const [editProduct, { isLoading: isUpdating }] = useEditProductMutation();
   const { data: categoriesData } = useGetCategoriesQuery();
   const categories = categoriesData?.categories || [];
@@ -64,13 +64,11 @@ const EditProduct = () => {
   // ✅ keyword input (tag əlavə etmək üçün)
   const [keywordInput, setKeywordInput] = useState("");
   
-  // Xüsusiyyətlər üçün state - specId -> array of { value, name, unit? }
-  const [selectedSpecs, setSelectedSpecs] = useState({});
+  // Xüsusiyyətlər üçün repeater field state - array of { specId, name, value, unit, tempId, saved }
+  const [specFields, setSpecFields] = useState([]);
   
-  // Xüsusiyyət əlavə etmə modalı üçün state
-  const [showSpecModal, setShowSpecModal] = useState(false);
-  const [currentSpec, setCurrentSpec] = useState(null);
-  const [specFormData, setSpecFormData] = useState({ value: "", name: "", unit: "" });
+  // Temp ID generator
+  const [tempIdCounter, setTempIdCounter] = useState(0);
   
   // Seçilmiş kateqoriyanın alt kateqoriyalarını tap
   const selectedCategory = categories.find((cat) => cat.name === formData.category);
@@ -84,6 +82,9 @@ const EditProduct = () => {
   const [previews, setPreviews] = useState([]);
   const [removedImages, setRemovedImages] = useState([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState("basic");
 
   useEffect(() => {
     if (data?.product) {
@@ -106,24 +107,28 @@ const EditProduct = () => {
           : [],
       });
 
-      // Xüsusiyyətləri yüklə
+      // Xüsusiyyətləri yüklə - specFields formatına çevir
       if (product.specs && typeof product.specs === 'object') {
-        // Product specs-də spec name -> array of values var
-        const selectedSpecsMap = {};
+        const fields = [];
+        let tempId = 0;
         Object.entries(product.specs).forEach(([specName, specValues]) => {
-          // Specs array-dən spec name-ə uyğun gələn spec-i tap
           const spec = allSpecs.find(s => s.name === specName);
           if (spec) {
-            // specValues array ola bilər və ya tək obyekt
             const valuesArray = Array.isArray(specValues) ? specValues : [specValues];
-            selectedSpecsMap[spec._id] = valuesArray.map(val => ({
-              value: val.value !== undefined ? val.value : val,
+            valuesArray.forEach((val) => {
+              fields.push({
+                tempId: tempId++,
+                specId: spec._id,
               name: val.name !== undefined ? val.name : (val.value !== undefined ? val.value : val),
-              unit: val.unit || null,
-            }));
+                value: val.value !== undefined ? val.value : val,
+                unit: val.unit || (spec.unit ? (spec.unit._id || spec.unit) : ""),
+                saved: true,
+              });
+            });
           }
         });
-        setSelectedSpecs(selectedSpecsMap);
+        setSpecFields(fields);
+        setTempIdCounter(tempId);
       }
     }
 
@@ -169,23 +174,69 @@ const EditProduct = () => {
     }
   };
 
-  // Xüsusiyyət əlavə etmə modalını aç
-  const handleAddSpec = (spec) => {
-    setCurrentSpec(spec);
-    const initialValue = spec.type === "boolean" ? "" : "";
-    setSpecFormData({ value: initialValue, name: "", unit: spec.unit || "" });
-    setShowSpecModal(true);
+  // Yeni xüsusiyyət field əlavə et
+  const handleAddSpecField = () => {
+    const newField = {
+      tempId: tempIdCounter,
+      specId: "",
+      name: "",
+      value: "",
+      unit: "",
+      saved: false,
+    };
+    setSpecFields((prev) => [...prev, newField]);
+    setTempIdCounter((prev) => prev + 1);
   };
 
-  // Xüsusiyyət dəyərini əlavə et
-  const handleAddSpecValue = () => {
-    if (!currentSpec) return;
+  // Xüsusiyyət field sil
+  const handleRemoveSpecField = (tempId) => {
+    setSpecFields((prev) => prev.filter((field) => field.tempId !== tempId));
+  };
 
-    const { value } = specFormData;
-    
-    // Validasiya (boolean istisna olmaqla)
-    if (currentSpec.type !== "boolean") {
-      if (!value || !value.toString().trim()) {
+  // Xüsusiyyət field dəyişikliyi
+  const handleSpecFieldChange = (tempId, field, value) => {
+    setSpecFields((prev) =>
+      prev.map((item) => {
+        if (item.tempId === tempId) {
+          const updated = { ...item, [field]: value, saved: false };
+          // Əgər specId dəyişirsə, unit-i yenilə
+          if (field === "specId") {
+            const spec = allSpecs.find((s) => s._id === value);
+            if (spec && spec.unit) {
+              updated.unit = spec.unit._id || spec.unit;
+            } else {
+              updated.unit = "";
+            }
+          }
+          return updated;
+        }
+        return item;
+      })
+    );
+  };
+
+  // Xüsusiyyət field save et
+  const handleSaveSpecField = (tempId) => {
+    const field = specFields.find((f) => f.tempId === tempId);
+    if (!field) return;
+
+    // Validasiya
+    if (!field.specId) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Xüsusiyyət seçilməlidir",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    const spec = allSpecs.find((s) => s._id === field.specId);
+    if (!spec) return;
+
+    // Dəyər validasiyası
+    if (spec.type !== "boolean") {
+      if (!field.value || !field.value.toString().trim()) {
         Swal.fire({
           title: "Xəta!",
           text: "Dəyər doldurulmalıdır",
@@ -197,7 +248,7 @@ const EditProduct = () => {
     }
 
     // Number tipi üçün rəqəm yoxla
-    if (currentSpec.type === "number" && isNaN(value)) {
+    if (spec.type === "number" && isNaN(field.value)) {
       Swal.fire({
         title: "Xəta!",
         text: "Rəqəm daxil edin",
@@ -208,7 +259,7 @@ const EditProduct = () => {
     }
 
     // Boolean tipi üçün validasiya
-    if (currentSpec.type === "boolean" && (value !== "true" && value !== "false" && value !== true && value !== false)) {
+    if (spec.type === "boolean" && (field.value !== "true" && field.value !== "false" && field.value !== true && field.value !== false)) {
       Swal.fire({
         title: "Xəta!",
         text: "Dəyər seçilməlidir",
@@ -218,58 +269,65 @@ const EditProduct = () => {
       return;
     }
 
-    let specValue;
-    
-    if (currentSpec.type === "boolean") {
-      const boolValue = value === "true" || value === true;
-      specValue = {
-        value: boolValue,
-        name: boolValue ? "true" : "false",
-      };
-    } else {
-      const trimmedValue = value.toString().trim();
-      specValue = {
-        value: trimmedValue,
-        name: trimmedValue, // Ad və dəyər eyni olur
-      };
-      
-      // Unit varsa əlavə et (spec-də populate edilmiş unit)
-      if (currentSpec.unit) {
-        specValue.unit = currentSpec.unit._id || currentSpec.unit;
-      }
+    // Ad validasiyası
+    if (!field.name || !field.name.toString().trim()) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Ad doldurulmalıdır",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
     }
 
-    // selectedSpecs-ə əlavə et
-    setSelectedSpecs((prev) => {
-      const specId = currentSpec._id;
-      const existingValues = prev[specId] || [];
-      return {
-        ...prev,
-        [specId]: [...existingValues, specValue],
-      };
-    });
+    // Eyni name-də ikinci dəyər olub-olmadığını yoxla
+    const trimmedName = field.name.toString().trim();
+    const duplicateName = specFields.find(
+      (f) => 
+        f.tempId !== tempId && 
+        f.saved && 
+        f.name && 
+        f.name.toString().trim().toLowerCase() === trimmedName.toLowerCase()
+    );
 
-    // Modalı bağla
-    setShowSpecModal(false);
-    setCurrentSpec(null);
-    setSpecFormData({ value: "", name: "", unit: "" });
+    if (duplicateName) {
+      Swal.fire({
+        title: "Xəta!",
+        text: `"${trimmedName}" adında xüsusiyyət artıq mövcuddur. Eyni adda ikinci dəyər əlavə etmək olmaz.`,
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    // Boolean üçün dəyəri çevir
+    let finalValue = field.value;
+    if (spec.type === "boolean") {
+      finalValue = field.value === "true" || field.value === true;
+    }
+
+    // Field-i save edilmiş kimi işarələ
+    setSpecFields((prev) =>
+      prev.map((item) =>
+        item.tempId === tempId
+          ? { ...item, saved: true, value: finalValue }
+          : item
+      )
+    );
+
+    // Toast mesajı göstər
+    toast.success("Xüsusiyyət saxlanıldı");
   };
 
-  // Xüsusiyyət dəyərini sil
-  const handleRemoveSpecValue = (specId, index) => {
-    setSelectedSpecs((prev) => {
-      const specValues = prev[specId] || [];
-      const newValues = specValues.filter((_, i) => i !== index);
-      if (newValues.length === 0) {
-        const newSpecs = { ...prev };
-        delete newSpecs[specId];
-        return newSpecs;
-      }
-      return {
-        ...prev,
-        [specId]: newValues,
-      };
-    });
+  // Xüsusiyyət field-i edit rejiminə keçir
+  const handleEditSpecField = (tempId) => {
+    setSpecFields((prev) =>
+      prev.map((item) =>
+        item.tempId === tempId
+          ? { ...item, saved: false }
+          : item
+      )
+    );
   };
 
   const handleInputChange = (e) => {
@@ -498,21 +556,30 @@ const EditProduct = () => {
 
       updatedData.append("mainImageIndex", mainImageIndex.toString());
 
-      // Seçilmiş specs - backend-də spec name ilə saxlanmalıdır
-      if (Object.keys(selectedSpecs).length > 0) {
+      // Seçilmiş specs - specFields-dən selectedSpecs formatına çevir
+      const savedSpecFields = specFields.filter((f) => f.saved && f.specId);
+      if (savedSpecFields.length > 0) {
         const specsToSend = {};
-        Object.entries(selectedSpecs).forEach(([specId, values]) => {
-          const spec = allSpecs.find((s) => s._id === specId);
-          if (spec && values && values.length > 0) {
-            // Spec name-i key kimi istifadə et
-            specsToSend[spec.name || spec.title] = values.map((val) => {
-              const specValue = { value: val.value, name: val.name };
-              if (val.unit) specValue.unit = val.unit;
-              return specValue;
-            });
+        savedSpecFields.forEach((field) => {
+          const spec = allSpecs.find((s) => s._id === field.specId);
+          if (spec) {
+            const specName = spec.name || spec.title;
+            if (!specsToSend[specName]) {
+              specsToSend[specName] = [];
+            }
+            const specValue = {
+              value: field.value,
+              name: field.name,
+            };
+            if (field.unit) {
+              specValue.unit = field.unit;
+            }
+            specsToSend[specName].push(specValue);
           }
         });
+        if (Object.keys(specsToSend).length > 0) {
         updatedData.append("specs", JSON.stringify(specsToSend));
+        }
       }
 
       images.forEach((file) => {
@@ -543,10 +610,10 @@ const EditProduct = () => {
         confirmButtonColor: '#5C4977',
         timer: 2000,
         showConfirmButton: false
-      }).then(() => {
-        navigate("/admin/products");
-        refetch();
       });
+      
+      // Məhsul məlumatlarını yenilə (olduğu sayfada qalır)
+      refetchProductDetails();
 
     } catch (err) {
       console.error("Xəta detalları:", err);
@@ -625,8 +692,38 @@ const EditProduct = () => {
 
         {/* Form Container */}
         <div className="bg-white rounded-2xl shadow-xl border border-[#5C4977]/10 p-6 md:p-8">
+          {/* Tab Navigation */}
+          <div className="mb-6 border-b border-[#5C4977]/10">
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab("basic")}
+                className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+                  activeTab === "basic"
+                    ? "border-[#5C4977] text-[#5C4977]"
+                    : "border-transparent text-gray-500 hover:text-[#5C4977]"
+                } cursor-pointer`}
+              >
+                Əsas yarat
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("features")}
+                className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+                  activeTab === "features"
+                    ? "border-[#5C4977] text-[#5C4977]"
+                    : "border-transparent text-gray-500 hover:text-[#5C4977]"
+                } cursor-pointer`}
+              >
+                Xüsusiyyətlər yarat
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Əsas məlumatlar */}
+            {/* Əsas məlumatlar - Basic Tab */}
+            {activeTab === "basic" && (
+              <>
             <div className="border-b border-[#5C4977]/10 pb-6">
               <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
                 <Info className="h-5 w-5" />
@@ -926,86 +1023,7 @@ const EditProduct = () => {
               )}
             </div>
 
-            {/* Xüsusiyyətlər */}
-            {formData.category && categorySpecs.length > 0 && (
-              <div className="border-b border-[#5C4977]/10 pb-6">
-                <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
-                  <Tag className="h-5 w-5" />
-                  Xüsusiyyətlər
-                </h2>
-
-                <div className="space-y-4">
-                  {categorySpecs.map((specRef) => {
-                    // Spec obyektini tap
-                    const spec = allSpecs.find((s) => s._id === (specRef._id || specRef));
-                    if (!spec) return null;
-
-                    const specValues = selectedSpecs[spec._id] || [];
-
-                    return (
-                      <div key={spec._id} className="border border-[#5C4977]/20 rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h3 className="font-medium text-[#5C4977]">{spec.title || spec.name}</h3>
-                            {spec.unit && (
-                              <p className="text-sm text-gray-500">
-                                Ölçü vahidi: {typeof spec.unit === "object" ? (spec.unit.title || spec.unit.name || spec.unit) : spec.unit}
-                              </p>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleAddSpec(spec)}
-                            disabled={isUpdating}
-                            className="px-4 py-2 bg-[#5C4977] text-white rounded-xl hover:bg-[#5C4977]/90 transition-colors text-sm font-medium cursor-pointer disabled:opacity-50"
-                          >
-                            Xüsusiyyət əlavə et
-                          </button>
-                        </div>
-
-                        {/* Əlavə edilmiş dəyərlər */}
-                        {specValues.length > 0 && (
-                          <div className="mt-3 space-y-2">
-                            {specValues.map((specValue, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between bg-[#5C4977]/5 p-2 rounded-lg"
-                              >
-                                <div className="flex-1">
-                                  <span className="font-medium text-gray-800">
-                                    {specValue.value}
-                                  </span>
-                                  {specValue.name !== specValue.value && (
-                                    <span className="text-sm text-gray-500 ml-2">
-                                      ({specValue.name})
-                                    </span>
-                                  )}
-                                  {spec.unit && (
-                                    <span className="text-sm text-gray-500 ml-2">
-                                      {typeof spec.unit === "object" ? (spec.unit.title || spec.unit.name || spec.unit) : spec.unit}
-                                    </span>
-                                  )}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveSpecValue(spec._id, index)}
-                                  disabled={isUpdating}
-                                  className="text-red-500 hover:text-red-700 cursor-pointer ml-2 disabled:opacity-50"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Şəkillər */}
+            {/* Şəkillər - Basic Tab */}
             <div className="pb-6">
               <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
                 <ImageIcon className="h-5 w-5" />
@@ -1136,6 +1154,279 @@ const EditProduct = () => {
                 </button>
               </div>
             </div>
+              </>
+            )}
+
+            {/* Xüsusiyyətlər - Features Tab */}
+            {activeTab === "features" && formData.category && categorySpecs.length > 0 && (
+              <div className="border-b border-[#5C4977]/10 pb-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-[#5C4977] flex items-center gap-2">
+                    <Tag className="h-5 w-5" />
+                    Xüsusiyyətlər
+                  </h2>
+              <button
+                type="button"
+                    onClick={handleAddSpecField}
+                    disabled={isUpdating}
+                    className="px-4 py-2 bg-[#5C4977] text-white rounded-xl hover:bg-[#5C4977]/90 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <span className="text-lg">+</span>
+                    Xüsusiyyət əlavə et
+              </button>
+            </div>
+
+            <div className="space-y-4">
+                  {specFields.map((field) => {
+                    const spec = allSpecs.find((s) => s._id === field.specId);
+                    const isSaved = field.saved;
+
+                    return (
+                      <div
+                        key={field.tempId}
+                        className={`border border-[#5C4977]/20 rounded-xl p-4 ${
+                          isSaved ? "bg-green-50/50" : "bg-white"
+                        }`}
+                      >
+                        {isSaved ? (
+                          // Save edilmiş xüsusiyyət - disabled formada göstərmə rejimi
+                          <div>
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                              {/* Xüsusiyyət - disabled */}
+                              <div className="md:col-span-3">
+                                <label className="block text-sm font-medium text-[#5C4977] mb-1.5">
+                                  Xüsusiyyət
+                  </label>
+                  <input
+                    type="text"
+                                  value={spec ? (spec.title || spec.name) : ""}
+                                  disabled
+                                  className="w-full p-2.5 border border-[#5C4977]/20 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 text-sm"
+                  />
+                </div>
+
+                              {/* Ad - disabled */}
+                              <div className="md:col-span-3">
+                                <label className="block text-sm font-medium text-[#5C4977] mb-1.5">
+                                  Ad
+                  </label>
+                  <input
+                    type="text"
+                                  value={field.name}
+                                  disabled
+                                  className="w-full p-2.5 border border-[#5C4977]/20 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 text-sm"
+                  />
+                </div>
+
+                              {/* Dəyər - disabled */}
+                              <div className="md:col-span-4">
+                                <label className="block text-sm font-medium text-[#5C4977] mb-1.5">
+                                  Dəyər
+                                </label>
+                                {spec && spec.type === "boolean" ? (
+                                  <select
+                                    value={field.value}
+                                    disabled
+                                    className="w-full p-2.5 border border-[#5C4977]/20 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 text-sm"
+                                  >
+                                    <option value={field.value}>
+                                      {field.value === true || field.value === "true" ? "Bəli" : "Xeyr"}
+                                    </option>
+                                  </select>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type={spec && spec.type === "number" ? "number" : "text"}
+                                      value={field.value}
+                                      disabled
+                                      className="flex-1 p-2.5 border border-[#5C4977]/20 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 text-sm"
+                                    />
+                                    {spec?.unit && (
+                                      <span className="text-xs text-gray-500 whitespace-nowrap font-medium">
+                                        {typeof spec.unit === "object" ? (spec.unit.title || spec.unit.name) : spec.unit}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Əməliyyatlar - row sonunda, düzgün hizalanmış */}
+                              <div className="md:col-span-2 flex items-end gap-2 h-[42px]">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditSpecField(field.tempId)}
+                                  disabled={isUpdating}
+                                  className="flex-1 px-3 py-2 bg-[#5C4977] text-white rounded-lg hover:bg-[#5C4977]/90 transition-all duration-200 text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Düzəliş"
+                                >
+                                  <span className="text-sm">✎</span>
+                                  <span>Düzəliş</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSpecField(field.tempId)}
+                                  disabled={isUpdating}
+                                  className="flex-1 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Sil"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span>Sil</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          // Yeni/redaktə rejimi
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {/* Xüsusiyyət seçimi */}
+                  <div>
+                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                  Xüsusiyyət *
+                    </label>
+                                <select
+                                  value={field.specId}
+                      onChange={(e) =>
+                                    handleSpecFieldChange(field.tempId, "specId", e.target.value)
+                                  }
+                                  disabled={isUpdating}
+                                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
+                                >
+                                  <option value="">Xüsusiyyət seçin</option>
+                                  {categorySpecs.map((specRef) => {
+                                    const specOption = allSpecs.find(
+                                      (s) => s._id === (specRef._id || specRef)
+                                    );
+                                    if (!specOption) return null;
+                                    return (
+                                      <option key={specOption._id} value={specOption._id}>
+                                        {specOption.title || specOption.name}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                  </div>
+
+                              {/* Ad */}
+                    <div>
+                      <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                  Ad *
+                      </label>
+                      <input
+                        type="text"
+                                  value={field.name}
+                                  onChange={(e) =>
+                                    handleSpecFieldChange(field.tempId, "name", e.target.value)
+                                  }
+                                  placeholder="Məs. Mavi"
+                                  disabled={isUpdating}
+                                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
+                      />
+                    </div>
+
+                              {/* Dəyər */}
+                <div>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Dəyər *
+                  </label>
+                                {spec && spec.type === "boolean" ? (
+                                  <select
+                                    value={field.value}
+                                    onChange={(e) =>
+                                      handleSpecFieldChange(field.tempId, "value", e.target.value)
+                                    }
+                                    disabled={isUpdating}
+                                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
+                                  >
+                                    <option value="">Seçin</option>
+                                    <option value="true">Bəli</option>
+                                    <option value="false">Xeyr</option>
+                                  </select>
+                                ) : spec && spec.type === "number" ? (
+                      <input
+                                    type="number"
+                                    value={field.value}
+                        onChange={(e) =>
+                                      handleSpecFieldChange(field.tempId, "value", e.target.value)
+                                    }
+                                    placeholder="Məs. 128"
+                                    disabled={isUpdating}
+                                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
+                                  />
+                                ) : (
+                      <input
+                                    type="text"
+                                    value={field.value}
+                        onChange={(e) =>
+                                      handleSpecFieldChange(field.tempId, "value", e.target.value)
+                                    }
+                                    placeholder="Dəyər daxil edin"
+                                    disabled={isUpdating}
+                                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
+                                  />
+                                )}
+                                {spec?.unit && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Ölçü vahidi: {typeof spec.unit === "object" ? (spec.unit.title || spec.unit.name) : spec.unit}
+                                  </p>
+                                )}
+                  </div>
+                </div>
+
+                            <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                                onClick={() => handleSaveSpecField(field.tempId)}
+                  disabled={isUpdating}
+                                className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                >
+                                <span>✓</span>
+                                Saxla
+                </button>
+                <button
+                  type="button"
+                                onClick={() => handleRemoveSpecField(field.tempId)}
+                                disabled={isUpdating}
+                                className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                              >
+                                <span>-</span>
+                                Sil
+                </button>
+              </div>
+            </div>
+                        )}
+          </div>
+                    );
+                  })}
+
+                  {specFields.length === 0 && (
+                    <div className="text-center py-8 border-2 border-dashed border-[#5C4977]/20 rounded-xl bg-[#5C4977]/5">
+                      <Tag className="h-12 w-12 text-[#5C4977]/40 mx-auto mb-4" />
+                      <p className="text-[#5C4977]/70 text-lg font-medium mb-2">
+                        Heç bir xüsusiyyət əlavə edilməyib
+                      </p>
+                      <p className="text-gray-500 text-sm">
+                        Yuxarıdakı "+ Xüsusiyyət əlavə et" düyməsinə basaraq xüsusiyyət əlavə edin
+                      </p>
+        </div>
+      )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "features" && (!formData.category || categorySpecs.length === 0) && (
+              <div className="border-b border-[#5C4977]/10 pb-6">
+                <div className="text-center py-12 bg-[#5C4977]/5 rounded-xl border-2 border-dashed border-[#5C4977]/20">
+                  <Info className="h-12 w-12 text-[#5C4977]/40 mx-auto mb-4" />
+                  <p className="text-[#5C4977]/70 text-lg font-medium">
+                    Xüsusiyyətlər əlavə etmək üçün əvvəlcə kateqoriya seçməlisiniz
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    "Əsas yarat" tab-ında kateqoriya seçin
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button
@@ -1158,183 +1449,6 @@ const EditProduct = () => {
       </div>
     </div>
 
-      {/* Xüsusiyyət əlavə etmə modalı */}
-      {showSpecModal && currentSpec && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-[#5C4977]">
-                {currentSpec.title || currentSpec.name} əlavə et
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSpecModal(false);
-                  setCurrentSpec(null);
-                  setSpecFormData({ value: "", name: "", unit: "" });
-                }}
-                className="text-gray-500 hover:text-gray-700 cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Tip: select */}
-              {currentSpec.type === "select" && (
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Value *
-                  </label>
-                  <input
-                    type="text"
-                    value={specFormData.value}
-                    onChange={(e) =>
-                      setSpecFormData((prev) => ({
-                        ...prev,
-                        value: e.target.value,
-                        name: e.target.value, // Select-də value və name eyni olur
-                      }))
-                    }
-                    placeholder="Məs. mavi"
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
-                  />
-                </div>
-              )}
-
-              {/* Tip: text */}
-              {currentSpec.type === "text" && (
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Dəyər *
-                  </label>
-                  <input
-                    type="text"
-                    value={specFormData.value}
-                    onChange={(e) =>
-                      setSpecFormData((prev) => ({
-                        ...prev,
-                        value: e.target.value,
-                        name: e.target.value,
-                      }))
-                    }
-                    placeholder="Yazı daxil edin"
-                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
-                  />
-                </div>
-              )}
-
-              {/* Tip: number */}
-              {currentSpec.type === "number" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Dəyər *
-                    </label>
-                    <input
-                      type="number"
-                      value={specFormData.value}
-                      onChange={(e) =>
-                        setSpecFormData((prev) => ({
-                          ...prev,
-                          value: e.target.value,
-                          name: e.target.value,
-                        }))
-                      }
-                      placeholder="Məs. 128"
-                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
-                    />
-                  </div>
-                  {currentSpec.unit && (
-                    <div>
-                      <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                        Ölçü vahidi
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          typeof currentSpec.unit === "object"
-                            ? currentSpec.unit.title || currentSpec.unit.name || ""
-                            : currentSpec.unit || ""
-                        }
-                        disabled
-                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl bg-gray-100 cursor-not-allowed"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Tip: boolean */}
-              {currentSpec.type === "boolean" && (
-                <div>
-                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                    Dəyər *
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="booleanValue"
-                        value="true"
-                        checked={specFormData.value === "true" || specFormData.value === true}
-                        onChange={(e) =>
-                          setSpecFormData((prev) => ({
-                            ...prev,
-                            value: e.target.value,
-                            name: e.target.value,
-                          }))
-                        }
-                        className="w-4 h-4 text-[#5C4977]"
-                      />
-                      <span>Bəli</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="booleanValue"
-                        value="false"
-                        checked={specFormData.value === "false" || specFormData.value === false}
-                        onChange={(e) =>
-                          setSpecFormData((prev) => ({
-                            ...prev,
-                            value: e.target.value,
-                            name: e.target.value,
-                          }))
-                        }
-                        className="w-4 h-4 text-[#5C4977]"
-                      />
-                      <span>Xeyr</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleAddSpecValue}
-                  disabled={isUpdating}
-                  className="flex-1 bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  Əlavə et
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSpecModal(false);
-                    setCurrentSpec(null);
-                    setSpecFormData({ value: "", name: "", unit: "" });
-                  }}
-                  className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-300 transition-colors cursor-pointer"
-                >
-                  Ləğv et
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 };
