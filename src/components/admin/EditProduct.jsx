@@ -112,19 +112,46 @@ const EditProduct = () => {
         const fields = [];
         let tempId = 0;
         Object.entries(product.specs).forEach(([specName, specValues]) => {
-          const spec = allSpecs.find(s => s.name === specName);
+          // Spec-i name və ya title-ə görə tap
+          const spec = allSpecs.find(s => s.name === specName || s.title === specName);
           if (spec) {
             const valuesArray = Array.isArray(specValues) ? specValues : [specValues];
-            valuesArray.forEach((val) => {
-              fields.push({
-                tempId: tempId++,
-                specId: spec._id,
-              name: val.name !== undefined ? val.name : (val.value !== undefined ? val.value : val),
-                value: val.value !== undefined ? val.value : val,
-                unit: val.unit || (spec.unit ? (spec.unit._id || spec.unit) : ""),
-                saved: true,
+            
+            // Select tipi üçün bütün dəyərləri bir field-də array olaraq topla
+            if (spec.type === "select") {
+              const selectedValueNames = valuesArray
+                .map((val) => {
+                  // Əvvəlcə name-ə bax, sonra value-ya, sonra isə direkt val-ın özünə
+                  if (val && typeof val === 'object') {
+                    return val.name !== undefined && val.name !== null ? val.name : (val.value !== undefined && val.value !== null ? val.value : null);
+                  }
+                  return val !== undefined && val !== null ? val : null;
+                })
+                .filter((name) => name !== undefined && name !== null && name !== "");
+              
+              if (selectedValueNames.length > 0) {
+                fields.push({
+                  tempId: tempId++,
+                  specId: spec._id,
+                  name: "", // Select tipi üçün name boşdur
+                  value: selectedValueNames, // Array formatında
+                  unit: "", // Select tipi üçün unit yoxdur
+                  saved: true,
+                });
+              }
+            } else {
+              // Digər tiplər üçün hər bir dəyər ayrı field
+              valuesArray.forEach((val) => {
+                fields.push({
+                  tempId: tempId++,
+                  specId: spec._id,
+                  name: val.name !== undefined ? val.name : (val.value !== undefined ? val.value : val),
+                  value: val.value !== undefined ? val.value : val,
+                  unit: val.unit || (spec.unit ? (spec.unit._id || spec.unit) : ""),
+                  saved: true,
+                });
               });
-            });
+            }
           }
         });
         setSpecFields(fields);
@@ -199,7 +226,7 @@ const EditProduct = () => {
       prev.map((item) => {
         if (item.tempId === tempId) {
           const updated = { ...item, [field]: value, saved: false };
-          // Əgər specId dəyişirsə, unit-i yenilə
+          // Əgər specId dəyişirsə, unit-i yenilə və select tipi üçün value-nu array et
           if (field === "specId") {
             const spec = allSpecs.find((s) => s._id === value);
             if (spec && spec.unit) {
@@ -207,8 +234,31 @@ const EditProduct = () => {
             } else {
               updated.unit = "";
             }
+            // Select tipi üçün value-nu array et
+            if (spec && spec.type === "select") {
+              updated.value = [];
+            } else {
+              updated.value = "";
+            }
           }
           return updated;
+        }
+        return item;
+      })
+    );
+  };
+
+  // Select tipi üçün dəyər toggle et (multiple select)
+  const handleSelectValueToggle = (tempId, selectValueName) => {
+    setSpecFields((prev) =>
+      prev.map((item) => {
+        if (item.tempId === tempId) {
+          const currentValues = Array.isArray(item.value) ? item.value : [];
+          const isSelected = currentValues.includes(selectValueName);
+          const updatedValues = isSelected
+            ? currentValues.filter((v) => v !== selectValueName)
+            : [...currentValues, selectValueName];
+          return { ...item, value: updatedValues, saved: false };
         }
         return item;
       })
@@ -235,7 +285,18 @@ const EditProduct = () => {
     if (!spec) return;
 
     // Dəyər validasiyası
-    if (spec.type !== "boolean") {
+    if (spec.type === "select") {
+      // Select tipi üçün array yoxla
+      if (!Array.isArray(field.value) || field.value.length === 0) {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Ən azı bir dəyər seçilməlidir",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+    } else if (spec.type !== "boolean") {
       if (!field.value || !field.value.toString().trim()) {
         Swal.fire({
           title: "Xəta!",
@@ -269,41 +330,47 @@ const EditProduct = () => {
       return;
     }
 
-    // Ad validasiyası
-    if (!field.name || !field.name.toString().trim()) {
-      Swal.fire({
-        title: "Xəta!",
-        text: "Ad doldurulmalıdır",
-        icon: "error",
-        confirmButtonColor: "#5C4977",
-      });
-      return;
-    }
+    // Ad validasiyası - select tipi üçün tələb olunmur (spec.name istifadə olunur)
+    if (spec.type !== "select") {
+      if (!field.name || !field.name.toString().trim()) {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Ad doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
 
-    // Eyni name-də ikinci dəyər olub-olmadığını yoxla
-    const trimmedName = field.name.toString().trim();
-    const duplicateName = specFields.find(
-      (f) => 
-        f.tempId !== tempId && 
-        f.saved && 
-        f.name && 
-        f.name.toString().trim().toLowerCase() === trimmedName.toLowerCase()
-    );
+      // Eyni name-də ikinci dəyər olub-olmadığını yoxla
+      const trimmedName = field.name.toString().trim();
+      const duplicateName = specFields.find(
+        (f) => 
+          f.tempId !== tempId && 
+          f.saved && 
+          f.name && 
+          f.name.toString().trim().toLowerCase() === trimmedName.toLowerCase()
+      );
 
-    if (duplicateName) {
-      Swal.fire({
-        title: "Xəta!",
-        text: `"${trimmedName}" adında xüsusiyyət artıq mövcuddur. Eyni adda ikinci dəyər əlavə etmək olmaz.`,
-        icon: "error",
-        confirmButtonColor: "#5C4977",
-      });
-      return;
+      if (duplicateName) {
+        Swal.fire({
+          title: "Xəta!",
+          text: `"${trimmedName}" adında xüsusiyyət artıq mövcuddur. Eyni adda ikinci dəyər əlavə etmək olmaz.`,
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
     }
 
     // Boolean üçün dəyəri çevir
     let finalValue = field.value;
     if (spec.type === "boolean") {
       finalValue = field.value === "true" || field.value === true;
+    }
+    // Select tipi üçün array-i saxla
+    if (spec.type === "select" && Array.isArray(field.value)) {
+      finalValue = field.value;
     }
 
     // Field-i save edilmiş kimi işarələ
@@ -567,14 +634,28 @@ const EditProduct = () => {
             if (!specsToSend[specName]) {
               specsToSend[specName] = [];
             }
-            const specValue = {
-              value: field.value,
-              name: field.name,
-            };
-            if (field.unit) {
-              specValue.unit = field.unit;
+            // Select tipi üçün hər bir seçilmiş dəyər üçün ayrı specValue yarat
+            if (spec.type === "select" && Array.isArray(field.value)) {
+              field.value.forEach((selectedValueName) => {
+                // spec.selectValues-dən title tap
+                const selectValue = spec.selectValues?.find((sv) => sv.name === selectedValueName);
+                const specValue = {
+                  value: selectValue?.title || selectedValueName,
+                  name: selectValue?.name || selectedValueName,
+                };
+                // Select tipi üçün unit yoxdur (spec.name və spec.title istifadə olunur)
+                specsToSend[specName].push(specValue);
+              });
+            } else {
+              const specValue = {
+                value: field.value,
+                name: field.name,
+              };
+              if (field.unit) {
+                specValue.unit = field.unit;
+              }
+              specsToSend[specName].push(specValue);
             }
-            specsToSend[specName].push(specValue);
           }
         });
         if (Object.keys(specsToSend).length > 0) {
@@ -1205,25 +1286,49 @@ const EditProduct = () => {
                   />
                 </div>
 
-                              {/* Ad - disabled */}
-                              <div className="md:col-span-3">
-                                <label className="block text-sm font-medium text-[#5C4977] mb-1.5">
-                                  Ad
-                  </label>
-                  <input
-                    type="text"
-                                  value={field.name}
-                                  disabled
-                                  className="w-full p-2.5 border border-[#5C4977]/20 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 text-sm"
-                  />
-                </div>
+                              {/* Ad - disabled (select tipi üçün gizlə) */}
+                              {spec && spec.type !== "select" && (
+                                <div className="md:col-span-3">
+                                  <label className="block text-sm font-medium text-[#5C4977] mb-1.5">
+                                    Ad
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={field.name}
+                                    disabled
+                                    className="w-full p-2.5 border border-[#5C4977]/20 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700 text-sm"
+                                  />
+                                </div>
+                              )}
 
                               {/* Dəyər - disabled */}
-                              <div className="md:col-span-4">
+                              <div className={spec && spec.type === "select" ? "md:col-span-4" : "md:col-span-4"}>
                                 <label className="block text-sm font-medium text-[#5C4977] mb-1.5">
                                   Dəyər
                                 </label>
-                                {spec && spec.type === "boolean" ? (
+                                {spec && spec.type === "select" ? (
+                                    <div className="flex flex-wrap gap-2 border border-[#5C4977]/20 rounded-lg bg-gray-50 p-2">
+                                      {Array.isArray(field.value) && field.value.length > 0 ? (
+                                        <>
+                                          {field.value.slice(0, 3).map((selectedValueName, idx) => {
+                                            const selectValue = spec.selectValues?.find((sv) => sv.name === selectedValueName);
+                                            return (
+                                              <span key={idx} className="px-2 py-1 bg-white rounded text-xs text-gray-700 border border-gray-200 whitespace-nowrap">
+                                                {selectValue ? selectValue.title : selectedValueName}
+                                              </span>
+                                            );
+                                          })}
+                                          {field.value.length > 3 && (
+                                            <span className="px-2 py-1 text-xs text-gray-500 font-medium">
+                                              +{field.value.length - 3} ...
+                                            </span>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <span className="text-sm text-gray-500 italic">Seçilməyib</span>
+                                      )}
+                                    </div>
+                                  ) : spec && spec.type === "boolean" ? (
                                   <select
                                     value={field.value}
                                     disabled
@@ -1278,7 +1383,7 @@ const EditProduct = () => {
                         ) : (
                           // Yeni/redaktə rejimi
                           <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className={`grid grid-cols-1 ${spec && spec.type === "select" ? "md:grid-cols-2" : "md:grid-cols-3"} gap-4`}>
                               {/* Xüsusiyyət seçimi */}
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
@@ -1307,29 +1412,65 @@ const EditProduct = () => {
                                 </select>
                   </div>
 
-                              {/* Ad */}
-                    <div>
-                      <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                                  Ad *
-                      </label>
-                      <input
-                        type="text"
-                                  value={field.name}
-                                  onChange={(e) =>
-                                    handleSpecFieldChange(field.tempId, "name", e.target.value)
-                                  }
-                                  placeholder="Məs. Mavi"
-                                  disabled={isUpdating}
-                                  className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
-                      />
-                    </div>
+                              {/* Ad - select tipi üçün gizlə */}
+                              {spec && spec.type !== "select" && (
+                                <div>
+                                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                                    Ad *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={field.name}
+                                    onChange={(e) =>
+                                      handleSpecFieldChange(field.tempId, "name", e.target.value)
+                                    }
+                                    placeholder="Məs. Mavi"
+                                    disabled={isUpdating}
+                                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
+                                  />
+                                </div>
+                              )}
 
                               {/* Dəyər */}
                 <div>
                   <label className="block text-sm font-medium text-[#5C4977] mb-2">
                     Dəyər *
                   </label>
-                                {spec && spec.type === "boolean" ? (
+                                {spec && spec.type === "select" ? (
+                                    <div className="flex flex-wrap gap-2 border border-[#5C4977]/20 rounded-xl p-3">
+                                      {spec.selectValues && spec.selectValues.length > 0 ? (
+                                        <>
+                                          {spec.selectValues.slice(0, 3).map((selectValue, idx) => {
+                                            const isSelected = Array.isArray(field.value) && field.value.includes(selectValue.name);
+                                            return (
+                                              <label
+                                                key={idx}
+                                                className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50 rounded-lg text-xs cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200"
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  checked={isSelected}
+                                                  onChange={() => handleSelectValueToggle(field.tempId, selectValue.name)}
+                                                  disabled={isUpdating}
+                                                  className="w-3.5 h-3.5 rounded border-gray-300 text-[#5C4977] focus:ring-[#5C4977] cursor-pointer disabled:opacity-50"
+                                                />
+                                                <span className={isSelected ? "text-[#5C4977] font-medium whitespace-nowrap" : "text-gray-800 whitespace-nowrap"}>
+                                                  {selectValue.title}
+                                                </span>
+                                              </label>
+                                            );
+                                          })}
+                                          {spec.selectValues.length > 3 && (
+                                            <span className="px-2 py-1.5 text-xs text-gray-500 font-medium">
+                                              +{spec.selectValues.length - 3} ...
+                                            </span>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <p className="text-sm text-gray-500 italic">Bu xüsusiyyət üçün dəyər tapılmadı</p>
+                                      )}
+                                    </div>
+                                  ) : spec && spec.type === "boolean" ? (
                                   <select
                                     value={field.value}
                                     onChange={(e) =>
@@ -1365,7 +1506,7 @@ const EditProduct = () => {
                                     className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors disabled:opacity-50"
                                   />
                                 )}
-                                {spec?.unit && (
+                                {spec?.unit && spec.type !== "select" && (
                                   <p className="text-xs text-gray-500 mt-1">
                                     Ölçü vahidi: {typeof spec.unit === "object" ? (spec.unit.title || spec.unit.name) : spec.unit}
                                   </p>

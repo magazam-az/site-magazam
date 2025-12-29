@@ -22,6 +22,10 @@ const EditSpec = () => {
     status: true,
   });
 
+  // Select values üçün repeater field state
+  const [selectValueFields, setSelectValueFields] = useState([]);
+  const [selectValueTempIdCounter, setSelectValueTempIdCounter] = useState(0);
+
   const units = unitsData?.units || [];
 
   useEffect(() => {
@@ -35,15 +39,59 @@ const EditSpec = () => {
         isFilterable: spec.isFilterable || false,
         status: spec.status !== false,
       });
+
+      // SelectValues yüklə
+      if (spec.selectValues && Array.isArray(spec.selectValues) && spec.selectValues.length > 0) {
+        const fields = spec.selectValues.map((sv, index) => ({
+          tempId: index,
+          name: sv.name || "",
+          title: sv.title || "",
+        }));
+        setSelectValueFields(fields);
+        setSelectValueTempIdCounter(fields.length);
+      } else {
+        setSelectValueFields([]);
+        setSelectValueTempIdCounter(0);
+      }
     }
   }, [data]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setSpecForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setSpecForm((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+      // Əgər tip select-dən başqa bir şeyə dəyişirsə, selectValues-i təmizlə
+      if (name === "type" && value !== "select") {
+        setSelectValueFields([]);
+      }
+      return updated;
+    });
+  };
+
+  // Select value field əlavə et
+  const handleAddSelectValue = () => {
+    const newField = {
+      tempId: selectValueTempIdCounter,
+      name: "",
+      title: "",
+    };
+    setSelectValueFields((prev) => [...prev, newField]);
+    setSelectValueTempIdCounter((prev) => prev + 1);
+  };
+
+  // Select value field sil
+  const handleRemoveSelectValue = (tempId) => {
+    setSelectValueFields((prev) => prev.filter((field) => field.tempId !== tempId));
+  };
+
+  // Select value field dəyişikliyi
+  const handleSelectValueChange = (tempId, field, value) => {
+    setSelectValueFields((prev) =>
+      prev.map((item) => (item.tempId === tempId ? { ...item, [field]: value } : item))
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -90,6 +138,22 @@ const EditSpec = () => {
       return;
     }
 
+    // Select tipi üçün selectValues validasiyası
+    if (specForm.type === "select") {
+      const validSelectValues = selectValueFields.filter(
+        (field) => field.name && field.name.trim() !== "" && field.title && field.title.trim() !== ""
+      );
+      if (validSelectValues.length === 0) {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Select tipi üçün ən azı bir dəyər əlavə edilməlidir",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+    }
+
     try {
       const specData = {
         name: specForm.name.trim(),
@@ -104,6 +168,18 @@ const EditSpec = () => {
         specData.unit = specForm.unit;
       } else {
         specData.unit = null;
+      }
+
+      // SelectValues - yalnız select tipi üçün
+      if (specForm.type === "select") {
+        specData.selectValues = selectValueFields
+          .filter((field) => field.name && field.name.trim() !== "" && field.title && field.title.trim() !== "")
+          .map((field) => ({
+            name: field.name.trim(),
+            title: field.title.trim(),
+          }));
+      } else {
+        specData.selectValues = [];
       }
 
       await updateSpec({ id, data: specData }).unwrap();
@@ -237,30 +313,93 @@ const EditSpec = () => {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Unit (Ölçü Vahidi) {specForm.type === "number" && <span className="text-red-500">*</span>}
-                    </label>
-                    <select
-                      name="unit"
-                      value={specForm.unit}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                      disabled={unitsLoading}
-                      required={specForm.type === "number"}
-                    >
-                      <option value="">Unit seçin {specForm.type === "number" ? "(məcburi)" : "(opsional)"}</option>
-                      {units.map((unit) => (
-                        <option key={unit._id} value={unit._id}>
-                          {unit.title} ({unit.name})
-                        </option>
-                      ))}
-                    </select>
-                    {unitsLoading && (
-                      <p className="text-sm text-gray-500 mt-1">Unit-lər yüklənir...</p>
-                    )}
-                  </div>
+                  {/* Unit - yalnız number tipi üçün görünür */}
+                  {specForm.type === "number" && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                        Unit (Ölçü Vahidi) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="unit"
+                        value={specForm.unit}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                        disabled={unitsLoading}
+                        required
+                      >
+                        <option value="">Unit seçin</option>
+                        {units.map((unit) => (
+                          <option key={unit._id} value={unit._id}>
+                            {unit.title} ({unit.name})
+                          </option>
+                        ))}
+                      </select>
+                      {unitsLoading && (
+                        <p className="text-sm text-gray-500 mt-1">Unit-lər yüklənir...</p>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Select Values - yalnız select tipi üçün */}
+                {specForm.type === "select" && (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="block text-sm font-medium text-[#5C4977]">
+                        Dəyərlər (Ad və Başlıq) <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleAddSelectValue}
+                        className="px-4 py-2 bg-[#5C4977] text-white rounded-lg hover:bg-[#5C4977]/90 transition-colors text-sm font-medium"
+                      >
+                        + Əlavə et
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      {selectValueFields.map((field) => (
+                        <div key={field.tempId} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end p-4 border border-[#5C4977]/20 rounded-xl">
+                          <div className="col-span-5">
+                            <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                              Ad *
+                            </label>
+                            <input
+                              type="text"
+                              value={field.name}
+                              onChange={(e) => handleSelectValueChange(field.tempId, "name", e.target.value)}
+                              placeholder="Məs. qirmizi"
+                              className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                            />
+                          </div>
+                          <div className="col-span-5">
+                            <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                              Başlıq *
+                            </label>
+                            <input
+                              type="text"
+                              value={field.title}
+                              onChange={(e) => handleSelectValueChange(field.tempId, "title", e.target.value)}
+                              placeholder="Məs. Qırmızı"
+                              className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSelectValue(field.tempId)}
+                              className="w-full px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors text-sm font-medium"
+                            >
+                              Sil
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {selectValueFields.length === 0 && (
+                        <p className="text-sm text-gray-500 italic">Heç bir dəyər əlavə edilməyib. "+ Əlavə et" düyməsinə klikləyin.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Əlavə parametrlər */}
