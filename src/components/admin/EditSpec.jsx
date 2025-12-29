@@ -79,6 +79,17 @@ const EditSpec = () => {
       return;
     }
 
+    // Number tipi üçün unit required-dır
+    if (specForm.type === "number" && (!specForm.unit || specForm.unit === "")) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Number tipi üçün ölçü vahidi seçilməlidir",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
     try {
       const specData = {
         name: specForm.name.trim(),
@@ -88,7 +99,7 @@ const EditSpec = () => {
         status: specForm.status,
       };
 
-      // Unit optional-dır, null ola bilər
+      // Unit - number üçün required, digərləri üçün optional
       if (specForm.unit && specForm.unit !== "") {
         specData.unit = specForm.unit;
       } else {
@@ -228,7 +239,7 @@ const EditSpec = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Unit (Ölçü Vahidi)
+                      Unit (Ölçü Vahidi) {specForm.type === "number" && <span className="text-red-500">*</span>}
                     </label>
                     <select
                       name="unit"
@@ -236,8 +247,9 @@ const EditSpec = () => {
                       onChange={handleInputChange}
                       className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
                       disabled={unitsLoading}
+                      required={specForm.type === "number"}
                     >
-                      <option value="">Unit seçin (opsional)</option>
+                      <option value="">Unit seçin {specForm.type === "number" ? "(məcburi)" : "(opsional)"}</option>
                       {units.map((unit) => (
                         <option key={unit._id} value={unit._id}>
                           {unit.title} ({unit.name})
