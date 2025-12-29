@@ -3,11 +3,12 @@ import { useAddProductMutation } from "../../redux/api/productsApi";
 import { useGetCategoriesQuery } from "../../redux/api/categoryApi";
 import { useGetBrandsQuery } from "../../redux/api/brandApi";
 import { useGetSpecsQuery } from "../../redux/api/specApi";
+import { useGetUnitsQuery } from "../../redux/api/unitApi";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { FaImage, FaTag, FaInfoCircle, FaUpload, FaStar, FaTrash, FaBoxOpen } from "react-icons/fa";
+import { FaImage, FaTag, FaInfoCircle, FaUpload, FaStar, FaTrash, FaBoxOpen, FaTimes } from "react-icons/fa";
 import { HiOutlinePhotograph } from "react-icons/hi";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 const AddProduct = () => {
@@ -28,8 +29,13 @@ const AddProduct = () => {
   // ✅ keyword input (tag əlavə etmək üçün)
   const [keywordInput, setKeywordInput] = useState("");
 
-  // Xüsusiyyətlər üçün state - spec ID-si ilə spec name saxlayacaq
+  // Xüsusiyyətlər üçün state - specId -> array of { value, name, unit? }
   const [selectedSpecs, setSelectedSpecs] = useState({});
+  
+  // Xüsusiyyət əlavə etmə modalı üçün state
+  const [showSpecModal, setShowSpecModal] = useState(false);
+  const [currentSpec, setCurrentSpec] = useState(null);
+  const [specFormData, setSpecFormData] = useState({ value: "", name: "", unit: "" });
 
   const { data: categoriesData } = useGetCategoriesQuery();
   const categories = categoriesData?.categories || [];
@@ -38,11 +44,14 @@ const AddProduct = () => {
   const brands = brandsData?.brands || [];
 
   const { data: specsData } = useGetSpecsQuery();
-  const specs = specsData?.specs || [];
+  const allSpecs = specsData?.specs || [];
 
   // Seçilmiş kateqoriyanın alt kateqoriyalarını tap
   const selectedCategory = categories.find((cat) => cat.name === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
+  
+  // Seçilmiş kateqoriyanın xüsusiyyətlərini yüklə
+  const categorySpecs = selectedCategory?.specs || [];
 
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
@@ -108,15 +117,107 @@ const AddProduct = () => {
     }
   };
 
-  // Xüsusiyyət seçimi üçün funksiya
-  const handleSpecChange = (specId, specName) => {
+  // Xüsusiyyət əlavə etmə modalını aç
+  const handleAddSpec = (spec) => {
+    setCurrentSpec(spec);
+    // Boolean üçün default dəyər yoxdur, seçilməlidir
+    const initialValue = spec.type === "boolean" ? "" : "";
+    setSpecFormData({ value: initialValue, name: "", unit: spec.unit || "" });
+    setShowSpecModal(true);
+  };
+
+  // Xüsusiyyət dəyərini əlavə et
+  const handleAddSpecValue = () => {
+    if (!currentSpec) return;
+
+    const { value } = specFormData;
+    
+    // Validasiya (boolean istisna olmaqla)
+    if (currentSpec.type !== "boolean") {
+      if (!value || !value.toString().trim()) {
+        Swal.fire({
+          title: "Xəta!",
+          text: "Dəyər doldurulmalıdır",
+          icon: "error",
+          confirmButtonColor: "#5C4977",
+        });
+        return;
+      }
+    }
+
+    // Number tipi üçün rəqəm yoxla
+    if (currentSpec.type === "number" && isNaN(value)) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Rəqəm daxil edin",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    // Boolean tipi üçün validasiya
+    if (currentSpec.type === "boolean" && (value !== "true" && value !== "false" && value !== true && value !== false)) {
+      Swal.fire({
+        title: "Xəta!",
+        text: "Dəyər seçilməlidir",
+        icon: "error",
+        confirmButtonColor: "#5C4977",
+      });
+      return;
+    }
+
+    let specValue;
+    
+    if (currentSpec.type === "boolean") {
+      const boolValue = value === "true" || value === true;
+      specValue = {
+        value: boolValue,
+        name: boolValue ? "true" : "false",
+      };
+    } else {
+      const trimmedValue = value.toString().trim();
+      specValue = {
+        value: trimmedValue,
+        name: trimmedValue, // Ad və dəyər eyni olur
+      };
+      
+      // Unit varsa əlavə et (spec-də populate edilmiş unit)
+      if (currentSpec.unit) {
+        specValue.unit = currentSpec.unit._id || currentSpec.unit;
+      }
+    }
+
+    // selectedSpecs-ə əlavə et
     setSelectedSpecs((prev) => {
-      if (prev[specId]) {
+      const specId = currentSpec._id;
+      const existingValues = prev[specId] || [];
+      return {
+        ...prev,
+        [specId]: [...existingValues, specValue],
+      };
+    });
+
+    // Modalı bağla
+    setShowSpecModal(false);
+    setCurrentSpec(null);
+    setSpecFormData({ value: "", name: "", unit: "" });
+  };
+
+  // Xüsusiyyət dəyərini sil
+  const handleRemoveSpecValue = (specId, index) => {
+    setSelectedSpecs((prev) => {
+      const specValues = prev[specId] || [];
+      const newValues = specValues.filter((_, i) => i !== index);
+      if (newValues.length === 0) {
         const newSpecs = { ...prev };
         delete newSpecs[specId];
         return newSpecs;
       }
-      return { ...prev, [specId]: specName };
+      return {
+        ...prev,
+        [specId]: newValues,
+      };
     });
   };
 
@@ -259,9 +360,21 @@ const AddProduct = () => {
         formDataToSend.append("attributes", JSON.stringify(formData.attributes));
       }
 
-      // Seçilmiş specs
+      // Seçilmiş specs - backend-də spec name ilə saxlanmalıdır
       if (Object.keys(selectedSpecs).length > 0) {
-        formDataToSend.append("specs", JSON.stringify(selectedSpecs));
+        const specsToSend = {};
+        Object.entries(selectedSpecs).forEach(([specId, values]) => {
+          const spec = allSpecs.find((s) => s._id === specId);
+          if (spec && values && values.length > 0) {
+            // Spec name-i key kimi istifadə et
+            specsToSend[spec.name || spec.title] = values.map((val) => {
+              const specValue = { value: val.value, name: val.name };
+              if (val.unit) specValue.unit = val.unit;
+              return specValue;
+            });
+          }
+        });
+        formDataToSend.append("specs", JSON.stringify(specsToSend));
       }
 
       formDataToSend.append("mainImageIndex", mainImageIndex.toString());
@@ -294,6 +407,9 @@ const AddProduct = () => {
       setImages([]);
       setPreviews([]);
       setMainImageIndex(0);
+      setShowSpecModal(false);
+      setCurrentSpec(null);
+      setSpecFormData({ value: "", name: "", unit: "" });
 
       Swal.fire({
         title: "Uğur!",
@@ -559,70 +675,82 @@ const AddProduct = () => {
                 )}
               </div>
 
-              {/* Texniki Xüsusiyyətlər */}
-              <div className="border-b border-[#5C4977]/10 pb-6">
-                <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
-                  <FaTag className="h-5 w-5" />
-                  Xüsusiyyətlər (Seçmək üçün klikləyin)
-                </h2>
+              {/* Xüsusiyyətlər */}
+              {formData.category && categorySpecs.length > 0 && (
+                <div className="border-b border-[#5C4977]/10 pb-6">
+                  <h2 className="text-xl font-bold text-[#5C4977] mb-6 flex items-center gap-2">
+                    <FaTag className="h-5 w-5" />
+                    Xüsusiyyətlər
+                  </h2>
 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {specs.map((spec) => (
-                      <button
-                        key={spec._id}
-                        type="button"
-                        onClick={() => handleSpecChange(spec._id, spec.name)}
-                        className={`p-3 border rounded-xl text-left transition-all duration-200 cursor-pointer ${
-                          selectedSpecs[spec._id]
-                            ? "bg-[#5C4977] text-white border-[#5C4977]"
-                            : "border-[#5C4977]/20 hover:border-[#5C4977] hover:bg-[#5C4977]/5"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{spec.name}</span>
-                          {selectedSpecs[spec._id] && (
-                            <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                              Seçildi
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  <div className="space-y-4">
+                    {categorySpecs.map((specRef) => {
+                      // Spec obyektini tap
+                      const spec = allSpecs.find((s) => s._id === (specRef._id || specRef));
+                      if (!spec) return null;
 
-                  {specs.length === 0 && (
-                    <p className="text-sm text-gray-500">
-                      Xüsusiyyət yoxdur. Admin panelindən xüsusiyyət əlavə edin.
-                    </p>
-                  )}
+                      const specValues = selectedSpecs[spec._id] || [];
 
-                  {Object.keys(selectedSpecs).length > 0 && (
-                    <div className="mt-4 p-4 bg-[#5C4977]/5 rounded-xl">
-                      <p className="text-sm font-medium text-[#5C4977] mb-2">
-                        Seçilmiş Xüsusiyyətlər:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(selectedSpecs).map(([specId, specName]) => (
-                          <span
-                            key={specId}
-                            className="inline-flex items-center gap-1 bg-[#5C4977] text-white px-3 py-1 rounded-full text-sm"
-                          >
-                            {specName}
+                      return (
+                        <div key={spec._id} className="border border-[#5C4977]/20 rounded-xl p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="font-medium text-[#5C4977]">{spec.title || spec.name}</h3>
+                              {spec.unit && (
+                                <p className="text-sm text-gray-500">
+                                  Ölçü vahidi: {spec.unit.title || spec.unit.name || spec.unit}
+                                </p>
+                              )}
+                            </div>
                             <button
                               type="button"
-                              onClick={() => handleSpecChange(specId, specName)}
-                              className="ml-1 hover:text-red-200 cursor-pointer"
+                              onClick={() => handleAddSpec(spec)}
+                              className="px-4 py-2 bg-[#5C4977] text-white rounded-xl hover:bg-[#5C4977]/90 transition-colors text-sm font-medium cursor-pointer"
                             >
-                              ×
+                              Xüsusiyyət əlavə et
                             </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                          </div>
+
+                          {/* Əlavə edilmiş dəyərlər */}
+                          {specValues.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              {specValues.map((specValue, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-[#5C4977]/5 p-2 rounded-lg"
+                                >
+                                  <div className="flex-1">
+                                    <span className="font-medium text-gray-800">
+                                      {specValue.value}
+                                    </span>
+                                    {specValue.name !== specValue.value && (
+                                      <span className="text-sm text-gray-500 ml-2">
+                                        ({specValue.name})
+                                      </span>
+                                    )}
+                                    {spec.unit && (
+                                      <span className="text-sm text-gray-500 ml-2">
+                                        {spec.unit.title || spec.unit.name || spec.unit}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveSpecValue(spec._id, index)}
+                                    className="text-red-500 hover:text-red-700 cursor-pointer ml-2"
+                                  >
+                                    <FaTrash className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Şəkillər */}
               <div className="pb-6">
@@ -749,6 +877,183 @@ const AddProduct = () => {
           </div>
         </div>
       </div>
+
+      {/* Xüsusiyyət əlavə etmə modalı */}
+      {showSpecModal && currentSpec && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-[#5C4977]">
+                {currentSpec.title || currentSpec.name} əlavə et
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSpecModal(false);
+                  setCurrentSpec(null);
+                  setSpecFormData({ value: "", name: "", unit: "" });
+                }}
+                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Tip: select */}
+              {currentSpec.type === "select" && (
+                <div>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Value *
+                  </label>
+                  <input
+                    type="text"
+                    value={specFormData.value}
+                    onChange={(e) =>
+                      setSpecFormData((prev) => ({
+                        ...prev,
+                        value: e.target.value,
+                        name: e.target.value, // Select-də value və name eyni olur
+                      }))
+                    }
+                    placeholder="Məs. mavi"
+                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
+                  />
+                </div>
+              )}
+
+              {/* Tip: text */}
+              {currentSpec.type === "text" && (
+                <div>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Dəyər *
+                  </label>
+                  <input
+                    type="text"
+                    value={specFormData.value}
+                    onChange={(e) =>
+                      setSpecFormData((prev) => ({
+                        ...prev,
+                        value: e.target.value,
+                        name: e.target.value,
+                      }))
+                    }
+                    placeholder="Yazı daxil edin"
+                    className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
+                  />
+                </div>
+              )}
+
+              {/* Tip: number */}
+              {currentSpec.type === "number" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                      Dəyər *
+                    </label>
+                    <input
+                      type="number"
+                      value={specFormData.value}
+                      onChange={(e) =>
+                        setSpecFormData((prev) => ({
+                          ...prev,
+                          value: e.target.value,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="Məs. 128"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent"
+                    />
+                  </div>
+                  {currentSpec.unit && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                        Ölçü vahidi
+                      </label>
+                      <input
+                        type="text"
+                        value={
+                          typeof currentSpec.unit === "object"
+                            ? currentSpec.unit.title || currentSpec.unit.name || ""
+                            : currentSpec.unit || ""
+                        }
+                        disabled
+                        className="w-full p-3 border border-[#5C4977]/20 rounded-xl bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Tip: boolean */}
+              {currentSpec.type === "boolean" && (
+                <div>
+                  <label className="block text-sm font-medium text-[#5C4977] mb-2">
+                    Dəyər *
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="booleanValue"
+                        value="true"
+                        checked={specFormData.value === "true" || specFormData.value === true}
+                        onChange={(e) =>
+                          setSpecFormData((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                            name: e.target.value,
+                          }))
+                        }
+                        className="w-4 h-4 text-[#5C4977]"
+                      />
+                      <span>Bəli</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="booleanValue"
+                        value="false"
+                        checked={specFormData.value === "false" || specFormData.value === false}
+                        onChange={(e) =>
+                          setSpecFormData((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                            name: e.target.value,
+                          }))
+                        }
+                        className="w-4 h-4 text-[#5C4977]"
+                      />
+                      <span>Xeyr</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleAddSpecValue}
+                  className="flex-1 bg-[#5C4977] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#5C4977]/90 transition-colors cursor-pointer"
+                >
+                  Əlavə et
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSpecModal(false);
+                    setCurrentSpec(null);
+                    setSpecFormData({ value: "", name: "", unit: "" });
+                  }}
+                  className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-300 transition-colors cursor-pointer"
+                >
+                  Ləğv et
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
