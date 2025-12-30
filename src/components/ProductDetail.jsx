@@ -80,10 +80,10 @@ const ProductDetail = () => {
   const product = data?.product;
 
   // Əgər URL-də ID varsa və product yüklənibsə, dərhal redirect et
-  // useLayoutEffect render-dan dərhal sonra, amma DOM-a çatmamışdan əvvəl işləyir
-  useLayoutEffect(() => {
+  // useEffect ilə query bitdikdən sonra dərhal redirect et
+  useEffect(() => {
     if (product && productSlug && isObjectId && product.slug && productSlug !== product.slug) {
-      // window.location.replace istifadə et ki, daha tez redirect olsun
+      // window.location.replace istifadə et ki, daha tez redirect olsun və history-də ID qalmasın
       window.location.replace(`/product/${product.slug}`);
     }
   }, [product, productSlug, isObjectId]);

@@ -406,7 +406,7 @@ const SebetCart = ({ isOpen, onClose }) => {
                     {/* Product Image */}
                     <div className="w-20 h-20 flex-shrink-0">
                       <Link
-                        to={`/product/${item.product._id}`}
+                        to={`/product/${item.product.slug || item.product._id}`}
                         onClick={() => onClose && onClose()}
                         className="block w-full h-full cursor-pointer"
                       >
