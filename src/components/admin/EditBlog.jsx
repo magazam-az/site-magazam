@@ -45,9 +45,40 @@ const EditBlog = () => {
     }
   }, [data]);
 
+  // Slug generate funksiyası
+  const generateSlug = (text) => {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[ə]/g, 'e')
+      .replace(/[ı]/g, 'i')
+      .replace(/[ö]/g, 'o')
+      .replace(/[ü]/g, 'u')
+      .replace(/[ğ]/g, 'g')
+      .replace(/[ş]/g, 's')
+      .replace(/[ç]/g, 'c')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      // Title dəyişdikdə, əgər slug boşdursa, avtomatik generate et
+      if (name === "title") {
+        // Əgər slug boşdursa və ya yoxdursa, avtomatik generate et
+        if (!prev.slug || prev.slug.trim() === '') {
+          const autoSlug = generateSlug(value);
+          return { ...prev, [name]: value, slug: autoSlug };
+        }
+        // Əgər slug manual dəyişdirilibsə, yalnız title-i dəyiş
+        return { ...prev, [name]: value };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleNewImagesChange = (e) => {
@@ -112,9 +143,15 @@ const EditBlog = () => {
     }
 
     try {
+      // Əgər slug boşdursa, title-ə əsasən avtomatik generate et
+      let finalSlug = formData.slug?.trim() || '';
+      if (!finalSlug && formData.title) {
+        finalSlug = generateSlug(formData.title);
+      }
+
       const updatedData = new FormData();
       
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries({ ...formData, slug: finalSlug }).forEach(([key, value]) => {
         if (key === "date") {
           updatedData.append(key, new Date(value).toISOString());
         } else if (value) {
@@ -218,7 +255,7 @@ const EditBlog = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Slug *
+                      Slug (URL üçün) <span className="text-gray-500 text-xs font-normal">(İstəyə bağlı)</span>
                     </label>
                     <input
                       type="text"
@@ -227,9 +264,8 @@ const EditBlog = () => {
                       onChange={handleInputChange}
                       placeholder="blog-slug-ornegi"
                       className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                      required
                     />
-                    <p className="text-xs text-gray-500 mt-1">URL üçün unikal slug (məs: blog-bashligi)</p>
+                    <p className="text-xs text-gray-500 mt-1">Boş buraxılsa, başlıq əsasında avtomatik yaradılacaq</p>
                   </div>
                 </div>
 

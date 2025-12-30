@@ -34,9 +34,40 @@ const EditSubcategory = () => {
     }
   }, [categoryData, subcategoryId]);
 
+  // Slug generate funksiyası
+  const generateSlug = (text) => {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[ə]/g, 'e')
+      .replace(/[ı]/g, 'i')
+      .replace(/[ö]/g, 'o')
+      .replace(/[ü]/g, 'u')
+      .replace(/[ğ]/g, 'g')
+      .replace(/[ş]/g, 's')
+      .replace(/[ç]/g, 'c')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSubcategoryForm((prev) => ({ ...prev, [name]: value }));
+    setSubcategoryForm((prev) => {
+      // Name dəyişdikdə, əgər slug boşdursa, avtomatik generate et
+      if (name === "name") {
+        // Əgər slug boşdursa və ya yoxdursa, avtomatik generate et
+        if (!prev.slug || prev.slug.trim() === '') {
+          const autoSlug = generateSlug(value);
+          return { ...prev, [name]: value, slug: autoSlug };
+        }
+        // Əgər slug manual dəyişdirilibsə, yalnız name-i dəyiş
+        return { ...prev, [name]: value };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleImageChange = (e) => {
@@ -73,10 +104,16 @@ const EditSubcategory = () => {
     }
 
     try {
+      // Əgər slug boşdursa, name-ə əsasən avtomatik generate et
+      let finalSlug = subcategoryForm.slug?.trim() || '';
+      if (!finalSlug && subcategoryForm.name) {
+        finalSlug = generateSlug(subcategoryForm.name);
+      }
+
       const formData = new FormData();
       formData.append("name", subcategoryForm.name.trim());
-      if (subcategoryForm.slug.trim()) {
-        formData.append("slug", subcategoryForm.slug.trim());
+      if (finalSlug) {
+        formData.append("slug", finalSlug);
       }
       if (subcategoryForm.image) {
         formData.append("image", subcategoryForm.image);

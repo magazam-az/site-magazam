@@ -21,9 +21,40 @@ const CreateCategory = () => {
     selectedSpecs: [],
   });
 
+  // Slug generate funksiyası
+  const generateSlug = (text) => {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[ə]/g, 'e')
+      .replace(/[ı]/g, 'i')
+      .replace(/[ö]/g, 'o')
+      .replace(/[ü]/g, 'u')
+      .replace(/[ğ]/g, 'g')
+      .replace(/[ş]/g, 's')
+      .replace(/[ç]/g, 'c')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCategoryForm((prev) => ({ ...prev, [name]: value }));
+    setCategoryForm((prev) => {
+      // Name dəyişdikdə, əgər slug boşdursa, avtomatik generate et
+      if (name === "name") {
+        // Əgər slug boşdursa və ya yoxdursa, avtomatik generate et
+        if (!prev.slug || prev.slug.trim() === '') {
+          const autoSlug = generateSlug(value);
+          return { ...prev, [name]: value, slug: autoSlug };
+        }
+        // Əgər slug manual dəyişdirilibsə, yalnız name-i dəyiş
+        return { ...prev, [name]: value };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleSpecToggle = (specId) => {
@@ -69,10 +100,16 @@ const CreateCategory = () => {
     }
 
     try {
+      // Əgər slug boşdursa, name-ə əsasən avtomatik generate et
+      let finalSlug = categoryForm.slug?.trim() || '';
+      if (!finalSlug && categoryForm.name) {
+        finalSlug = generateSlug(categoryForm.name);
+      }
+
       const formData = new FormData();
       formData.append("name", categoryForm.name.trim());
-      if (categoryForm.slug.trim()) {
-        formData.append("slug", categoryForm.slug.trim());
+      if (finalSlug) {
+        formData.append("slug", finalSlug);
       }
       if (categoryForm.image) {
         formData.append("image", categoryForm.image);

@@ -25,10 +25,41 @@ const AddBlogs = () => {
   const { refetch } = useGetBlogsQuery(); // Blog siyahısını yeniləmək üçün
   const navigate = useNavigate();
 
+  // Slug generate funksiyası
+  const generateSlug = (text) => {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[ə]/g, 'e')
+      .replace(/[ı]/g, 'i')
+      .replace(/[ö]/g, 'o')
+      .replace(/[ü]/g, 'u')
+      .replace(/[ğ]/g, 'g')
+      .replace(/[ş]/g, 's')
+      .replace(/[ç]/g, 'c')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
   // Form input dəyişikliklərini state-ə ötür
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      // Title dəyişdikdə, əgər slug boşdursa, avtomatik generate et
+      if (name === "title") {
+        // Əgər slug boşdursa və ya yoxdursa, avtomatik generate et
+        if (!prev.slug || prev.slug.trim() === '') {
+          const autoSlug = generateSlug(value);
+          return { ...prev, [name]: value, slug: autoSlug };
+        }
+        // Əgər slug manual dəyişdirilibsə, yalnız title-i dəyiş
+        return { ...prev, [name]: value };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   // Şəkil seçimi dəyişikliklərini tut
@@ -74,12 +105,21 @@ const AddBlogs = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Əgər slug boşdursa, title-ə əsasən avtomatik generate et
+    let finalSlug = formData.slug?.trim() || '';
+    if (!finalSlug && formData.title) {
+      finalSlug = generateSlug(formData.title);
+    }
+
     const form = new FormData();
     // Formdakı məlumatları FormData-ya əlavə et
     for (let key in formData) {
       if (key === "date") {
         // Date-i ISO formatına çevir
         form.append(key, new Date(formData[key]).toISOString());
+      } else if (key === "slug") {
+        // Slug-u finalSlug ilə əvəz et
+        form.append(key, finalSlug);
       } else {
         form.append(key, formData[key]);
       }
@@ -165,7 +205,7 @@ const AddBlogs = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Slug *
+                      Slug (URL üçün) <span className="text-gray-500 text-xs font-normal">(İstəyə bağlı)</span>
                     </label>
                     <input
                       type="text"
@@ -174,9 +214,8 @@ const AddBlogs = () => {
                       onChange={handleInputChange}
                       placeholder="blog-slug-ornegi"
                       className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
-                      required
                     />
-                    <p className="text-xs text-gray-500 mt-1">URL üçün unikal slug (məs: blog-bashligi)</p>
+                    <p className="text-xs text-gray-500 mt-1">Boş buraxılsa, başlıq əsasında avtomatik yaradılacaq</p>
                   </div>
                 </div>
 

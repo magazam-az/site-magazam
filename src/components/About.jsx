@@ -24,8 +24,11 @@ export default function About({ aboutData }) {
         {title}
       </h1>
 
-      {/* First paragraph */}
-      <p className="text-gray-600 text-base leading-relaxed mb-4">{description}</p>
+      {/* First paragraph - HTML və ya text dəstəkləyir */}
+      <div 
+        className="text-gray-600 text-base leading-relaxed mb-4 prose prose-sm max-w-none"
+        dangerouslySetInnerHTML={{ __html: description }}
+      />
 
       {/* Second paragraph - conditionally expanded */}
       {isExpanded && <p className="text-gray-600 text-base leading-relaxed mb-6">{fullText}</p>}
