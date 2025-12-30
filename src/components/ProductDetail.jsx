@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useState, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   useGetProductDetailsQuery, 
@@ -72,19 +72,21 @@ const ProductDetail = () => {
   const params = useParams();
   const navigate = useNavigate();
   const productSlug = params?.slug; // Now using slug instead of id
+  
+  // Əgər URL-də ID varsa (ObjectId formatı), URL-də görünməsinin qarşısını almaq üçün
+  const isObjectId = /^[a-f\d]{24}$/i.test(productSlug || '');
+  
   const { data, isLoading, error, isError } = useGetProductDetailsQuery(productSlug);
   const product = data?.product;
 
-  // Əgər URL-də ID varsa (köhnə link), amma product-də slug varsa, slug-a yönləndir
-  useEffect(() => {
-    if (product && productSlug && product.slug && productSlug !== product.slug) {
-      // Slug mövcuddur və URL-dəki ilə uyğun gəlmir, yenilə
-      // Əgər URL-də ObjectId formatındadırsa (24 karakter hex), slug-a yönləndir
-      if (/^[a-f\d]{24}$/i.test(productSlug) && product.slug) {
-        navigate(`/product/${product.slug}`, { replace: true });
-      }
+  // Əgər URL-də ID varsa və product yüklənibsə, dərhal redirect et
+  // useLayoutEffect render-dan dərhal sonra, amma DOM-a çatmamışdan əvvəl işləyir
+  useLayoutEffect(() => {
+    if (product && productSlug && isObjectId && product.slug && productSlug !== product.slug) {
+      // Navigate ilə dərhal redirect et (replace: true ilə history-də ID qalmır)
+      navigate(`/product/${product.slug}`, { replace: true });
     }
-  }, [product, productSlug, navigate]);
+  }, [product, productSlug, navigate, isObjectId]);
 
   // User authentication check
   const { isAuthenticated, user } = useSelector((state) => state.user || {});
@@ -387,7 +389,12 @@ const ProductDetail = () => {
     return "/catalog";
   };
 
-  if (isLoading) {
+  // Əgər URL-də ID varsa, product yüklənənə və redirect olunana qədər loading göstər
+  // Bu, URL-də ID-nin görünməsinin qarşısını alır
+  const isRedirecting = isObjectId && product && product.slug && productSlug !== product.slug;
+  const shouldShowLoading = isLoading || (isObjectId && !product) || isRedirecting;
+
+  if (shouldShowLoading) {
     return (
       <div className="min-h-screen bg-[#F3F4F6] flex flex-col pb-14 md:pb-0">
         <Navbar />

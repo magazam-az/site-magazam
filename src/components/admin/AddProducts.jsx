@@ -88,10 +88,15 @@ const AddProduct = () => {
       if (name === "category") {
         return { ...prev, [name]: value, subcategory: "" };
       }
-      // Həmişə name dəyişdikdə slug-u avtomatik generate et
+      // Name dəyişdikdə, əgər slug boşdursa, avtomatik generate et
       if (name === "name") {
-        const autoSlug = generateSlug(value);
-        return { ...prev, [name]: value, slug: autoSlug };
+        // Əgər slug boşdursa və ya yoxdursa, avtomatik generate et
+        if (!prev.slug || prev.slug.trim() === '') {
+          const autoSlug = generateSlug(value);
+          return { ...prev, [name]: value, slug: autoSlug };
+        }
+        // Əgər slug manual dəyişdirilibsə, yalnız name-i dəyiş
+        return { ...prev, [name]: value };
       }
       return { ...prev, [name]: value };
     });
@@ -433,10 +438,16 @@ const AddProduct = () => {
     }
 
     try {
+      // Əgər slug boşdursa, name-ə əsasən avtomatik generate et
+      let finalSlug = formData.slug?.trim() || '';
+      if (!finalSlug && formData.name) {
+        finalSlug = generateSlug(formData.name);
+      }
+
       const formDataToSend = new FormData();
 
       // ✅ normal field-lər
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries({ ...formData, slug: finalSlug }).forEach(([key, value]) => {
         // keywords və attributes array-ləri burda append ETMİRİK (aşağıda ayrıca edəcəyik)
         if (key === "keywords" || key === "attributes") return;
 
@@ -692,16 +703,16 @@ const AddProduct = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Slug (URL üçün) <span className="text-gray-500 text-xs font-normal">(Avtomatik yaradılır)</span>
+                      Slug (URL üçün) <span className="text-gray-500 text-xs font-normal">(İstəyə bağlı)</span>
                     </label>
                     <input
                       name="slug"
                       value={formData.slug}
+                      onChange={handleInputChange}
                       placeholder="Məs. iphone-15-pro-max"
-                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl bg-gray-50 cursor-not-allowed transition-colors"
-                      readOnly
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Slug məhsul adı əsasında avtomatik yaradılır</p>
+                    <p className="text-xs text-gray-500 mt-1">Boş buraxılsa, məhsul adı əsasında avtomatik yaradılacaq</p>
                   </div>
 
                   <div>
