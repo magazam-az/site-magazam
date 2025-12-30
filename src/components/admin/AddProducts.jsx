@@ -548,9 +548,30 @@ const AddProduct = () => {
 
       let errorMessage = "Məhsul əlavə edilərkən xəta baş verdi";
 
-      if (error?.data?.error) errorMessage = error.data.error;
-      else if (error?.data?.message) errorMessage = error.data.message;
-      else if (error?.status === "FETCH_ERROR") {
+      // 401 Unauthorized xətası üçün xüsusi mesaj
+      if (error?.status === 401) {
+        errorMessage = error?.data?.message || error?.data?.error || "Giriş etməlisiniz. Zəhmət olmasa yenidən daxil olun.";
+        
+        // Token problemi varsa, localStorage-i təmizlə və login-ə yönləndir
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('isAuthenticated');
+        
+        Swal.fire({
+          title: "Session bitib",
+          text: "Zəhmət olmasa yenidən daxil olun",
+          icon: "warning",
+          confirmButtonColor: '#5C4977',
+          confirmButtonText: 'Daxil ol'
+        }).then(() => {
+          navigate('/login');
+        });
+        return;
+      } else if (error?.data?.error) {
+        errorMessage = error.data.error;
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.status === "FETCH_ERROR") {
         errorMessage = "Serverlə əlaqə problemi. Zəhmət olmasa bir daha yoxlayın.";
       } else if (error?.status === 500) {
         errorMessage = "Server xətası. Məlumatların düzgünlüyünü yoxlayın.";

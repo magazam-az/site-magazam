@@ -9,6 +9,17 @@ const AdminRoute = ({ children }) => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // Token yoxla - localStorage-də token yoxdursa, login-ə yönləndir
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Token yoxdursa, localStorage-i təmizlə və login-ə yönləndir
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('isAuthenticated');
+      navigate("/login");
+      return;
+    }
+
     // Əgər istifadəçi autentifikasiya olunmayıbsa login səhifəsinə yönləndir
     if (!isAuthenticated || !user) {
       navigate("/login");
@@ -29,14 +40,17 @@ const AdminRoute = ({ children }) => {
 
   // İstifadəçinin rolunu yoxla
   const userRole = user?.user?.role || user?.role;
+  
+  // Token yoxla
+  const token = localStorage.getItem('token');
 
   // Yoxlama davam edirsə, heç nə göstərmə
   if (isChecking) {
     return null;
   }
 
-  // Yalnız autentifikasiya olunmuş və admin olan istifadəçilər üçün məzmunu göstər
-  if (!isAuthenticated || !user || userRole !== "admin") {
+  // Token yoxdursa və ya yalnız autentifikasiya olunmuş və admin olan istifadəçilər üçün məzmunu göstər
+  if (!token || !isAuthenticated || !user || userRole !== "admin") {
     return <NotFound />;
   }
 

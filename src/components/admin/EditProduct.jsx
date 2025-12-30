@@ -715,7 +715,28 @@ const EditProduct = () => {
       
       let errorMessage = "Məhsul yenilənmədi!";
       
-      if (err?.data?.error) {
+      // 401 Unauthorized xətası üçün xüsusi mesaj
+      if (err?.status === 401) {
+        errorMessage = err?.data?.message || err?.data?.error || "Giriş etməlisiniz. Zəhmət olmasa yenidən daxil olun.";
+        
+        // Token problemi varsa, localStorage-i təmizlə və login-ə yönləndir
+        if (errorMessage.includes('token') || errorMessage.includes('Token') || errorMessage.includes('Girish')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('isAuthenticated');
+          
+          Swal.fire({
+            title: "Session bitib",
+            text: "Zəhmət olmasa yenidən daxil olun",
+            icon: "warning",
+            confirmButtonColor: '#5C4977',
+            confirmButtonText: 'Daxil ol'
+          }).then(() => {
+            navigate('/login');
+          });
+          return;
+        }
+      } else if (err?.data?.error) {
         errorMessage = err.data.error;
       } else if (err?.data?.message) {
         errorMessage = err.data.message;

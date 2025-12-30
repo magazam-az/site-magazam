@@ -75,6 +75,17 @@ const ProductDetail = () => {
   const { data, isLoading, error, isError } = useGetProductDetailsQuery(productSlug);
   const product = data?.product;
 
+  // Əgər URL-də ID varsa (köhnə link), amma product-də slug varsa, slug-a yönləndir
+  useEffect(() => {
+    if (product && productSlug && product.slug && productSlug !== product.slug) {
+      // Slug mövcuddur və URL-dəki ilə uyğun gəlmir, yenilə
+      // Əgər URL-də ObjectId formatındadırsa (24 karakter hex), slug-a yönləndir
+      if (/^[a-f\d]{24}$/i.test(productSlug) && product.slug) {
+        navigate(`/product/${product.slug}`, { replace: true });
+      }
+    }
+  }, [product, productSlug, navigate]);
+
   // User authentication check
   const { isAuthenticated, user } = useSelector((state) => state.user || {});
 
