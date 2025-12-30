@@ -116,7 +116,7 @@ function App() {
           {/* Catch-all route for crud paths - SONDA OLMALIDIR */}
           <Route path="/crud/*" element={<PasswordResetRedirect />} />
 
-          {/* Product Detail - supports both ID and slug */}
+          {/* Product Detail - slug only */}
           <Route path="/product/:slug" element={<ProductDetail />} />
 
           {/* Search Results */}

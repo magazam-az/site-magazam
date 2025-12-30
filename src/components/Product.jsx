@@ -20,8 +20,9 @@ const Product = ({ product, mehsul, badgeText = "", badgeColor = "#FF0000" }) =>
   const navigate = useNavigate();
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
 
-  // yalnız _id və ya id
   const productId = productData._id || productData.id;
+  const productSlug = productData?.slug;
+  const hasValidSlug = !!productSlug;
   const hasValidId = !!productId;
 
   const isOutOfStock =
@@ -128,10 +129,10 @@ const Product = ({ product, mehsul, badgeText = "", badgeColor = "#FF0000" }) =>
   const goToDetail = useCallback(() => {
     if (hasValidId) {
       // Use slug if available, otherwise fallback to ID
-      const productSlug = productData?.slug || productId;
-      navigate(`/product/${productSlug}`);
+      const routeParam = productSlug || productId;
+      navigate(`/product/${routeParam}`);
     }
-  }, [hasValidId, productId, productData?.slug, navigate]);
+  }, [hasValidId, productId, productSlug, navigate]);
 
   const handleClick = (e) => {
     // interaktiv elementə toxunubsa açma

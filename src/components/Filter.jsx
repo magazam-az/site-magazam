@@ -1308,6 +1308,7 @@ const Filter = () => {
   // Product component'inin beklediği formata dönüştür
   const formattedProducts = products.map((product) => ({
     _id: product._id,
+    slug: product.slug,
     name: product.name,
     brand: product.brand || "",
     model: product.model || "",

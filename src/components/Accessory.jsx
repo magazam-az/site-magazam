@@ -53,6 +53,7 @@ export default function Accessory({ accessoryData }) {
       })
       .map((product) => ({
         _id: product._id,
+        slug: product.slug,
         name: product.name,
         brand: product.brand,
         model: product.model,
@@ -85,6 +86,7 @@ export default function Accessory({ accessoryData }) {
     
     return homeAppliances.selectedProductIds.map((product) => ({
       _id: product._id,
+      slug: product.slug,
       name: product.name,
       brand: product.brand,
       model: product.model,

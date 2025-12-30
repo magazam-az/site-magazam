@@ -16,8 +16,8 @@ export const productApi = createApi({
       providesTags: ["Products"],
     }),
     getProductDetails: builder.query({
-      query: (id) => `/products/${id}`,
-      providesTags: (result, error, id) => [{ type: "Products", id }],
+      query: (slug) => `/products/${slug}`,
+      providesTags: (result, error, slug) => [{ type: "Products", id: slug }],
     }),
     addProduct: builder.mutation({
       query: (productData) => ({
@@ -157,7 +157,7 @@ export const productApi = createApi({
       invalidatesTags: ["Products"],
     }),
         getProductReviews: builder.query({
-          query: (id) => `/products/${id}/reviews`,
+          query: (slug) => `/products/${slug}/reviews`,
           providesTags: ["Reviews"],
         }), 
   }),

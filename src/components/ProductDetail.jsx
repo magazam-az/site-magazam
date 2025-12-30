@@ -71,22 +71,10 @@ const CustomBreadcrumb = ({ items }) => {
 const ProductDetail = () => {
   const params = useParams();
   const navigate = useNavigate();
-  const productSlug = params?.slug; // Now using slug instead of id
-  
-  // Əgər URL-də ID varsa (ObjectId formatı), URL-də görünməsinin qarşısını almaq üçün
-  const isObjectId = /^[a-f\d]{24}$/i.test(productSlug || '');
+  const productSlug = params?.slug;
   
   const { data, isLoading, error, isError } = useGetProductDetailsQuery(productSlug);
   const product = data?.product;
-
-  // Əgər URL-də ID varsa və product yüklənibsə, dərhal redirect et
-  // useEffect ilə query bitdikdən sonra dərhal redirect et
-  useEffect(() => {
-    if (product && productSlug && isObjectId && product.slug && productSlug !== product.slug) {
-      // window.location.replace istifadə et ki, daha tez redirect olsun və history-də ID qalmasın
-      window.location.replace(`/product/${product.slug}`);
-    }
-  }, [product, productSlug, isObjectId]);
 
   // User authentication check
   const { isAuthenticated, user } = useSelector((state) => state.user || {});
@@ -389,10 +377,7 @@ const ProductDetail = () => {
     return "/catalog";
   };
 
-  // Əgər URL-də ID varsa, product yüklənənə və redirect olunana qədər loading göstər
-  // Bu, URL-də ID-nin görünməsinin qarşısını alır
-  const isRedirecting = isObjectId && product && product.slug && productSlug !== product.slug;
-  const shouldShowLoading = isLoading || (isObjectId && !product) || isRedirecting;
+  const shouldShowLoading = isLoading;
 
   if (shouldShowLoading) {
     return (
