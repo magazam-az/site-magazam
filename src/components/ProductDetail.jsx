@@ -83,10 +83,10 @@ const ProductDetail = () => {
   // useLayoutEffect render-dan dərhal sonra, amma DOM-a çatmamışdan əvvəl işləyir
   useLayoutEffect(() => {
     if (product && productSlug && isObjectId && product.slug && productSlug !== product.slug) {
-      // Navigate ilə dərhal redirect et (replace: true ilə history-də ID qalmır)
-      navigate(`/product/${product.slug}`, { replace: true });
+      // window.location.replace istifadə et ki, daha tez redirect olsun
+      window.location.replace(`/product/${product.slug}`);
     }
-  }, [product, productSlug, navigate, isObjectId]);
+  }, [product, productSlug, isObjectId]);
 
   // User authentication check
   const { isAuthenticated, user } = useSelector((state) => state.user || {});
