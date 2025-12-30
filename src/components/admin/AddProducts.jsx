@@ -62,6 +62,25 @@ const AddProduct = () => {
   const [addProduct, { isLoading }] = useAddProductMutation();
   const navigate = useNavigate();
 
+  // Slug generate funksiyası (backend-dəki kimi)
+  const generateSlug = (text) => {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[ə]/g, 'e')
+      .replace(/[ı]/g, 'i')
+      .replace(/[ö]/g, 'o')
+      .replace(/[ü]/g, 'u')
+      .replace(/[ğ]/g, 'g')
+      .replace(/[ş]/g, 's')
+      .replace(/[ç]/g, 'c')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -69,14 +88,9 @@ const AddProduct = () => {
       if (name === "category") {
         return { ...prev, [name]: value, subcategory: "" };
       }
-      // Auto-generate slug from name if slug is empty and name is being changed
-      if (name === "name" && !prev.slug) {
-        const autoSlug = value
-          .toLowerCase()
-          .trim()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/[\s_-]+/g, '-')
-          .replace(/^-+|-+$/g, '');
+      // Həmişə name dəyişdikdə slug-u avtomatik generate et
+      if (name === "name") {
+        const autoSlug = generateSlug(value);
         return { ...prev, [name]: value, slug: autoSlug };
       }
       return { ...prev, [name]: value };
@@ -657,16 +671,16 @@ const AddProduct = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#5C4977] mb-2">
-                      Slug (URL üçün) <span className="text-gray-500 text-xs font-normal">(İstəyə bağlı)</span>
+                      Slug (URL üçün) <span className="text-gray-500 text-xs font-normal">(Avtomatik yaradılır)</span>
                     </label>
                     <input
                       name="slug"
                       value={formData.slug}
-                      onChange={handleInputChange}
                       placeholder="Məs. iphone-15-pro-max"
-                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl focus:ring-2 focus:ring-[#5C4977] focus:border-transparent transition-colors"
+                      className="w-full p-3 border border-[#5C4977]/20 rounded-xl bg-gray-50 cursor-not-allowed transition-colors"
+                      readOnly
                     />
-                    <p className="text-xs text-gray-500 mt-1">Boş buraxılsa, məhsul adı əsasında avtomatik yaradılacaq</p>
+                    <p className="text-xs text-gray-500 mt-1">Slug məhsul adı əsasında avtomatik yaradılır</p>
                   </div>
 
                   <div>
