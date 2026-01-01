@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 // Proxy target URL-i - buradan API URL-ləri alınır
 const API_TARGET = 'https://api.magazam.az';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     tailwindcss(),
     react()
@@ -20,11 +20,34 @@ export default defineConfig({
 
   base: '/',
 
+  // Keep dev logs, but strip console/debugger from production bundles
+  esbuild: mode === 'production'
+    ? { drop: ['console', 'debugger'] }
+    : undefined,
+
   build: {
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name]-[hash][extname]'
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        // Split big deps into cached vendor chunks (helps Lighthouse/Insights)
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+          charts: ['chart.js', 'react-chartjs-2'],
+          swiper: ['swiper'],
+          ui: [
+            'flowbite',
+            'flowbite-react',
+            '@radix-ui/react-menubar',
+            '@radix-ui/react-navigation-menu',
+            'lucide-react',
+            'react-icons',
+            'react-toastify',
+            'sweetalert2'
+          ]
+        }
       }
     }
   },
@@ -59,4 +82,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense, lazy } from "react"
 import { Search, Menu, X, Phone, Globe, User, Heart, ShoppingCart, ChevronDown, Package, LogOut, Loader2 } from "lucide-react"
 import { useSelector, useDispatch } from "react-redux"
 import { useNavigate, Link, useLocation } from "react-router-dom"
@@ -11,7 +11,8 @@ import {
 import { getFavorites } from "../utils/favorites"
 import { useGetCategoriesQuery } from "../redux/api/categoryApi"
 import { useGetSettingsQuery } from "../redux/api/settingsApi"
-import SebetCart from "./ShoppingCard"
+
+const SebetCart = lazy(() => import("./ShoppingCard"))
 
 // Desktop üçün İstifadəçi Menyusu
 const UserMenu = ({ name, email, imageUrl, role, onLogout }) => {
@@ -1041,7 +1042,11 @@ export default function MetaShopHeader() {
       </div>
 
       {/* Shopping Cart Modal */}
-      <SebetCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <Suspense fallback={null}>
+        {isCartOpen ? (
+          <SebetCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+        ) : null}
+      </Suspense>
     </div>
   )
 }
